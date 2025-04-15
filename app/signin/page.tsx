@@ -12,10 +12,12 @@ import config from "@/config";
 export default function Login() {
   const supabase = createClient();
   const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isDisabled, setIsDisabled] = useState<boolean>(false);
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
 
-  const handleSignup = async (
+  const handleAuth = async (
     e: any,
     options: {
       type: string;
@@ -37,7 +39,7 @@ export default function Login() {
             redirectTo: redirectURL,
           },
         });
-      } else if (type === "magic_link") {
+      } else if (type === "magic_link" && mode === "signin") {
         await supabase.auth.signInWithOtp({
           email,
           options: {
@@ -46,8 +48,43 @@ export default function Login() {
         });
 
         toast.success("Check your emails!");
-
         setIsDisabled(true);
+      } else if (type === "email" && mode === "signup") {
+        if (!password) {
+          toast.error("Password is required for signup");
+          setIsLoading(false);
+          return;
+        }
+        
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: redirectURL,
+          },
+        });
+
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Verification email sent. Check your inbox!");
+          setIsDisabled(true);
+        }
+      } else if (type === "email" && mode === "signin") {
+        if (!password) {
+          toast.error("Password is required for sign in");
+          setIsLoading(false);
+          return;
+        }
+        
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          toast.error(error.message);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -75,15 +112,31 @@ export default function Login() {
           Home
         </Link>
       </div>
+      
+      <div className="tabs tabs-boxed justify-center mx-auto max-w-[200px] mb-4 p-1 bg-base-200 rounded-lg">
+        <a 
+          className={`tab text-sm ${mode === "signin" ? "tab-active" : ""}`}
+          onClick={() => setMode("signin")}
+        >
+          Sign in
+        </a>
+        <a 
+          className={`tab text-sm ${mode === "signup" ? "tab-active" : ""}`}
+          onClick={() => setMode("signup")}
+        >
+          Sign up
+        </a>
+      </div>
+      
       <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-center mb-12">
-        Sign-in to {config.appName}{" "}
+        {mode === "signin" ? "Sign in to" : "Sign up for"} {config.appName}
       </h1>
 
       <div className="space-y-8 max-w-xl mx-auto">
         <button
           className="btn btn-block"
           onClick={(e) =>
-            handleSignup(e, { type: "oauth", provider: "google" })
+            handleAuth(e, { type: "oauth", provider: "google" })
           }
           disabled={isLoading}
         >
@@ -113,7 +166,7 @@ export default function Login() {
               />
             </svg>
           )}
-          Sign-up with Google
+          {mode === "signin" ? "Sign in with Google" : "Sign up with Google"}
         </button>
 
         <div className="divider text-xs text-base-content/50 font-medium">
@@ -122,7 +175,7 @@ export default function Login() {
 
         <form
           className="form-control w-full space-y-4"
-          onSubmit={(e) => handleSignup(e, { type: "magic_link" })}
+          onSubmit={(e) => handleAuth(e, { type: mode === "signin" && !password ? "magic_link" : "email" })}
         >
           <input
             required
@@ -133,6 +186,15 @@ export default function Login() {
             className="input input-bordered w-full placeholder:opacity-60"
             onChange={(e) => setEmail(e.target.value)}
           />
+          
+          <input
+            type="password"
+            value={password}
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            placeholder="Password"
+            className="input input-bordered w-full placeholder:opacity-60"
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
           <button
             className="btn btn-primary btn-block"
@@ -142,8 +204,34 @@ export default function Login() {
             {isLoading && (
               <span className="loading loading-spinner loading-xs"></span>
             )}
-            Send Magic Link
+            {password 
+              ? (mode === "signin" ? "Sign in" : "Sign up") 
+              : "Send Magic Link"}
           </button>
+          
+          {mode === "signin" && (
+            <p className="text-center text-sm text-base-content/70">
+              Don&apos;t have an account?{" "}
+              <a 
+                className="link link-primary" 
+                onClick={() => setMode("signup")}
+              >
+                Sign up
+              </a>
+            </p>
+          )}
+          
+          {mode === "signup" && (
+            <p className="text-center text-sm text-base-content/70">
+              Already have an account?{" "}
+              <a 
+                className="link link-primary" 
+                onClick={() => setMode("signin")}
+              >
+                Sign in
+              </a>
+            </p>
+          )}
         </form>
       </div>
     </main>
