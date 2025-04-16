@@ -6,11 +6,13 @@ import { createClient } from "@/libs/supabase/client";
 import { Provider } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
 import config from "@/config";
+import { useRouter } from "next/navigation";
 
 // This a login/singup page for Supabase Auth.
 // Successfull login redirects to /api/auth/callback where the Code Exchange is processed (see app/api/auth/callback/route.js).
 export default function Login() {
   const supabase = createClient();
+  const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -77,13 +79,16 @@ export default function Login() {
           return;
         }
         
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) {
           toast.error(error.message);
+        } else if (data?.user) {
+          // Redirect to dashboard on successful login
+          router.push(config.auth.callbackUrl);
         }
       }
     } catch (error) {
