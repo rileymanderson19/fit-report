@@ -36,23 +36,22 @@ const ButtonSignin = ({
     return (
       <Link
         href={config.auth.callbackUrl}
-        className={`btn ${extraStyle ? extraStyle : ""}`}
+        className={`btn btn-circle ${extraStyle ? extraStyle : ""}`}
       >
         {user?.user_metadata?.avatar_url ? (
           <img
             src={user?.user_metadata?.avatar_url}
-            alt={user?.user_metadata?.name || "Account"}
-            className="w-6 h-6 rounded-full shrink-0"
+            alt="Account"
+            className="w-6 h-6 rounded-full"
             referrerPolicy="no-referrer"
             width={24}
             height={24}
           />
         ) : (
-          <span className="w-6 h-6 bg-base-300 flex justify-center items-center rounded-full shrink-0">
+          <span className="w-6 h-6 flex justify-center items-center rounded-full">
             {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0)}
           </span>
         )}
-        {user?.user_metadata?.name || user?.email || "Account"}
       </Link>
     );
   }
