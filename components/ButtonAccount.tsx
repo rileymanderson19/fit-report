@@ -98,11 +98,11 @@ const ButtonAccount = () => {
               leaveFrom="transform scale-100 opacity-100"
               leaveTo="transform scale-95 opacity-0"
             >
-              <Popover.Panel className="absolute -right-2 top-0 z-50 max-w-[16rem] translate-x-full">
+              <Popover.Panel className="fixed left-64 bottom-6 z-50 ml-2">
                 <div className="overflow-hidden rounded-lg shadow-xl ring-1 ring-base-content ring-opacity-5 bg-base-100 p-1">
                   <div className="space-y-0.5 text-sm">
                     <button
-                      className="flex items-center gap-2 hover:bg-base-300 duration-200 py-1.5 px-3 w-full rounded-md"
+                      className="flex items-center gap-2 hover:bg-base-300 duration-200 py-1.5 px-3 w-full rounded-md whitespace-nowrap"
                       onClick={handleBilling}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -113,7 +113,7 @@ const ButtonAccount = () => {
                     </button>
 
                     <button
-                      className="flex items-center gap-2 hover:bg-error/20 hover:text-error duration-200 py-1.5 px-3 w-full rounded-md"
+                      className="flex items-center gap-2 hover:bg-error/20 hover:text-error duration-200 py-1.5 px-3 w-full rounded-md whitespace-nowrap"
                       onClick={handleSignOut}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
