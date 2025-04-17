@@ -30,9 +30,13 @@ export default async function LayoutPrivate({
   const pathname = headersList.get("x-pathname") || "";
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar currentPath={pathname} />
-      <div className="flex-1">{children}</div>
+    <div className="flex min-h-screen bg-base-100">
+      <div className="fixed inset-y-0 left-0">
+        <Sidebar currentPath={pathname} />
+      </div>
+      <div className="flex-1 ml-64 p-8">
+        {children}
+      </div>
     </div>
   );
 }
