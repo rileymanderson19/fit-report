@@ -6,6 +6,7 @@ import { Popover, Transition } from "@headlessui/react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/libs/supabase/client";
 import apiClient from "@/libs/api";
+import config from "@/config";
 
 // A button to show user some account actions
 //  1. Billing: open a Stripe Customer Portal to manage their billing (cancel subscription, update payment method, etc.).
@@ -16,7 +17,8 @@ import apiClient from "@/libs/api";
 const ButtonAccount = () => {
   const supabase = createClient();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [user, setUser] = useState<User>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -25,6 +27,15 @@ const ButtonAccount = () => {
       } = await supabase.auth.getUser();
 
       setUser(user);
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        setProfile(profile);
+      }
     };
 
     getUser();
@@ -78,7 +89,9 @@ const ButtonAccount = () => {
                 <div className="font-medium text-base-content text-left">
                   {user?.email?.split('@')[0] || 'Account'}
                 </div>
-                <div className="text-xs text-base-content/60">Free Plan</div>
+                <div className="text-xs text-base-content/60">
+                  {profile?.has_access ? config.stripe.plans[0].name : "Free Plan"}
+                </div>
               </div>
               {isLoading ? (
                 <span className="loading loading-spinner loading-xs ml-auto"></span>
