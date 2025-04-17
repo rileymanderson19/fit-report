@@ -7,11 +7,19 @@ export const dynamic = "force-dynamic";
 // See https://shipfa.st/docs/tutorials/private-page
 export default async function Dashboard() {
   return (
-    <main className="min-h-screen p-8 pb-24">
-      <section className="max-w-xl mx-auto space-y-8">
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
         <ButtonAccount />
-        <h1 className="text-3xl md:text-4xl font-extrabold">Dashboard</h1>
-      </section>
-    </main>
+      </div>
+      
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h2 className="text-xl font-semibold mb-4">Welcome to FitReport</h2>
+        <p className="text-gray-600">
+          Use the sidebar to navigate between different sections. You can manage your clients, 
+          create reports, and configure your Trainerize integration.
+        </p>
+      </div>
+    </div>
   );
 }
