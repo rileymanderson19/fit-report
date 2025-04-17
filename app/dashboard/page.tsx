@@ -1,11 +1,26 @@
 export const dynamic = "force-dynamic";
 
+import { createClient } from "@/libs/supabase/server";
+import ButtonCheckout from "@/components/ButtonCheckout";
+import config from "@/config";
+
 // This is a private page: It's protected by the layout.js component which ensures the user is authenticated.
 // It's a server compoment which means you can fetch data (like the user profile) before the page is rendered.
 // See https://shipfa.st/docs/tutorials/private-page
 export default async function Dashboard() {
-  // TODO: Replace with actual subscription check
-  const hasActivePlan = false;
+  const supabase = createClient();
+
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Get the user's profile with subscription info
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user?.id)
+    .single();
+
+  const hasActivePlan = profile?.has_access === true;
 
   return (
     <div className="p-8">
@@ -25,10 +40,21 @@ export default async function Dashboard() {
                 <div className="text-sm">You need to subscribe to generate reports.</div>
               </div>
             </div>
-            <button className="btn btn-primary">Subscribe Now</button>
+            <ButtonCheckout 
+              priceId={config.stripe.plans[0].priceId}
+              mode="subscription"
+            />
           </div>
         ) : (
           <div className="space-y-6">
+            <div className="alert alert-success">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <div>
+                <h3 className="font-bold">Active Subscription</h3>
+                <div className="text-sm">You have full access to all features.</div>
+              </div>
+            </div>
+            
             <p className="text-base-content/80 text-lg">Here&apos;s how to generate reports:</p>
             
             <div className="steps steps-vertical">
