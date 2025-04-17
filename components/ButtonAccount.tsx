@@ -57,7 +57,7 @@ const ButtonAccount = () => {
   return (
     <div className="relative z-10">
       <Popover>
-        {({ open }) => (
+        {() => (
           <>
             <Popover.Button className="w-full flex items-center gap-3 hover:bg-base-300 rounded-lg p-2">
               {user?.user_metadata?.avatar_url ? (

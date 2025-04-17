@@ -5,16 +5,14 @@ import { useState } from 'react';
 interface Client {
   name: string;
   email: string;
-  status: string;
-  lastActive: string;
 }
 
 export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [clients] = useState<Client[]>([
-    { name: 'Joshua Mbitu', email: 'joshmwangi@gmail.com', status: 'Active', lastActive: 'N/A' },
-    { name: 'Lindsay Sollers', email: 'Lsollers22@gmail.com', status: 'Active', lastActive: 'N/A' },
-    { name: 'Steve Hornick', email: 'stevehornick@hotmail.com', status: 'Active', lastActive: 'N/A' },
+    { name: 'Joshua Mbitu', email: 'joshmwangi@gmail.com' },
+    { name: 'Lindsay Sollers', email: 'Lsollers22@gmail.com' },
+    { name: 'Steve Hornick', email: 'stevehornick@hotmail.com' },
   ]);
 
   const handleSync = () => {
@@ -65,8 +63,6 @@ export default function ClientsPage() {
                   </th>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Status</th>
-                  <th>Last Active</th>
                   <th></th>
                 </tr>
               </thead>
@@ -80,10 +76,6 @@ export default function ClientsPage() {
                     </td>
                     <td>{client.name}</td>
                     <td>{client.email}</td>
-                    <td>
-                      <span className="badge badge-success badge-sm">{client.status}</span>
-                    </td>
-                    <td>{client.lastActive}</td>
                     <td>
                       <button className="btn btn-ghost btn-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
