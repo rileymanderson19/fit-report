@@ -10,7 +10,7 @@ import config from "@/config";
 // You can also change the mode to "subscription" if you want to create a subscription instead of a one-time payment
 const ButtonCheckout = ({
   priceId,
-  mode = "payment",
+  mode = "subscription",
 }: {
   priceId: string;
   mode?: "payment" | "subscription";
@@ -25,13 +25,17 @@ const ButtonCheckout = ({
         "/stripe/create-checkout",
         {
           priceId,
-          successUrl: window.location.href,
-          cancelUrl: window.location.href,
+          successUrl: window.location.href + "?success=true",
+          cancelUrl: window.location.href + "?canceled=true",
           mode,
         }
       );
 
-      window.location.href = url;
+      if (url) {
+        window.location.href = url;
+      } else {
+        console.error("No URL returned from checkout endpoint");
+      }
     } catch (e) {
       console.error(e);
     }

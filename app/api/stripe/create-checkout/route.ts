@@ -35,13 +35,21 @@ export async function POST(req: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
+    if (!user) {
+      console.error("No user found - authentication required");
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
     const { priceId, mode, successUrl, cancelUrl } = body;
+    console.log("Checkout request:", { priceId, mode, successUrl, cancelUrl });
 
     const { data } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user?.id)
       .single();
+
+    console.log("User profile:", data);
 
     const stripeSessionURL = await createCheckout({
       priceId,
@@ -58,6 +66,12 @@ export async function POST(req: NextRequest) {
       // If you send coupons from the frontend, you can pass it here
       // couponId: body.couponId,
     });
+
+    console.log("Stripe session URL:", stripeSessionURL);
+
+    if (!stripeSessionURL) {
+      return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
+    }
 
     return NextResponse.json({ url: stripeSessionURL });
   } catch (e) {

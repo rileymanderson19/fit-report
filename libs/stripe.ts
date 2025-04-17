@@ -29,8 +29,10 @@ export const createCheckout = async ({
   couponId,
 }: CreateCheckoutParams): Promise<string> => {
   try {
+    console.log("Creating Stripe instance with key:", process.env.STRIPE_SECRET_KEY?.slice(0, 10) + "...");
+    
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2023-08-16", // TODO: update this when Stripe updates their API
+      apiVersion: "2023-08-16",
       typescript: true,
     });
 
@@ -58,6 +60,15 @@ export const createCheckout = async ({
       extraParams.tax_id_collection = { enabled: true };
     }
 
+    console.log("Creating checkout session with params:", {
+      mode,
+      priceId,
+      successUrl,
+      cancelUrl,
+      clientReferenceId,
+      extraParams,
+    });
+
     const stripeSession = await stripe.checkout.sessions.create({
       mode,
       allow_promotion_codes: true,
@@ -80,9 +91,21 @@ export const createCheckout = async ({
       ...extraParams,
     });
 
+    console.log("Stripe session created:", {
+      sessionId: stripeSession.id,
+      url: stripeSession.url,
+    });
+
     return stripeSession.url;
   } catch (e) {
-    console.error(e);
+    console.error("Stripe checkout creation error:", e);
+    if (e.type === 'StripeInvalidRequestError') {
+      console.error("Stripe invalid request details:", {
+        code: e.code,
+        param: e.param,
+        message: e.message,
+      });
+    }
     return null;
   }
 };

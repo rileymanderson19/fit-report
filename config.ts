@@ -12,7 +12,7 @@ const config = {
   domainName: "shipfa.st",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
-    id: "",
+    //id: "",
     // Hide Crisp by default, except on route "/". Crisp is toggled with <ButtonSupport/>. If you want to show Crisp on every routes, just remove this below
     onlyShowOnRoutes: ["/"],
   },
@@ -24,7 +24,7 @@ const config = {
         priceId:
           process.env.NODE_ENV === "development"
             ? "price_1REyI72ceCzkqxuBEJy3ZPfS"
-            : "price_456",
+            : "price_1REyI72ceCzkqxuBEJy3ZPfS",
         //  REQUIRED - Name of the plan, displayed on the pricing page
         name: "Starter",
         // A friendly description of the plan, displayed on the pricing page. Tip: explain why this plan and not others
@@ -45,8 +45,8 @@ const config = {
       {
         priceId:
           process.env.NODE_ENV === "development"
-            ? "price_1O5KtcAxyNprDp7iftKnrrpw"
-            : "price_456",
+            ? "price_1REyI72ceCzkqxuBEJy3ZPfS"
+            : "price_1REyI72ceCzkqxuBEJy3ZPfS",
         // This plan will look different on the pricing page, it will be highlighted. You can only have one plan with isFeatured: true
         isFeatured: true,
         name: "Advanced",
