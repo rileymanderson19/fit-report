@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ReactNode } from "react";
+import ButtonAccount from "./ButtonAccount";
 
 interface SidebarItemProps {
   href: string;
@@ -55,20 +56,7 @@ export default function Sidebar({ currentPath = "" }: { currentPath?: string }) 
       </div>
       
       <div className="mt-auto border-t border-base-300 p-6 bg-base-200">
-        <Link href="/dashboard/account" className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 bg-primary text-primary-content rounded-full">
-            A
-          </div>
-          <div>
-            <div className="font-medium text-base-content">Account</div>
-            <div className="text-xs text-base-content/60">Free Plan</div>
-          </div>
-          <div className="ml-auto text-base-content/60">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </div>
-        </Link>
+        <ButtonAccount />
       </div>
     </aside>
   );
