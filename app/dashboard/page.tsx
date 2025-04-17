@@ -23,13 +23,13 @@ export default async function Dashboard() {
   const hasActivePlan = profile?.has_access === true;
 
   return (
-    <div className="p-8">
+    <div className="container mx-auto px-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
       </div>
       
-      <div className="bg-base-100 p-6 rounded-lg shadow-xl border border-base-300">
-        <h2 className="text-xl font-semibold mb-4">Welcome to FitReport</h2>
+      <div className="bg-base-100 p-8 rounded-lg shadow-xl border border-base-300">
+        <h2 className="text-xl font-semibold mb-6">Welcome to FitReport</h2>
         
         {!hasActivePlan ? (
           <div className="space-y-4">
@@ -46,29 +46,58 @@ export default async function Dashboard() {
             />
           </div>
         ) : (
-          <div className="space-y-6">
-            <div className="alert alert-success">
-              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div className="space-y-8">
+            <div className="alert alert-success bg-primary/10 border-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-primary shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <div>
-                <h3 className="font-bold">Active Subscription</h3>
-                <div className="text-sm">You have full access to all features.</div>
+                <h3 className="font-bold text-primary">Active Subscription</h3>
+                <div className="text-base-content/80">You have full access to all features</div>
               </div>
             </div>
             
-            <p className="text-base-content/80 text-lg">Here&apos;s how to generate reports:</p>
-            
-            <div className="steps steps-vertical">
-              <div className="step step-primary">
-                <div className="step-circle">1</div>
-                <h3 className="text-base font-medium">Enter your trainerize credentials</h3>
-              </div>
-              <div className="step step-primary">
-                <div className="step-circle">2</div>
-                <h3 className="text-base font-medium">Import your clients from trainerize</h3>
-              </div>
-              <div className="step step-primary">
-                <div className="step-circle">3</div>
-                <h3 className="text-base font-medium">Schedule & run your report</h3>
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Getting Started</h3>
+              <p className="text-base-content/80 mb-6">Follow these steps to start generating reports:</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="card bg-base-200 shadow-lg hover:shadow-xl transition-all">
+                  <div className="card-body">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-semibold">1</div>
+                      <h4 className="font-semibold">Trainerize Setup</h4>
+                    </div>
+                    <p className="text-base-content/80">Enter your Trainerize credentials to connect your account</p>
+                    <div className="card-actions justify-end mt-4">
+                      <button className="btn btn-primary btn-sm">Configure</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card bg-base-200 shadow-lg hover:shadow-xl transition-all">
+                  <div className="card-body">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-semibold">2</div>
+                      <h4 className="font-semibold">Import Clients</h4>
+                    </div>
+                    <p className="text-base-content/80">Import your client list from your Trainerize account</p>
+                    <div className="card-actions justify-end mt-4">
+                      <button className="btn btn-primary btn-sm">Import</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card bg-base-200 shadow-lg hover:shadow-xl transition-all">
+                  <div className="card-body">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-semibold">3</div>
+                      <h4 className="font-semibold">Generate Reports</h4>
+                    </div>
+                    <p className="text-base-content/80">Schedule and run reports for your clients</p>
+                    <div className="card-actions justify-end mt-4">
+                      <button className="btn btn-primary btn-sm">Create</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
