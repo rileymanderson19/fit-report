@@ -36,6 +36,10 @@ now what steps should I take to test this? I would like to make sure that the fo
 
 ### trainerize connection
 
+379136
+aJeIYzJNUKTNIwU3hgyg
+11974482
+
 On the @page.tsx I want to be able to enter the required credentials:
 
 1. Username
