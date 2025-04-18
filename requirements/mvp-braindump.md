@@ -32,3 +32,23 @@ now what steps should I take to test this? I would like to make sure that the fo
 2. Once they are subscribed, they should be able to access all other pages (clients, reports, trainerize configuration).
 3. The data should be stored in supabase under the profiles table: customer_id, price_id, has_access.
 4. They should have access as long as their subscription is active.
+
+
+### trainerize connection
+
+On the @page.tsx I want to be able to enter the required credentials:
+
+1. Username
+2. Password
+3. Trainer ID
+
+When "Save Configuration" is pressed, it will test the connection and display "Credentials Verified" or "Invalid Credentials" depending on the response.
+
+It will use the following api authentication from trainerize @api-auth.md
+
+
+Additionally, I want these crednetials stored in supabase under the profile table.
+
+Username = trainerize_username
+Password = trainerize_password
+Trainer ID = trainerize_id
