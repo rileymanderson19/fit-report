@@ -8,8 +8,6 @@ interface TrainerizeClient {
   firstName: string;
   lastName: string;
   email: string;
-  status: string;
-  lastSignInDate?: string;
 }
 
 export default function ClientsPage() {
@@ -30,7 +28,15 @@ export default function ClientsPage() {
         throw new Error(data.error || 'Failed to fetch clients');
       }
 
-      setClients(data.users || []);
+      // Map the response to only include the fields we need
+      const mappedClients = data.users.map((user: { id: number; firstName: string; lastName: string; email: string }) => ({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      }));
+
+      setClients(mappedClients);
     } catch (error) {
       console.error('Error fetching clients:', error);
       toast.error('Failed to fetch clients from Trainerize');
@@ -138,8 +144,6 @@ export default function ClientsPage() {
                   </th>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Last Sign In</th>
-                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -157,24 +161,18 @@ export default function ClientsPage() {
                     </td>
                     <td>{`${client.firstName} ${client.lastName}`}</td>
                     <td>{client.email}</td>
-                    <td>{client.lastSignInDate ? new Date(client.lastSignInDate).toLocaleDateString() : 'Never'}</td>
-                    <td>
-                      <span className={`badge ${client.status === 'active' ? 'badge-success' : 'badge-warning'}`}>
-                        {client.status}
-                      </span>
-                    </td>
                   </tr>
                 ))}
                 {filteredClients.length === 0 && !isLoading && (
                   <tr>
-                    <td colSpan={5} className="text-center py-4">
+                    <td colSpan={3} className="text-center py-4">
                       {clients.length === 0 ? 'Click "Load Clients" to fetch your clients from Trainerize' : 'No clients found'}
                     </td>
                   </tr>
                 )}
                 {isLoading && (
                   <tr>
-                    <td colSpan={5} className="text-center py-4">
+                    <td colSpan={3} className="text-center py-4">
                       <span className="loading loading-spinner loading-md"></span>
                     </td>
                   </tr>
