@@ -53,12 +53,31 @@ export default function ClientsPage() {
 
     setIsImporting(true);
     try {
-      // TODO: Implement client import functionality
-      toast.success(`Selected ${selectedClients.length} clients for import`);
+      // Get the selected clients' data
+      const clientsToImport = clients.filter(client => 
+        selectedClients.includes(client.id)
+      );
+
+      // Send the clients to our import endpoint
+      const response = await fetch('/api/clients/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ clients: clientsToImport }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to import clients');
+      }
+
+      toast.success(`Successfully imported ${selectedClients.length} clients`);
       setSelectedClients([]); // Reset selection after import
     } catch (error) {
       console.error('Error importing clients:', error);
-      toast.error('Failed to import selected clients');
+      toast.error(error instanceof Error ? error.message : 'Failed to import selected clients');
     } finally {
       setIsImporting(false);
     }

@@ -56,3 +56,18 @@ Additionally, I want these crednetials stored in supabase under the profile tabl
 Username = trainerize_username
 Password = trainerize_password
 Trainer ID = trainerize_id
+
+
+### importing clients
+
+Ok, now I want to work on the "Import Selected" functionality to import the user into FitReport and store them in our supabase database.
+
+We will need to create a "clients" table. My initial thoughts on the table structure would be this:
+
+id = unique id
+trainer_id = trainer's id (this would be the trainer Id in the @page)
+trainerize_id = client's user id
+first_name = clients first name
+last_name = cliesnt last name
+
+Do you think this table set up is correct? Is there anything else you would add?
