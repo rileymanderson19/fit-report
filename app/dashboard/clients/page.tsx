@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/libs/supabase/client';
 import toast from 'react-hot-toast';
 
 interface TrainerizeClient {
@@ -10,12 +11,50 @@ interface TrainerizeClient {
   email: string;
 }
 
+interface ImportedClient {
+  id: string;
+  trainerize_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  active: boolean;
+}
+
 export default function ClientsPage() {
+  const supabase = createClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [clients, setClients] = useState<TrainerizeClient[]>([]);
+  const [importedClients, setImportedClients] = useState<ImportedClient[]>([]);
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+
+  // Fetch imported clients from Supabase
+  const fetchImportedClients = async () => {
+    try {
+      console.log('Fetching imported clients...');
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Imported clients data:', data);
+      setImportedClients(data || []);
+    } catch (error) {
+      console.error('Error fetching imported clients:', error);
+      toast.error('Failed to fetch imported clients');
+    }
+  };
+
+  // Call fetchImportedClients when the component mounts
+  useEffect(() => {
+    fetchImportedClients();
+  }, []);
 
   // Fetch clients from Trainerize
   const fetchClients = async () => {
@@ -37,6 +76,8 @@ export default function ClientsPage() {
       }));
 
       setClients(mappedClients);
+      // Fetch imported clients after successfully fetching Trainerize clients
+      await fetchImportedClients();
     } catch (error) {
       console.error('Error fetching clients:', error);
       toast.error('Failed to fetch clients from Trainerize');
@@ -75,6 +116,8 @@ export default function ClientsPage() {
 
       toast.success(`Successfully imported ${selectedClients.length} clients`);
       setSelectedClients([]); // Reset selection after import
+      // Refresh the imported clients list
+      await fetchImportedClients();
     } catch (error) {
       console.error('Error importing clients:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to import selected clients');
@@ -102,6 +145,12 @@ export default function ClientsPage() {
   // Filter clients based on search query
   const filteredClients = clients.filter(client => 
     `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Filter imported clients based on search query
+  const filteredImportedClients = importedClients.filter(client =>
+    `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -139,10 +188,10 @@ export default function ClientsPage() {
         </button>
       </div>
 
-      {/* Clients Table */}
-      <div className="card bg-base-100 shadow-xl">
+      {/* Trainerize Clients Table */}
+      <div className="card bg-base-100 shadow-xl mb-8">
         <div className="card-body">
-          <h2 className="text-xl font-bold mb-4">Your Clients</h2>
+          <h2 className="text-xl font-bold mb-4">Trainerize Clients</h2>
           <p className="text-base-content/60 mb-6">
             Showing {filteredClients.length} clients from Trainerize
           </p>
@@ -193,6 +242,48 @@ export default function ClientsPage() {
                   <tr>
                     <td colSpan={3} className="text-center py-4">
                       <span className="loading loading-spinner loading-md"></span>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Imported Clients Table */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="text-xl font-bold mb-4">Imported Clients</h2>
+          <p className="text-base-content/60 mb-6">
+            Showing {filteredImportedClients.length} imported clients
+          </p>
+          
+          <div className="overflow-x-auto">
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredImportedClients.map((client) => (
+                  <tr key={client.id} className="hover">
+                    <td>{`${client.first_name} ${client.last_name}`}</td>
+                    <td>{client.email}</td>
+                    <td>
+                      <span className={`badge ${client.active ? 'badge-success' : 'badge-error'}`}>
+                        {client.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {filteredImportedClients.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="text-center py-4">
+                      No imported clients found
                     </td>
                   </tr>
                 )}
