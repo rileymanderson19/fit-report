@@ -1,23 +1,50 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createClient } from '@/libs/supabase/client';
+import toast from 'react-hot-toast';
 
 interface Client {
-  name: string;
+  id: string;
+  first_name: string;
+  last_name: string;
   email: string;
+  active: boolean;
 }
 
 export default function ReportsPage() {
+  const supabase = createClient();
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [clients] = useState<Client[]>([
-    { name: 'Joshua Mbitu', email: 'joshmwangi@gmail.com' },
-    { name: 'Lindsay Sollers', email: 'Lsollers22@gmail.com' },
-    { name: 'Steve Hornick', email: 'stevehornick@hotmail.com' },
-  ]);
+  const [clients, setClients] = useState<Client[]>([]);
+
+  // Fetch clients from Supabase
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast.error('Failed to fetch clients');
+    }
+  };
+
+  // Fetch clients when component mounts
+  useEffect(() => {
+    fetchClients();
+  }, []);
 
   const handleRunReport = async () => {
     setIsLoading(true);
@@ -25,24 +52,24 @@ export default function ReportsPage() {
     setTimeout(() => setIsLoading(false), 1000);
   };
 
-  const handleClientSelect = (clientName: string) => {
+  const handleClientSelect = (clientId: string) => {
     setSelectedClients(prev => 
-      prev.includes(clientName)
-        ? prev.filter(name => name !== clientName)
-        : [...prev, clientName]
+      prev.includes(clientId)
+        ? prev.filter(id => id !== clientId)
+        : [...prev, clientId]
     );
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedClients(filteredClients.map(client => client.name));
+      setSelectedClients(filteredClients.map(client => client.id));
     } else {
       setSelectedClients([]);
     }
   };
 
   const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -69,7 +96,9 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <p className="text-base-content/60 mb-6">Showing {filteredClients.length} clients</p>
+            <p className="text-base-content/60 mb-6">
+              Showing {filteredClients.length} active clients
+            </p>
             
             <div className="overflow-x-auto">
               <table className="table w-full">
@@ -90,31 +119,31 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredClients.map((client, index) => (
-                    <tr key={index} className={selectedClients.includes(client.name) ? 'bg-base-200' : ''}>
+                  {filteredClients.map((client) => (
+                    <tr key={client.id} className={selectedClients.includes(client.id) ? 'bg-base-200' : ''}>
                       <td>
                         <label>
                           <input 
                             type="checkbox" 
                             className="checkbox"
-                            checked={selectedClients.includes(client.name)}
-                            onChange={() => handleClientSelect(client.name)}
+                            checked={selectedClients.includes(client.id)}
+                            onChange={() => handleClientSelect(client.id)}
                           />
                         </label>
                       </td>
-                      <td>{client.name}</td>
+                      <td>{`${client.first_name} ${client.last_name}`}</td>
                       <td>{client.email}</td>
                     </tr>
                   ))}
+                  {filteredClients.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="text-center py-4">
+                        {clients.length === 0 ? 'No clients imported yet' : 'No clients found matching your search'}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
-            </div>
-
-            {/* Pagination */}
-            <div className="flex justify-center mt-4 gap-2">
-              <button className="btn btn-ghost btn-sm">Previous</button>
-              <button className="btn btn-ghost btn-sm bg-base-200">1</button>
-              <button className="btn btn-ghost btn-sm">Next</button>
             </div>
           </div>
         </div>
