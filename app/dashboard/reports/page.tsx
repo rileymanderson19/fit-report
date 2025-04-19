@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface Client {
   id: string;
@@ -10,6 +10,7 @@ interface Client {
   last_name: string;
   email: string;
   active: boolean;
+  trainerize_id: string;  // Add this field since we need it for the API calls
 }
 
 export default function ReportsPage() {
@@ -20,10 +21,16 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [clients, setClients] = useState<Client[]>([]);
+  const [reportData, setReportData] = useState<any>(null);
 
   // Fetch clients from Supabase
   const fetchClients = useCallback(async () => {
     try {
+      const { data: profile } = await supabase.auth.getUser();
+      if (!profile.user) {
+        throw new Error('No user found');
+      }
+
       const { data, error } = await supabase
         .from('clients')
         .select('*')
@@ -46,25 +53,144 @@ export default function ReportsPage() {
     fetchClients();
   }, [fetchClients]);
 
-  const handleRunReport = async () => {
-    setIsLoading(true);
-    // TODO: Implement report generation logic
-    setTimeout(() => setIsLoading(false), 1000);
-  };
-
   const handleClientSelect = (clientId: string) => {
-    setSelectedClients(prev => 
-      prev.includes(clientId)
-        ? prev.filter(id => id !== clientId)
-        : [...prev, clientId]
-    );
+    // Since we're only allowing one client at a time for now
+    setSelectedClients([clientId]);
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedClients(filteredClients.map(client => client.id));
+      // For now, just select the first client if selecting all
+      if (filteredClients.length > 0) {
+        setSelectedClients([filteredClients[0].id]);
+      }
     } else {
       setSelectedClients([]);
+    }
+  };
+
+  const generateReport = async () => {
+    if (selectedClients.length === 0 || !startDate || !endDate) {
+      toast.error('Please select a client and date range');
+      return;
+    }
+
+    const selectedClient = selectedClients[0]; // Get the first (and only) selected client
+    const client = clients.find(c => c.id === selectedClient);
+    
+    if (!client?.trainerize_id) {
+      toast.error('Selected client does not have a Trainerize ID');
+      return;
+    }
+
+    setIsLoading(true);
+    setReportData(null);
+
+    try {
+      console.log('Fetching body stats...');
+      // Fetch body stats
+      const bodyStatsResponse = await fetch('/api/trainerize/bodystats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userID: client.trainerize_id,
+          date: endDate.toISOString().split('T')[0],
+          unitBodystats: 'inches',
+          unitWeight: 'lbs',
+        }),
+      });
+
+      if (!bodyStatsResponse.ok) {
+        const error = await bodyStatsResponse.json();
+        throw new Error(`Failed to fetch body stats: ${error.error}`);
+      }
+
+      console.log('Fetching health data...');
+      // Fetch health data
+      const healthDataResponse = await fetch('/api/trainerize/health-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userID: client.trainerize_id,
+          type: 'step',
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+        }),
+      });
+
+      if (!healthDataResponse.ok) {
+        const error = await healthDataResponse.json();
+        throw new Error(`Failed to fetch health data: ${error.error}`);
+      }
+
+      console.log('Fetching nutrition data...');
+      // Fetch nutrition data
+      const nutritionDataResponse = await fetch('/api/trainerize/nutrition', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userID: client.trainerize_id,
+          startDate: `${startDate.toISOString().split('T')[0]} 00:00:00`,
+          endDate: `${endDate.toISOString().split('T')[0]} 23:59:59`,
+        }),
+      });
+
+      if (!nutritionDataResponse.ok) {
+        const error = await nutritionDataResponse.json();
+        throw new Error(`Failed to fetch nutrition data: ${error.error}`);
+      }
+
+      console.log('Processing responses...');
+      const [bodyStats, healthData, nutritionData] = await Promise.all([
+        bodyStatsResponse.json(),
+        healthDataResponse.json(),
+        nutritionDataResponse.json(),
+      ]);
+
+      console.log('Setting report data...');
+      const newReportData = {
+        bodyStats,
+        healthData,
+        nutritionData,
+      };
+      
+      setReportData(newReportData);
+
+      console.log('Storing report...');
+      // Store the report in the database
+      const storeResponse = await fetch('/api/reports/store', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientId: selectedClient,
+          reportData: newReportData,
+          dateRange: {
+            from: startDate.toISOString(),
+            to: endDate.toISOString(),
+          },
+        }),
+      });
+
+      if (!storeResponse.ok) {
+        const error = await storeResponse.json();
+        throw new Error(`Failed to store report: ${error.error}`);
+      }
+
+      toast.success('Report generated successfully');
+    } catch (error) {
+      console.error('Error generating report:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate report');
+      setReportData(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,7 +207,7 @@ export default function ReportsPage() {
         {/* Client Selection */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
-            <h2 className="text-xl font-bold mb-4">Select Clients</h2>
+            <h2 className="text-xl font-bold mb-4">Select Client</h2>
             
             {/* Search Bar */}
             <div className="flex items-center justify-between gap-4 mb-6">
@@ -109,13 +235,14 @@ export default function ReportsPage() {
                         <input 
                           type="checkbox" 
                           className="checkbox"
-                          checked={selectedClients.length === filteredClients.length && filteredClients.length > 0}
+                          checked={selectedClients.length === 1 && filteredClients.length > 0}
                           onChange={handleSelectAll}
                         />
                       </label>
                     </th>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Trainerize ID</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -133,11 +260,12 @@ export default function ReportsPage() {
                       </td>
                       <td>{`${client.first_name} ${client.last_name}`}</td>
                       <td>{client.email}</td>
+                      <td>{client.trainerize_id || 'Not set'}</td>
                     </tr>
                   ))}
                   {filteredClients.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="text-center py-4">
+                      <td colSpan={4} className="text-center py-4">
                         {clients.length === 0 ? 'No clients imported yet' : 'No clients found matching your search'}
                       </td>
                     </tr>
@@ -179,8 +307,8 @@ export default function ReportsPage() {
         <div className="flex justify-end mt-6">
           <button 
             className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
-            onClick={handleRunReport}
-            disabled={!selectedClients.length || !startDate || !endDate || isLoading}
+            onClick={generateReport}
+            disabled={selectedClients.length === 0 || !startDate || !endDate || isLoading}
           >
             {isLoading ? 'Generating Report...' : 'Generate Report'}
           </button>
@@ -188,13 +316,22 @@ export default function ReportsPage() {
       </div>
 
       {/* Report Results Section */}
-      <div className="mt-8 bg-base-100 p-6 rounded-lg shadow-xl border border-base-300">
-        <h2 className="text-xl font-semibold mb-4">Report Results</h2>
-        <div className="alert alert-info">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          <span>Select clients and a timeframe above to generate a report</span>
+      {reportData ? (
+        <div className="mt-8">
+          <div className="bg-base-100 p-6 rounded-lg shadow-xl border border-base-300">
+            <h2 className="text-xl font-semibold mb-4">Report Results</h2>
+            <pre className="whitespace-pre-wrap">{JSON.stringify(reportData, null, 2)}</pre>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="mt-8 bg-base-100 p-6 rounded-lg shadow-xl border border-base-300">
+          <h2 className="text-xl font-semibold mb-4">Report Results</h2>
+          <div className="alert alert-info">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Select a client and timeframe above to generate a report</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
