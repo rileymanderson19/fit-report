@@ -96,7 +96,8 @@ export default function ReportsPage() {
         },
         body: JSON.stringify({
           userID: client.trainerize_id,
-          date: endDate.toISOString().split('T')[0],
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
           unitBodystats: 'inches',
           unitWeight: 'lbs',
         }),
@@ -136,8 +137,8 @@ export default function ReportsPage() {
         },
         body: JSON.stringify({
           userID: client.trainerize_id,
-          startDate: `${startDate.toISOString().split('T')[0]} 00:00:00`,
-          endDate: `${endDate.toISOString().split('T')[0]} 23:59:59`,
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
         }),
       });
 
@@ -147,15 +148,20 @@ export default function ReportsPage() {
       }
 
       console.log('Processing responses...');
-      const [bodyStats, healthData, nutritionData] = await Promise.all([
-        bodyStatsResponse.json(),
-        healthDataResponse.json(),
-        nutritionDataResponse.json(),
-      ]);
+      // First get all responses
+      const bodyStatsData = await bodyStatsResponse.json();
+      const healthData = await healthDataResponse.json();
+      const nutritionData = await nutritionDataResponse.json();
+
+      console.log('Response data:', {
+        bodyStatsData,
+        healthData,
+        nutritionData
+      });
 
       console.log('Setting report data...');
       const newReportData = {
-        bodyStats,
+        bodyStats: bodyStatsData,
         healthData,
         nutritionData,
       };

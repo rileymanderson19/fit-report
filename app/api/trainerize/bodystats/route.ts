@@ -26,33 +26,45 @@ export async function POST(request: Request) {
 
     // Get request body
     const body = await request.json();
-    const { userID, date, unitBodystats, unitWeight } = body;
+    const { userID, startDate, endDate, unitBodystats, unitWeight } = body;
 
     // Create Basic Auth header
     const credentials = Buffer.from(`${profile.trainerize_username}:${profile.trainerize_password}`).toString('base64');
 
-    // Make request to Trainerize API
-    const response = await fetch('https://api.trainerize.com/v03/bodystats/get', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userID,
-        date,
-        unitBodystats,
-        unitWeight,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      return NextResponse.json({ error: error.message || 'Failed to fetch body stats' }, { status: response.status });
+    // Create an array of dates between startDate and endDate
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const dates = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push(new Date(d).toISOString().split('T')[0]);
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    // Fetch body stats for each date
+    const promises = dates.map(date => 
+      fetch('https://api.trainerize.com/v03/bodystats/get', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${credentials}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userID,
+          date,
+          unitBodystats,
+          unitWeight,
+        }),
+      }).then(res => res.json().catch(() => null))
+    );
+
+    const results = await Promise.all(promises);
+
+    // Process results to only include dates with data
+    const bodyStats = dates.map((date, index) => ({
+      date,
+      weight: results[index]?.bodyMeasures?.bodyWeight || null
+    })).filter(stat => stat.weight !== null);
+
+    return NextResponse.json({ bodyStats });
   } catch (error) {
     console.error('Error in bodystats route:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

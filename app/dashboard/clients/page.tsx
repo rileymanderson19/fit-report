@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 interface TrainerizeClient {
   id: number;
@@ -197,6 +198,7 @@ export default function ClientsPage() {
                   <th>Name</th>
                   <th>Email</th>
                   <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -208,6 +210,14 @@ export default function ClientsPage() {
                       <span className={`badge ${client.active ? 'badge-success' : 'badge-error'}`}>
                         {client.active ? 'Active' : 'Inactive'}
                       </span>
+                    </td>
+                    <td>
+                      <Link
+                        href={`/dashboard/clients/${client.id}/reports`}
+                        className="btn btn-sm btn-outline"
+                      >
+                        View Reports
+                      </Link>
                     </td>
                   </tr>
                 ))}
