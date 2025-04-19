@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -22,7 +22,7 @@ export default function ReportsPage() {
   const [clients, setClients] = useState<Client[]>([]);
 
   // Fetch clients from Supabase
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('clients')
@@ -39,12 +39,12 @@ export default function ReportsPage() {
       console.error('Error fetching clients:', error);
       toast.error('Failed to fetch clients');
     }
-  };
+  }, [supabase]);
 
   // Fetch clients when component mounts
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [fetchClients]);
 
   const handleRunReport = async () => {
     setIsLoading(true);

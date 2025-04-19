@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -31,7 +31,7 @@ export default function ClientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch imported clients from Supabase
-  const fetchImportedClients = async () => {
+  const fetchImportedClients = useCallback(async () => {
     try {
       console.log('Fetching imported clients...');
       const { data, error } = await supabase
@@ -50,12 +50,12 @@ export default function ClientsPage() {
       console.error('Error fetching imported clients:', error);
       toast.error('Failed to fetch imported clients');
     }
-  };
+  }, [supabase]);
 
   // Call fetchImportedClients when the component mounts
   useEffect(() => {
     fetchImportedClients();
-  }, []);
+  }, [fetchImportedClients]);
 
   // Fetch clients from Trainerize
   const fetchClients = async () => {
