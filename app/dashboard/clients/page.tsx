@@ -28,6 +28,7 @@ export default function ClientsPage() {
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch imported clients from Supabase
   const fetchImportedClients = async () => {
@@ -76,8 +77,7 @@ export default function ClientsPage() {
       }));
 
       setClients(mappedClients);
-      // Fetch imported clients after successfully fetching Trainerize clients
-      await fetchImportedClients();
+      setIsModalOpen(true); // Open the modal after successful fetch
     } catch (error) {
       console.error('Error fetching clients:', error);
       toast.error('Failed to fetch clients from Trainerize');
@@ -116,6 +116,7 @@ export default function ClientsPage() {
 
       toast.success(`Successfully imported ${selectedClients.length} clients`);
       setSelectedClients([]); // Reset selection after import
+      setIsModalOpen(false); // Close the modal after successful import
       // Refresh the imported clients list
       await fetchImportedClients();
     } catch (error) {
@@ -179,76 +180,6 @@ export default function ClientsPage() {
           </svg>
           {isLoading ? 'Loading...' : 'Load Clients'}
         </button>
-        <button 
-          className={`btn btn-primary ${isImporting ? 'loading' : ''}`}
-          onClick={handleImport}
-          disabled={isImporting || selectedClients.length === 0}
-        >
-          Import Selected ({selectedClients.length})
-        </button>
-      </div>
-
-      {/* Trainerize Clients Table */}
-      <div className="card bg-base-100 shadow-xl mb-8">
-        <div className="card-body">
-          <h2 className="text-xl font-bold mb-4">Trainerize Clients</h2>
-          <p className="text-base-content/60 mb-6">
-            Showing {filteredClients.length} clients from Trainerize
-          </p>
-          
-          <div className="overflow-x-auto">
-            <table className="table w-full">
-              <thead>
-                <tr>
-                  <th>
-                    <label>
-                      <input
-                        type="checkbox"
-                        className="checkbox"
-                        checked={selectedClients.length === clients.length}
-                        onChange={toggleSelectAll}
-                      />
-                    </label>
-                  </th>
-                  <th>Name</th>
-                  <th>Email</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredClients.map((client) => (
-                  <tr key={client.id} className="hover">
-                    <td>
-                      <label>
-                        <input
-                          type="checkbox"
-                          className="checkbox"
-                          checked={selectedClients.includes(client.id)}
-                          onChange={() => toggleSelectClient(client.id)}
-                        />
-                      </label>
-                    </td>
-                    <td>{`${client.firstName} ${client.lastName}`}</td>
-                    <td>{client.email}</td>
-                  </tr>
-                ))}
-                {filteredClients.length === 0 && !isLoading && (
-                  <tr>
-                    <td colSpan={3} className="text-center py-4">
-                      {clients.length === 0 ? 'Click "Load Clients" to fetch your clients from Trainerize' : 'No clients found'}
-                    </td>
-                  </tr>
-                )}
-                {isLoading && (
-                  <tr>
-                    <td colSpan={3} className="text-center py-4">
-                      <span className="loading loading-spinner loading-md"></span>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
       {/* Imported Clients Table */}
@@ -292,6 +223,88 @@ export default function ClientsPage() {
           </div>
         </div>
       </div>
+
+      {/* Trainerize Clients Modal */}
+      <dialog id="trainerize_modal" className={`modal ${isModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box w-11/12 max-w-5xl">
+          <h3 className="font-bold text-lg mb-4">Import Clients from Trainerize</h3>
+          
+          <div className="overflow-x-auto">
+            <table className="table w-full">
+              <thead>
+                <tr>
+                  <th>
+                    <label>
+                      <input
+                        type="checkbox"
+                        className="checkbox"
+                        checked={selectedClients.length === clients.length}
+                        onChange={toggleSelectAll}
+                      />
+                    </label>
+                  </th>
+                  <th>Name</th>
+                  <th>Email</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredClients.map((client) => (
+                  <tr key={client.id} className="hover">
+                    <td>
+                      <label>
+                        <input
+                          type="checkbox"
+                          className="checkbox"
+                          checked={selectedClients.includes(client.id)}
+                          onChange={() => toggleSelectClient(client.id)}
+                        />
+                      </label>
+                    </td>
+                    <td>{`${client.firstName} ${client.lastName}`}</td>
+                    <td>{client.email}</td>
+                  </tr>
+                ))}
+                {filteredClients.length === 0 && !isLoading && (
+                  <tr>
+                    <td colSpan={3} className="text-center py-4">
+                      No clients found
+                    </td>
+                  </tr>
+                )}
+                {isLoading && (
+                  <tr>
+                    <td colSpan={3} className="text-center py-4">
+                      <span className="loading loading-spinner loading-md"></span>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="modal-action">
+            <button 
+              className={`btn btn-primary ${isImporting ? 'loading' : ''}`}
+              onClick={handleImport}
+              disabled={isImporting || selectedClients.length === 0}
+            >
+              Import Selected ({selectedClients.length})
+            </button>
+            <button 
+              className="btn"
+              onClick={() => {
+                setIsModalOpen(false);
+                setSelectedClients([]);
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setIsModalOpen(false)}>close</button>
+        </form>
+      </dialog>
     </div>
   );
 } 
