@@ -399,17 +399,17 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                           </td>
                                           <td className="py-4 px-6 text-right">
                                             <div className="space-y-2">
-                                              {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
+                                            {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
                                                 <div key={groupIdx} className="text-sm">
-                                                  {[...Array(group.count)].map((_, i) => (
+                                                {[...Array(group.count)].map((_, i) => (
                                                     <div key={i} className="font-medium">
                                                       {group.reps || ''}{group.weight ? ` × ${group.weight} lbs` : ''}
-                                                      {group.time ? ` for ${group.time}s` : ''}
-                                                      {group.distance ? ` for ${group.distance} miles` : ''}
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              ))}
+                                                    {group.time ? ` for ${group.time}s` : ''}
+                                                    {group.distance ? ` for ${group.distance} miles` : ''}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ))}
                                             </div>
                                           </td>
                                           <td className="py-4 px-4">
@@ -607,113 +607,118 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
           <div>
             <h3 className="text-xl font-semibold mb-4">Weekly Workout Summary</h3>
             <div className="space-y-6">
-              {weeklyAverages
-                .map((week) => {
+              {/* Group all workouts by title across all weeks */}
+              {(() => {
+                // Get all workouts from all weeks
+                const allWorkouts = weeklyAverages.flatMap(week => {
                   const weekStart = new Date(week.weekStart);
                   const weekEnd = new Date(week.weekEnd);
-                  const weekWorkouts = processedDailyData
+                  return processedDailyData
                     .filter(day => {
                       const date = new Date(day.date);
                       return date >= weekStart && date <= weekEnd && day.workouts && day.workouts.length > 0;
                     })
                     .flatMap(day => day.workouts || []);
+                });
 
-                  if (weekWorkouts.length === 0) return null;
+                // Group workouts by title
+                const workoutGroups = allWorkouts.reduce((groups, workout) => {
+                  if (!groups[workout.title]) {
+                    groups[workout.title] = [];
+                  }
+                  groups[workout.title].push(workout);
+                  return groups;
+                }, {} as Record<string, Workout[]>);
+
+                return Object.entries(workoutGroups).map(([title, workouts]) => {
+                  // Sort workouts by date
+                  const sortedWorkouts = [...workouts].sort((a, b) => 
+                    new Date(a.date).getTime() - new Date(b.date).getTime()
+                  );
 
                   return (
-                    <div key={week.weekStart} className="card bg-base-200">
+                    <div key={title} className="card bg-base-200">
                       <div className="card-body">
-                        <h4 className="card-title mb-4">
-                          {`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}
-                          <span className="text-sm font-normal opacity-70">
-                            ({weekWorkouts.length} workout{weekWorkouts.length !== 1 ? 's' : ''})
-                          </span>
-                        </h4>
-                        <div className="space-y-6">
-                          {weekWorkouts.map((workout) => (
-                            <div key={workout.id} className="mb-6 last:mb-0">
-                              <div className="flex items-center justify-between mb-4">
-                                <h5 className="text-lg font-medium">{workout.title}</h5>
-                                <span className="text-sm opacity-70">
-                                  {formatDate(workout.date)}
-                                </span>
-                              </div>
-                              {workout.exercises && workout.exercises.length > 0 && (
-                                <div className="overflow-x-auto">
-                                  <table className="w-full">
-                                    <thead>
-                                      <tr className="border-b-2 border-base-300">
-                                        <th className="py-4 px-4 text-left font-semibold text-base">Exercise</th>
-                                        <th className="py-4 px-6 text-right font-semibold text-base">Sets</th>
-                                        <th className="py-4 px-4 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-base-300">
-                                      {workout.exercises
-                                        .filter(exercise => 
-                                          !exercise.name.toLowerCase().includes('walking') &&
-                                          !exercise.name.toLowerCase().includes('walk')
-                                        )
-                                        .map((exercise, idx) => {
-                                          // Group sets that have the same weight and reps
-                                          const groupedSets = exercise.stats?.reduce((acc, stat) => {
-                                            const key = `${stat.weight}-${stat.reps}-${stat.time}-${stat.distance}`;
-                                            if (!acc[key]) {
-                                              acc[key] = {
-                                                count: 1,
-                                                weight: stat.weight,
-                                                reps: stat.reps,
-                                                time: stat.time,
-                                                distance: stat.distance
-                                              };
-                                            } else {
-                                              acc[key].count++;
-                                            }
-                                            return acc;
-                                          }, {} as Record<string, { count: number; weight?: number; reps?: number; time?: number; distance?: number }>);
+                        <h4 className="card-title mb-4">{title}</h4>
+                        {sortedWorkouts[0].exercises && sortedWorkouts[0].exercises.length > 0 && (
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b-2 border-base-300">
+                                  <th className="py-4 px-4 text-left font-semibold text-base">Exercise</th>
+                                  {sortedWorkouts.map(workout => (
+                                    <th key={workout.id} className="py-4 px-6 text-right font-semibold text-base">
+                                      Sets ({formatDate(workout.date)})
+                                    </th>
+                                  ))}
+                                  <th className="py-4 px-4 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-base-300">
+                                {sortedWorkouts[0].exercises
+                                  .filter(exercise => 
+                                    !exercise.name.toLowerCase().includes('walking') &&
+                                    !exercise.name.toLowerCase().includes('walk')
+                                  )
+                                  .map((exercise, idx) => (
+                                    <tr key={idx} className="hover:bg-base-200/50">
+                                      <td className="py-4 px-4 text-primary font-medium">
+                                        {exercise.name}
+                                      </td>
+                                      {sortedWorkouts.map(workout => {
+                                        const matchingExercise = workout.exercises?.find(e => e.name === exercise.name);
+                                        const groupedSets = matchingExercise?.stats?.reduce((acc, stat) => {
+                                          const key = `${stat.weight}-${stat.reps}-${stat.time}-${stat.distance}`;
+                                          if (!acc[key]) {
+                                            acc[key] = {
+                                              count: 1,
+                                              weight: stat.weight,
+                                              reps: stat.reps,
+                                              time: stat.time,
+                                              distance: stat.distance
+                                            };
+                                          } else {
+                                            acc[key].count++;
+                                          }
+                                          return acc;
+                                        }, {} as Record<string, { count: number; weight?: number; reps?: number; time?: number; distance?: number }>);
 
-                                          return (
-                                            <tr key={idx} className="hover:bg-base-200/50">
-                                              <td className="py-4 px-4 text-primary font-medium">
-                                                {exercise.name}
-                                              </td>
-                                              <td className="py-4 px-6 text-right">
-                                                <div className="space-y-2">
-                                                  {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
-                                                    <div key={groupIdx} className="text-sm">
-                                                      {[...Array(group.count)].map((_, i) => (
-                                                        <div key={i} className="font-medium">
-                                                          {group.reps || ''}{group.weight ? ` × ${group.weight} lbs` : ''}
-                                                          {group.time ? ` for ${group.time}s` : ''}
-                                                          {group.distance ? ` for ${group.distance} miles` : ''}
-                                                        </div>
-                                                      ))}
+                                        return (
+                                          <td key={workout.id} className="py-4 px-6 text-right">
+                                            <div className="space-y-2">
+                                              {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
+                                                <div key={groupIdx} className="text-sm">
+                                                  {[...Array(group.count)].map((_, i) => (
+                                                    <div key={i} className="font-medium">
+                                                      {group.reps || ''}{group.weight ? ` × ${group.weight} lbs` : ''}
+                                                      {group.time ? ` for ${group.time}s` : ''}
+                                                      {group.distance ? ` for ${group.distance} miles` : ''}
                                                     </div>
                                                   ))}
                                                 </div>
-                                              </td>
-                                              <td className="py-4 px-4">
-                                                <ExerciseNotes
-                                                  exerciseId={idx}
-                                                  initialNotes={exercise.notes}
-                                                  onSave={() => {}}
-                                                />
-                                              </td>
-                                            </tr>
-                                          );
-                                        })}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
+                                              ))}
+                                            </div>
+                                          </td>
+                                        );
+                                      })}
+                                      <td className="py-4 px-4">
+                                        <ExerciseNotes
+                                          exerciseId={idx}
+                                          initialNotes={exercise.notes}
+                                          onSave={() => {}}
+                                        />
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
-                })
-                .filter(Boolean)}
+                });
+              })()}
               {!weeklyAverages.some(week => {
                 const weekStart = new Date(week.weekStart);
                 const weekEnd = new Date(week.weekEnd);
