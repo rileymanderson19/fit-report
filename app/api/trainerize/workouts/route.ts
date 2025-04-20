@@ -40,6 +40,7 @@ interface Exercise {
     sets?: number;
   };
   stats?: ExerciseStat[];
+  notes?: string;
 }
 
 interface WorkoutDetail {
@@ -161,7 +162,8 @@ export async function POST(request: Request) {
             weight: stat.weight,
             time: stat.time,
             distance: stat.distance
-          }))
+          })),
+          notes: exercise.notes || ''
         }))
       };
     });

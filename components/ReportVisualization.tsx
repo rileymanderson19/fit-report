@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { ExerciseNotes } from './ExerciseNotes';
 
 interface WorkoutExercise {
   name: string;
@@ -11,6 +12,7 @@ interface WorkoutExercise {
     time?: number;
     distance?: number;
   }[];
+  notes?: string;
 }
 
 interface Workout {
@@ -75,6 +77,17 @@ interface WeeklyAverage {
 }
 
 export function ReportVisualization({ data }: ReportVisualizationProps) {
+  const [workoutNotes, setWorkoutNotes] = useState<Record<string, string>>({});
+
+  const handleSaveNotes = (exerciseId: number, notes: string) => {
+    setWorkoutNotes(prev => ({
+      ...prev,
+      [exerciseId]: notes
+    }));
+    // Here you would typically make an API call to save the notes
+    // For now, we're just storing them in component state
+  };
+
   // Process all data into a single daily format
   const processedDailyData = useMemo(() => {
     const dailyData = new Map<string, DailyData>();
@@ -401,6 +414,13 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                               </div>
                                             ))}
                                           </td>
+                                          <td className="py-3">
+                                            <ExerciseNotes
+                                              exerciseId={idx}
+                                              initialNotes={exercise.notes}
+                                              onSave={(notes) => handleSaveNotes(idx, notes)}
+                                            />
+                                          </td>
                                         </tr>
                                       );
                                     })}
@@ -593,6 +613,13 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                                     ))}
                                                   </div>
                                                 ))}
+                                              </td>
+                                              <td className="py-3">
+                                                <ExerciseNotes
+                                                  exerciseId={idx}
+                                                  initialNotes={exercise.notes}
+                                                  onSave={(notes) => handleSaveNotes(idx, notes)}
+                                                />
                                               </td>
                                             </tr>
                                           );
