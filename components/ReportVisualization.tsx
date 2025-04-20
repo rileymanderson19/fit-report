@@ -489,46 +489,117 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
 
           {/* Week-over-Week Changes */}
           {weeklyChanges.length > 0 && (
-            <div className="overflow-x-auto">
-              <h3 className="text-xl font-semibold mb-4">Week-over-Week Changes</h3>
-              <table className="table table-zebra w-full">
-                <thead>
-                  <tr>
-                    <th>Week</th>
-                    <th>Weight (lbs)</th>
-                    <th>Steps</th>
-                    <th>Calories</th>
-                    <th>Protein (g)</th>
-                    <th>Carbs (g)</th>
-                    <th>Fats (g)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {weeklyChanges.map((change) => (
-                    <tr key={change.weekStart}>
-                      <td>{`${formatDate(change.weekStart)} - ${formatDate(change.weekEnd)}`}</td>
-                      <td className={change.weight.diff >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.weight)}
-                      </td>
-                      <td className={change.steps.diff >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.steps, 0)}
-                      </td>
-                      <td className={change.calories.diff >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.calories, 0)}
-                      </td>
-                      <td className={change.protein.diff >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.protein)}
-                      </td>
-                      <td className={change.carbs.diff >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.carbs)}
-                      </td>
-                      <td className={change.fats.diff >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.fats)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div>
+              <h3 className="text-xl font-semibold mb-6">Week-over-Week Changes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-6">
+                {/* Avg Weight */}
+                <div className="card bg-base-200 shadow-lg">
+                  <div className="card-body">
+                    <div className="text-sm text-base-content/60">Avg Weight</div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgWeight)}</div>
+                      <div className="text-xl">lbs</div>
+                      <div className="text-sm text-base-content/80">
+                        {weeklyChanges[weeklyChanges.length - 1].weight.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].weight.diff).toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgWeight)} lbs</div>
+                    <div className="text-sm text-base-content/80">
+                      {weeklyChanges[weeklyChanges.length - 1].weight.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].weight.percent)}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Avg Steps */}
+                <div className="card bg-base-200 shadow-lg">
+                  <div className="card-body">
+                    <div className="text-sm text-base-content/60">Avg Steps</div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgSteps, 0)}</div>
+                      <div className="text-xl">steps</div>
+                      <div className="text-sm text-base-content/80">
+                        {weeklyChanges[weeklyChanges.length - 1].steps.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].steps.diff).toFixed(0)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgSteps, 0)} steps</div>
+                    <div className="text-sm text-base-content/80">
+                      {weeklyChanges[weeklyChanges.length - 1].steps.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].steps.percent)}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Avg Calories */}
+                <div className="card bg-base-200 shadow-lg">
+                  <div className="card-body">
+                    <div className="text-sm text-base-content/60">Avg Calories</div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgCalories, 0)}</div>
+                      <div className="text-xl">calories</div>
+                      <div className="text-sm text-base-content/80">
+                        {weeklyChanges[weeklyChanges.length - 1].calories.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].calories.diff).toFixed(0)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgCalories, 0)} calories</div>
+                    <div className="text-sm text-base-content/80">
+                      {weeklyChanges[weeklyChanges.length - 1].calories.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].calories.percent)}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Avg Protein */}
+                <div className="card bg-base-200 shadow-lg">
+                  <div className="card-body">
+                    <div className="text-sm text-base-content/60">Avg Protein</div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgProtein)}</div>
+                      <div className="text-xl">g</div>
+                      <div className="text-sm text-base-content/80">
+                        {weeklyChanges[weeklyChanges.length - 1].protein.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].protein.diff).toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgProtein)}g</div>
+                    <div className="text-sm text-base-content/80">
+                      {weeklyChanges[weeklyChanges.length - 1].protein.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].protein.percent)}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Avg Carbs */}
+                <div className="card bg-base-200 shadow-lg">
+                  <div className="card-body">
+                    <div className="text-sm text-base-content/60">Avg Carbs</div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgCarbs)}</div>
+                      <div className="text-xl">g</div>
+                      <div className="text-sm text-base-content/80">
+                        {weeklyChanges[weeklyChanges.length - 1].carbs.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].carbs.diff).toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgCarbs)}g</div>
+                    <div className="text-sm text-base-content/80">
+                      {weeklyChanges[weeklyChanges.length - 1].carbs.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].carbs.percent)}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Avg Fats */}
+                <div className="card bg-base-200 shadow-lg">
+                  <div className="card-body">
+                    <div className="text-sm text-base-content/60">Avg Fats</div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgFats)}</div>
+                      <div className="text-xl">g</div>
+                      <div className="text-sm text-base-content/80">
+                        {weeklyChanges[weeklyChanges.length - 1].fats.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].fats.diff).toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgFats)}g</div>
+                    <div className="text-sm text-base-content/80">
+                      {weeklyChanges[weeklyChanges.length - 1].fats.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].fats.percent)}%
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
