@@ -200,12 +200,30 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
     return weeklyAverages.slice(1).map((week, index) => ({
       weekStart: week.weekStart,
       weekEnd: week.weekEnd,
-      weightChange: ((week.avgWeight - weeklyAverages[index].avgWeight) / weeklyAverages[index].avgWeight) * 100,
-      stepsChange: ((week.avgSteps - weeklyAverages[index].avgSteps) / weeklyAverages[index].avgSteps) * 100,
-      caloriesChange: ((week.avgCalories - weeklyAverages[index].avgCalories) / weeklyAverages[index].avgCalories) * 100,
-      proteinChange: ((week.avgProtein - weeklyAverages[index].avgProtein) / weeklyAverages[index].avgProtein) * 100,
-      carbsChange: ((week.avgCarbs - weeklyAverages[index].avgCarbs) / weeklyAverages[index].avgCarbs) * 100,
-      fatsChange: ((week.avgFats - weeklyAverages[index].avgFats) / weeklyAverages[index].avgFats) * 100,
+      weight: {
+        diff: week.avgWeight - weeklyAverages[index].avgWeight,
+        percent: ((week.avgWeight - weeklyAverages[index].avgWeight) / weeklyAverages[index].avgWeight) * 100
+      },
+      steps: {
+        diff: week.avgSteps - weeklyAverages[index].avgSteps,
+        percent: ((week.avgSteps - weeklyAverages[index].avgSteps) / weeklyAverages[index].avgSteps) * 100
+      },
+      calories: {
+        diff: week.avgCalories - weeklyAverages[index].avgCalories,
+        percent: ((week.avgCalories - weeklyAverages[index].avgCalories) / weeklyAverages[index].avgCalories) * 100
+      },
+      protein: {
+        diff: week.avgProtein - weeklyAverages[index].avgProtein,
+        percent: ((week.avgProtein - weeklyAverages[index].avgProtein) / weeklyAverages[index].avgProtein) * 100
+      },
+      carbs: {
+        diff: week.avgCarbs - weeklyAverages[index].avgCarbs,
+        percent: ((week.avgCarbs - weeklyAverages[index].avgCarbs) / weeklyAverages[index].avgCarbs) * 100
+      },
+      fats: {
+        diff: week.avgFats - weeklyAverages[index].avgFats,
+        percent: ((week.avgFats - weeklyAverages[index].avgFats) / weeklyAverages[index].avgFats) * 100
+      }
     }));
   }, [weeklyAverages]);
 
@@ -220,9 +238,11 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
     return num.toFixed(decimals);
   };
 
-  const formatChange = (change: number) => {
-    const sign = change >= 0 ? '+' : '';
-    return `${sign}${change.toFixed(1)}%`;
+  const formatChange = (change: { diff: number, percent: number }, decimals: number = 1) => {
+    const sign = change.diff >= 0 ? '+' : '';
+    const formattedDiff = formatNumber(change.diff, decimals);
+    const formattedPercent = formatNumber(change.percent, 1);
+    return `${sign}${formattedDiff} (${sign}${formattedPercent}%)`;
   };
 
   if (processedDailyData.length === 0) {
@@ -310,35 +330,35 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                 <thead>
                   <tr>
                     <th>Week</th>
-                    <th>Weight</th>
+                    <th>Weight (lbs)</th>
                     <th>Steps</th>
                     <th>Calories</th>
-                    <th>Protein</th>
-                    <th>Carbs</th>
-                    <th>Fats</th>
+                    <th>Protein (g)</th>
+                    <th>Carbs (g)</th>
+                    <th>Fats (g)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {weeklyChanges.map((change) => (
                     <tr key={change.weekStart}>
                       <td>{`${formatDate(change.weekStart)} - ${formatDate(change.weekEnd)}`}</td>
-                      <td className={change.weightChange >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.weightChange)}
+                      <td className={change.weight.diff >= 0 ? 'text-success' : 'text-error'}>
+                        {formatChange(change.weight)}
                       </td>
-                      <td className={change.stepsChange >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.stepsChange)}
+                      <td className={change.steps.diff >= 0 ? 'text-success' : 'text-error'}>
+                        {formatChange(change.steps, 0)}
                       </td>
-                      <td className={change.caloriesChange >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.caloriesChange)}
+                      <td className={change.calories.diff >= 0 ? 'text-success' : 'text-error'}>
+                        {formatChange(change.calories, 0)}
                       </td>
-                      <td className={change.proteinChange >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.proteinChange)}
+                      <td className={change.protein.diff >= 0 ? 'text-success' : 'text-error'}>
+                        {formatChange(change.protein)}
                       </td>
-                      <td className={change.carbsChange >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.carbsChange)}
+                      <td className={change.carbs.diff >= 0 ? 'text-success' : 'text-error'}>
+                        {formatChange(change.carbs)}
                       </td>
-                      <td className={change.fatsChange >= 0 ? 'text-success' : 'text-error'}>
-                        {formatChange(change.fatsChange)}
+                      <td className={change.fats.diff >= 0 ? 'text-success' : 'text-error'}>
+                        {formatChange(change.fats)}
                       </td>
                     </tr>
                   ))}
