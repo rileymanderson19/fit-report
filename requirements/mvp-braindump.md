@@ -183,3 +183,384 @@ curl -X POST "https://api.trainerize.com/v03/dailyNutrition/getList" \
   ]
 }
 ```
+
+### Workout data
+
+Let's work on grabbing client workout data and adding it to our report. this should be very similar to how we're grabbing our current information (weight, steps, calories, protein, carbs, fats).
+
+Once we get the basic authentication like we've done prior (in the trainierize folder).
+
+We will add 2 api posts.
+
+The first is /calendar/getList
+
+https://api.trainerize.com/v03/calendar/getList
+
+Example Request:
+
+const options = {
+  method: 'POST',
+  headers: {
+    accept: 'application/json',
+    'content-type': 'application/json',
+    authorization: 'Basic Mzc5MTM2OmFKZUlZekpOVUtUTkl3VTNoZ3ln'
+  },
+  body: JSON.stringify({
+    userID: 19823484,
+    startDate: '2025-01-02',
+    endDate: '2025-01-02',
+    unitDistance: 'miles',
+    unitWeight: 'lbs'
+  })
+};
+
+fetch('https://api.trainerize.com/v03/calendar/getList', options)
+  .then(res => res.json())
+  .then(res => console.log(res))
+  .catch(err => console.error(err));
+
+  Example Response:
+
+{
+  "calendar": [
+    {
+      "date": "2025-01-02",
+      "items": [
+        {
+          "id": 754259108,
+          "type": "workoutRegular",
+          "title": "Steve's Upper B",
+          "status": "tracked",
+          "subtitle": null,
+          "sort": 10,
+          "fromProgram": false,
+          "userProgramID": null,
+          "isAddon": false,
+          "createdBy": {
+            "id": 13076649,
+            "firstName": null,
+            "lastName": null
+          },
+          "numberOfComments": 1,
+          "detail": {
+            "workoutID": 169189272,
+            "rpe": 1
+          }
+        },
+        {
+          "id": 756136349,
+          "type": "cardio",
+          "title": "General",
+          "status": "tracked",
+          "subtitle": null,
+          "sort": 10,
+          "fromProgram": false,
+          "userProgramID": null,
+          "isAddon": false,
+          "createdBy": {
+            "id": 19823484,
+            "firstName": null,
+            "lastName": null
+          },
+          "numberOfComments": 0,
+          "detail": {
+            "exerciseID": 327,
+            "time": 3705,
+            "distance": null,
+            "targetDetail": null
+          }
+        },
+        {
+          "id": 756412727,
+          "type": "cardio",
+          "title": "Walking",
+          "status": "tracked",
+          "subtitle": null,
+          "sort": 10,
+          "fromProgram": false,
+          "userProgramID": null,
+          "isAddon": false,
+          "createdBy": {
+            "id": 19823484,
+            "firstName": null,
+            "lastName": null
+          },
+          "numberOfComments": 0,
+          "detail": {
+            "exerciseID": 136,
+            "time": 1096,
+            "distance": 0.9646583850931677,
+            "targetDetail": null
+          }
+        },
+        {
+          "id": 756522747,
+          "type": "cardio",
+          "title": "Running",
+          "status": "tracked",
+          "subtitle": null,
+          "sort": 10,
+          "fromProgram": false,
+          "userProgramID": null,
+          "isAddon": false,
+          "createdBy": {
+            "id": 19823484,
+            "firstName": null,
+            "lastName": null
+          },
+          "numberOfComments": 0,
+          "detail": {
+            "exerciseID": 137,
+            "time": 1015,
+            "distance": 1.814472049689441,
+            "targetDetail": null
+          }
+        },
+        {
+          "id": 195692123,
+          "type": "bodyStat",
+          "title": "182.5 lbs",
+          "status": "tracked",
+          "subtitle": null,
+          "sort": 30,
+          "fromProgram": false,
+          "userProgramID": null,
+          "isAddon": false,
+          "createdBy": null,
+          "numberOfComments": 0,
+          "detail": {
+            "weight": 182.5,
+            "fat": null,
+            "restingHeartRate": null,
+            "bloodPressureDiastolic": 0,
+            "bloodPressureSystolic": 0
+          }
+        },
+        {
+          "id": 247143445,
+          "type": "nutrition",
+          "title": "3 Meals Added",
+          "status": "tracked",
+          "subtitle": "Protein 195g, Carbs 94g, Fat 65g",
+          "sort": 50,
+          "fromProgram": false,
+          "userProgramID": null,
+          "isAddon": false,
+          "createdBy": null,
+          "numberOfComments": 0,
+          "detail": {
+            "meetGoal": true,
+            "numberOfMeal": 3,
+            "calories": 1648.25,
+            "carbsGrams": 93.58,
+            "proteinGrams": 195.22,
+            "fatGrams": 65.09,
+            "meals": null,
+            "mealPhoto": null
+          }
+        },
+        {
+          "id": 740129347,
+          "type": "habit",
+          "title": "10k Steps",
+          "status": "tracked",
+          "subtitle": null,
+          "sort": 55,
+          "fromProgram": false,
+          "userProgramID": null,
+          "isAddon": false,
+          "createdBy": null,
+          "numberOfComments": 0,
+          "detail": {
+            "type": "customHabit"
+          }
+        },
+        {
+          "id": 740129727,
+          "type": "habit",
+          "title": "90 Oz of Water",
+          "status": "tracked",
+          "subtitle": null,
+          "sort": 55,
+          "fromProgram": false,
+          "userProgramID": null,
+          "isAddon": false,
+          "createdBy": null,
+          "numberOfComments": 0,
+          "detail": {
+            "type": "customHabit"
+          }
+        }
+      ]
+    }
+  ]
+}
+
+We will extract the following data: If the "type" = "workoutRegular" we want to grab the "id": 754259108 and the "title": "Steve's Upper B"
+
+And we will store this in an arrary of other workouts.
+
+We will then use that array for the next post.
+
+The next post is /dailyWorkout/get
+
+https://api.trainerize.com/v03/dailyWorkout/get
+
+The body params are an array of daily workout ids
+
+Example Request:
+
+const options = {
+  method: 'POST',
+  headers: {
+    accept: 'application/json',
+    'content-type': 'application/json',
+    authorization: 'Basic Mzc5MTM2OmFKZUlZekpOVUtUTkl3VTNoZ3ln'
+  }
+};
+
+fetch('https://api.trainerize.com/v03/dailyWorkout/get', options)
+  .then(res => res.json())
+  .then(res => console.log(res))
+  .catch(err => console.error(err));
+
+Example Response:
+
+{
+  "code": 0,
+  "statusMsg": "OK",
+  "dailyWorkouts": [
+    {
+      "id": 0,
+      "fromProgram": true,
+      "name": "string",
+      "date": "2025-04-03",
+      "startTime": "2025-04-03",
+      "endTime": "2025-04-03",
+      "duration": 10,
+      "workDuration": 10,
+      "type": "string",
+      "media": {
+        "id": 0,
+        "type": "string",
+        "status": "string",
+        "duration": 100,
+        "usage": 0,
+        "closeCaptionFileName": "string",
+        "videoUrl": {
+          "hls": "string",
+          "hlssd": "string",
+          "hlshd": "string"
+        },
+        "thumbnailUrl": {
+          "hd": "string",
+          "sd": "string"
+        }
+      },
+      "instructions": "string",
+      "hasOverride": true,
+      "status": "string",
+      "style": "string",
+      "workoutID": 0,
+      "notes": "string",
+      "intervalProgress": 10,
+      "numberOfComments": 10,
+      "trackingStats": {
+        "stats": {
+          "maxHeartRate": 0,
+          "avgHeartRate": 0,
+          "calories": 0,
+          "activeCalories": 0
+        }
+      },
+      "exercises": [
+        {
+          "dailyExerciseID": 0,
+          "def": {
+            "id": 0,
+            "name": "string",
+            "description": "string",
+            "sets": 0,
+            "target": "string",
+            "targetDetail": "string",
+            "side": "string",
+            "superSetID": 0,
+            "supersetType": "string",
+            "intervalTime": 0,
+            "restTime": 0,
+            "recordType": "string",
+            "type": "string",
+            "videoType": "string",
+            "videoUrl": "string",
+            "videoStatus": "string",
+            "numPhotos": 0,
+            "media": {
+              "type": "string",
+              "status": "string",
+              "default": {
+                "videoToken": "string",
+                "loopVideoToken": "string",
+                "videoUrl": {
+                  "fhd": "string",
+                  "hd": "string",
+                  "hls": "string",
+                  "sd": "string",
+                  "hlshd": "string",
+                  "hlssd": "string"
+                },
+                "loopVideoUrl": {
+                  "fhd": "string",
+                  "hd": "string",
+                  "hls": "string",
+                  "sd": "string"
+                },
+                "thumbnailUrl": {
+                  "hd": "string",
+                  "sd": "string"
+                }
+              },
+              "female": {
+                "videoToken": "string",
+                "loopVideoToken": "string",
+                "videoUrl": {
+                  "fhd": "string",
+                  "hd": "string",
+                  "hls": "string",
+                  "sd": "string",
+                  "hlshd": "string",
+                  "hlssd": "string"
+                },
+                "loopVideoUrl": {
+                  "fhd": "string",
+                  "hd": "string",
+                  "hls": "string",
+                  "sd": "string"
+                },
+                "thumbnailUrl": {
+                  "hd": "string",
+                  "sd": "string"
+                }
+              }
+            },
+            "stats": [
+              {
+                "setID": 0,
+                "reps": 0,
+                "weight": 0,
+                "distance": 0,
+                "time": 0,
+                "calories": 0,
+                "level": 0,
+                "speed": 0
+              }
+            ]
+          }
+        }
+      ],
+      "dateUpdated": "2015-07-22 01:01:55"
+    }
+  ]
+}
+
+We will take the exercises and the sets, reps, and weight for each exercise. And add them to our report to be displayed.
+

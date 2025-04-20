@@ -147,16 +147,37 @@ export default function ReportsPage() {
         throw new Error(`Failed to fetch nutrition data: ${error.error}`);
       }
 
+      console.log('Fetching workout data...');
+      // Fetch workout data
+      const workoutDataResponse = await fetch('/api/trainerize/workouts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userID: client.trainerize_id,
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+        }),
+      });
+
+      if (!workoutDataResponse.ok) {
+        const error = await workoutDataResponse.json();
+        throw new Error(`Failed to fetch workout data: ${error.error}`);
+      }
+
       console.log('Processing responses...');
       // First get all responses
       const bodyStatsData = await bodyStatsResponse.json();
       const healthData = await healthDataResponse.json();
       const nutritionData = await nutritionDataResponse.json();
+      const workoutData = await workoutDataResponse.json();
 
       console.log('Response data:', {
         bodyStatsData,
         healthData,
-        nutritionData
+        nutritionData,
+        workoutData
       });
 
       console.log('Setting report data...');
@@ -164,6 +185,7 @@ export default function ReportsPage() {
         bodyStats: bodyStatsData,
         healthData,
         nutritionData,
+        workoutData,
       };
       
       setReportData(newReportData);
@@ -194,7 +216,6 @@ export default function ReportsPage() {
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to generate report');
-      setReportData(null);
     } finally {
       setIsLoading(false);
     }

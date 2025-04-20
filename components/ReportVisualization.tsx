@@ -2,6 +2,36 @@
 
 import { useMemo } from 'react';
 
+interface WorkoutExercise {
+  name: string;
+  sets?: number;
+  stats?: {
+    reps?: number;
+    weight?: number;
+    time?: number;
+    distance?: number;
+  }[];
+}
+
+interface Workout {
+  id: number;
+  title: string;
+  date: string;
+  duration?: number;
+  exercises?: WorkoutExercise[];
+}
+
+interface DailyData {
+  date: string;
+  weight: number;
+  steps: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  workouts?: Workout[];
+}
+
 interface ReportVisualizationProps {
   data: {
     bodyStats: {
@@ -27,17 +57,10 @@ interface ReportVisualizationProps {
         fatGrams: number;
       }>;
     };
+    workoutData: {
+      workouts: Workout[];
+    };
   };
-}
-
-interface DailyData {
-  date: string;
-  weight: number;
-  steps: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
 }
 
 interface WeeklyAverage {
@@ -67,7 +90,8 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
           calories: 0,
           protein: 0,
           carbs: 0,
-          fats: 0
+          fats: 0,
+          workouts: []
         });
       } else {
         dailyData.get(date)!.weight = item.weight || 0;
@@ -85,7 +109,8 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
           calories: 0,
           protein: 0,
           carbs: 0,
-          fats: 0
+          fats: 0,
+          workouts: []
         });
       } else {
         dailyData.get(date)!.steps = item.data?.steps || 0;
@@ -103,7 +128,8 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
           calories: item.calories || 0,
           protein: item.proteinGrams || 0,
           carbs: item.carbsGrams || 0,
-          fats: item.fatGrams || 0
+          fats: item.fatGrams || 0,
+          workouts: []
         });
       } else {
         const entry = dailyData.get(date)!;
@@ -111,6 +137,29 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
         entry.protein = item.proteinGrams || 0;
         entry.carbs = item.carbsGrams || 0;
         entry.fats = item.fatGrams || 0;
+      }
+    });
+
+    // Process workout data
+    data.workoutData?.workouts?.forEach(workout => {
+      const date = new Date(workout.date).toISOString().split('T')[0];
+      if (!dailyData.has(date)) {
+        dailyData.set(date, {
+          date,
+          weight: 0,
+          steps: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          workouts: [workout]
+        });
+      } else {
+        const entry = dailyData.get(date)!;
+        if (!entry.workouts) {
+          entry.workouts = [];
+        }
+        entry.workouts.push(workout);
       }
     });
 
@@ -260,33 +309,96 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
     <div className="space-y-8">
       {timeSpanInfo.isSingleWeek ? (
         // Single Week View
-        <div className="overflow-x-auto">
-          <table className="table table-zebra w-full">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Weight (lbs)</th>
-                <th>Steps</th>
-                <th>Calories</th>
-                <th>Protein (g)</th>
-                <th>Carbs (g)</th>
-                <th>Fats (g)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {processedDailyData.map((day) => (
-                <tr key={day.date}>
-                  <td>{formatDate(day.date)}</td>
-                  <td>{formatNumber(day.weight)}</td>
-                  <td>{formatNumber(day.steps, 0)}</td>
-                  <td>{formatNumber(day.calories, 0)}</td>
-                  <td>{formatNumber(day.protein)}</td>
-                  <td>{formatNumber(day.carbs)}</td>
-                  <td>{formatNumber(day.fats)}</td>
+        <div className="space-y-6">
+          {/* Metrics Table */}
+          <div className="overflow-x-auto">
+            <h3 className="text-xl font-semibold mb-4">Daily Metrics</h3>
+            <table className="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Weight (lbs)</th>
+                  <th>Steps</th>
+                  <th>Calories</th>
+                  <th>Protein (g)</th>
+                  <th>Carbs (g)</th>
+                  <th>Fats (g)</th>
                 </tr>
+              </thead>
+              <tbody>
+                {processedDailyData.map((day) => (
+                  <tr key={day.date}>
+                    <td>{formatDate(day.date)}</td>
+                    <td>{formatNumber(day.weight)}</td>
+                    <td>{formatNumber(day.steps, 0)}</td>
+                    <td>{formatNumber(day.calories, 0)}</td>
+                    <td>{formatNumber(day.protein)}</td>
+                    <td>{formatNumber(day.carbs)}</td>
+                    <td>{formatNumber(day.fats)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Workouts Section */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Daily Workouts</h3>
+            <div className="grid grid-cols-1 gap-4">
+              {processedDailyData.map((day) => (
+                <div key={day.date} className="card bg-base-200">
+                  <div className="card-body">
+                    <h4 className="card-title text-lg">{formatDate(day.date)}</h4>
+                    {day.workouts && day.workouts.length > 0 ? (
+                      <div className="space-y-4">
+                        {day.workouts.map((workout) => (
+                          <div key={workout.id} className="bg-base-100 p-4 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <h5 className="font-medium">{workout.title}</h5>
+                              {workout.duration && (
+                                <span className="text-sm opacity-70">
+                                  Duration: {workout.duration} minutes
+                                </span>
+                              )}
+                            </div>
+                            {workout.exercises && workout.exercises.length > 0 && (
+                              <div className="mt-3">
+                                <div className="divider my-2">Exercises</div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {workout.exercises.map((exercise, idx) => (
+                                    <div key={idx} className="bg-base-200 p-3 rounded">
+                                      <h6 className="font-medium">{exercise.name}</h6>
+                                      {exercise.stats && exercise.stats.length > 0 && (
+                                        <div className="mt-2 space-y-1">
+                                          {exercise.stats.map((stat, statIdx) => (
+                                            <p key={statIdx} className="text-sm">
+                                              Set {statIdx + 1}:
+                                              {stat.reps && ` ${stat.reps} reps`}
+                                              {stat.weight && ` @ ${stat.weight} lbs`}
+                                              {stat.time && ` for ${stat.time} seconds`}
+                                              {stat.distance && ` for ${stat.distance} miles`}
+                                            </p>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-base-content/60">
+                        No workouts recorded
+                      </div>
+                    )}
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
         </div>
       ) : (
         // Multi-Week View
@@ -304,20 +416,34 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                   <th>Protein (g)</th>
                   <th>Carbs (g)</th>
                   <th>Fats (g)</th>
+                  <th>Workouts</th>
                 </tr>
               </thead>
               <tbody>
-                {weeklyAverages.map((week, index) => (
-                  <tr key={week.weekStart}>
-                    <td>{`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}</td>
-                    <td>{formatNumber(week.avgWeight)}</td>
-                    <td>{formatNumber(week.avgSteps, 0)}</td>
-                    <td>{formatNumber(week.avgCalories, 0)}</td>
-                    <td>{formatNumber(week.avgProtein)}</td>
-                    <td>{formatNumber(week.avgCarbs)}</td>
-                    <td>{formatNumber(week.avgFats)}</td>
-                  </tr>
-                ))}
+                {weeklyAverages.map((week, index) => {
+                  // Calculate number of workouts for this week
+                  const weekStart = new Date(week.weekStart);
+                  const weekEnd = new Date(week.weekEnd);
+                  const workoutsThisWeek = processedDailyData
+                    .filter(day => {
+                      const date = new Date(day.date);
+                      return date >= weekStart && date <= weekEnd && day.workouts && day.workouts.length > 0;
+                    })
+                    .reduce((total, day) => total + (day.workouts?.length || 0), 0);
+
+                  return (
+                    <tr key={week.weekStart}>
+                      <td>{`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}</td>
+                      <td>{formatNumber(week.avgWeight)}</td>
+                      <td>{formatNumber(week.avgSteps, 0)}</td>
+                      <td>{formatNumber(week.avgCalories, 0)}</td>
+                      <td>{formatNumber(week.avgProtein)}</td>
+                      <td>{formatNumber(week.avgCarbs)}</td>
+                      <td>{formatNumber(week.avgFats)}</td>
+                      <td>{workoutsThisWeek} workouts</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -366,6 +492,77 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
               </table>
             </div>
           )}
+
+          {/* Weekly Workout Summary */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Weekly Workout Summary</h3>
+            <div className="grid grid-cols-1 gap-4">
+              {weeklyAverages.map((week) => {
+                const weekStart = new Date(week.weekStart);
+                const weekEnd = new Date(week.weekEnd);
+                const weekWorkouts = processedDailyData
+                  .filter(day => {
+                    const date = new Date(day.date);
+                    return date >= weekStart && date <= weekEnd && day.workouts && day.workouts.length > 0;
+                  })
+                  .flatMap(day => day.workouts || []);
+
+                return (
+                  <div key={week.weekStart} className="card bg-base-200">
+                    <div className="card-body">
+                      <h4 className="card-title">
+                        {`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}
+                      </h4>
+                      {weekWorkouts.length > 0 ? (
+                        <div className="space-y-3">
+                          {weekWorkouts.map((workout) => (
+                            <div key={workout.id} className="bg-base-100 p-4 rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <h5 className="font-medium">{workout.title}</h5>
+                                <span className="text-sm opacity-70">
+                                  {formatDate(workout.date)}
+                                  {workout.duration && ` • ${workout.duration} minutes`}
+                                </span>
+                              </div>
+                              {workout.exercises && workout.exercises.length > 0 && (
+                                <div className="mt-3">
+                                  <div className="divider my-2">Exercises</div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {workout.exercises.map((exercise, idx) => (
+                                      <div key={idx} className="bg-base-200 p-3 rounded">
+                                        <h6 className="font-medium">{exercise.name}</h6>
+                                        {exercise.stats && exercise.stats.length > 0 && (
+                                          <div className="mt-2 space-y-1">
+                                            {exercise.stats.map((stat, statIdx) => (
+                                              <p key={statIdx} className="text-sm">
+                                                Set {statIdx + 1}:
+                                                {stat.reps && ` ${stat.reps} reps`}
+                                                {stat.weight && ` @ ${stat.weight} lbs`}
+                                                {stat.time && ` for ${stat.time} seconds`}
+                                                {stat.distance && ` for ${stat.distance} miles`}
+                                              </p>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-base-content/60">
+                          No workouts recorded this week
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>
