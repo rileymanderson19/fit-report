@@ -372,6 +372,13 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                           {workout.exercises && workout.exercises.length > 0 && (
                             <div className="overflow-x-auto">
                               <table className="w-full">
+                                <thead>
+                                  <tr className="border-b-2 border-base-300">
+                                    <th className="py-4 px-4 text-left font-semibold text-base">Exercise</th>
+                                    <th className="py-4 px-6 text-right font-semibold text-base">Sets</th>
+                                    <th className="py-4 px-4 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
+                                  </tr>
+                                </thead>
                                 <tbody className="divide-y divide-base-300">
                                   {workout.exercises
                                     .filter(exercise => 
@@ -397,24 +404,26 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                       }, {} as Record<string, { count: number; weight?: number; reps?: number; time?: number; distance?: number }>);
 
                                       return (
-                                        <tr key={idx} className="border-t border-base-300">
-                                          <td className="py-3 text-primary">
+                                        <tr key={idx} className="hover:bg-base-200/50">
+                                          <td className="py-4 px-4 text-primary font-medium">
                                             {exercise.name}
                                           </td>
-                                          <td className="py-3 text-right">
-                                            {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
-                                              <div key={groupIdx} className="text-sm space-y-1">
-                                                {[...Array(group.count)].map((_, i) => (
-                                                  <div key={i}>
-                                                    {group.reps || ''}{group.weight ? ` x ${group.weight} lbs` : ''}
-                                                    {group.time ? ` for ${group.time}s` : ''}
-                                                    {group.distance ? ` for ${group.distance} miles` : ''}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            ))}
+                                          <td className="py-4 px-6 text-right">
+                                            <div className="space-y-2">
+                                              {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
+                                                <div key={groupIdx} className="text-sm">
+                                                  {[...Array(group.count)].map((_, i) => (
+                                                    <div key={i} className="font-medium">
+                                                      {group.reps || ''}{group.weight ? ` × ${group.weight} lbs` : ''}
+                                                      {group.time ? ` for ${group.time}s` : ''}
+                                                      {group.distance ? ` for ${group.distance} miles` : ''}
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              ))}
+                                            </div>
                                           </td>
-                                          <td className="py-3">
+                                          <td className="py-4 px-4">
                                             <ExerciseNotes
                                               exerciseId={idx}
                                               initialNotes={exercise.notes}
@@ -572,6 +581,13 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                               {workout.exercises && workout.exercises.length > 0 && (
                                 <div className="overflow-x-auto">
                                   <table className="w-full">
+                                    <thead>
+                                      <tr className="border-b-2 border-base-300">
+                                        <th className="py-4 px-4 text-left font-semibold text-base">Exercise</th>
+                                        <th className="py-4 px-6 text-right font-semibold text-base">Sets</th>
+                                        <th className="py-4 px-4 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
+                                      </tr>
+                                    </thead>
                                     <tbody className="divide-y divide-base-300">
                                       {workout.exercises
                                         .filter(exercise => 
@@ -597,24 +613,26 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                           }, {} as Record<string, { count: number; weight?: number; reps?: number; time?: number; distance?: number }>);
 
                                           return (
-                                            <tr key={idx} className="border-t border-base-300">
-                                              <td className="py-3 text-primary">
+                                            <tr key={idx} className="hover:bg-base-200/50">
+                                              <td className="py-4 px-4 text-primary font-medium">
                                                 {exercise.name}
                                               </td>
-                                              <td className="py-3 text-right">
-                                                {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
-                                                  <div key={groupIdx} className="text-sm space-y-1">
-                                                    {[...Array(group.count)].map((_, i) => (
-                                                      <div key={i}>
-                                                        {group.reps || ''}{group.weight ? ` x ${group.weight} lbs` : ''}
-                                                        {group.time ? ` for ${group.time}s` : ''}
-                                                        {group.distance ? ` for ${group.distance} miles` : ''}
-                                                      </div>
-                                                    ))}
-                                                  </div>
-                                                ))}
+                                              <td className="py-4 px-6 text-right">
+                                                <div className="space-y-2">
+                                                  {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
+                                                    <div key={groupIdx} className="text-sm">
+                                                      {[...Array(group.count)].map((_, i) => (
+                                                        <div key={i} className="font-medium">
+                                                          {group.reps || ''}{group.weight ? ` × ${group.weight} lbs` : ''}
+                                                          {group.time ? ` for ${group.time}s` : ''}
+                                                          {group.distance ? ` for ${group.distance} miles` : ''}
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  ))}
+                                                </div>
                                               </td>
-                                              <td className="py-3">
+                                              <td className="py-4 px-4">
                                                 <ExerciseNotes
                                                   exerciseId={idx}
                                                   initialNotes={exercise.notes}
