@@ -633,7 +633,7 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                 return Object.entries(workoutGroups).map(([title, workouts]) => {
                   // Sort workouts by date
                   const sortedWorkouts = [...workouts].sort((a, b) => 
-                    new Date(a.date).getTime() - new Date(b.date).getTime()
+                    new Date(b.date).getTime() - new Date(a.date).getTime()
                   );
 
                   return (
@@ -646,7 +646,7 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                               <thead>
                                 <tr className="border-b-2 border-base-300">
                                   <th className="py-4 px-4 text-left font-semibold text-base">Exercise</th>
-                                  {sortedWorkouts.map(workout => (
+                                  {[...sortedWorkouts].reverse().map(workout => (
                                     <th key={workout.id} className="py-4 px-6 text-right font-semibold text-base">
                                       Sets ({formatDate(workout.date)})
                                     </th>
@@ -665,7 +665,7 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                       <td className="py-4 px-4 text-primary font-medium">
                                         {exercise.name}
                                       </td>
-                                      {sortedWorkouts.map(workout => {
+                                      {[...sortedWorkouts].reverse().map(workout => {
                                         const matchingExercise = workout.exercises?.find(e => e.name === exercise.name);
                                         const groupedSets = matchingExercise?.stats?.reduce((acc, stat) => {
                                           const key = `${stat.weight}-${stat.reps}-${stat.time}-${stat.distance}`;
@@ -702,11 +702,50 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                         );
                                       })}
                                       <td className="py-4 px-4">
-                                        <ExerciseNotes
-                                          exerciseId={idx}
-                                          initialNotes={exercise.notes}
-                                          onSave={() => {}}
-                                        />
+                                        {(() => {
+                                          // Get the last workout only
+                                          const latestWorkout = sortedWorkouts[sortedWorkouts.length - 1];
+                                          
+                                          // Find the matching exercise in the latest workout
+                                          const latestExercise = latestWorkout.exercises?.find(e => e.name === exercise.name);
+                                          
+                                          // Set default note if no existing note
+                                          let defaultNote = exercise.notes;
+                                          if (!defaultNote && latestExercise?.stats && latestExercise.stats.length > 0) {
+                                            // Get all sets at the highest weight
+                                            const maxWeight = Math.max(...latestExercise.stats.map(s => s.weight || 0));
+                                            const setsAtMaxWeight = latestExercise.stats.filter(s => s.weight === maxWeight);
+                                            
+                                            // Check if all sets are at or near the top of the rep range
+                                            // Using rep range of 6-10
+                                            const TARGET_REPS = 10;
+                                            const THRESHOLD = TARGET_REPS - 1; // At or above 9 reps
+                                            
+                                            // Log for debugging
+                                            console.log(`Exercise: ${exercise.name}`);
+                                            console.log(`Max Weight: ${maxWeight}`);
+                                            console.log(`Sets at max weight:`, setsAtMaxWeight);
+                                            console.log(`All sets near max:`, setsAtMaxWeight.every(set => (set.reps || 0) >= THRESHOLD));
+                                            
+                                            const allSetsNearMax = setsAtMaxWeight.every(set => 
+                                              (set.reps || 0) >= THRESHOLD
+                                            );
+                                            
+                                            defaultNote = allSetsNearMax ? 
+                                              "Increase weight next session" : 
+                                              "Focus on adding reps";
+
+                                            console.log(`Default note:`, defaultNote);
+                                          }
+
+                                          return (
+                                            <ExerciseNotes
+                                              exerciseId={idx}
+                                              initialNotes={defaultNote}
+                                              onSave={() => {}}
+                                            />
+                                          );
+                                        })()}
                                       </td>
                                     </tr>
                                   ))}
