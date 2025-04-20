@@ -30,6 +30,7 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
   const [client, setClient] = useState<Client | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClientAndReports = async () => {
@@ -68,6 +69,40 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
 
     fetchClientAndReports();
   }, [supabase, params.id]);
+
+  const handleDeleteReport = async (reportId: string) => {
+    if (!confirm("Are you sure you want to delete this report? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(reportId);
+    try {
+      const response = await fetch(`/api/reports/delete?id=${reportId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete report');
+      }
+
+      // Remove the report from the state
+      setReports(reports.filter(r => r.id !== reportId));
+      
+      // If the deleted report was selected, select the first available report
+      if (selectedReport?.id === reportId) {
+        const remainingReports = reports.filter(r => r.id !== reportId);
+        setSelectedReport(remainingReports.length > 0 ? remainingReports[0] : null);
+      }
+
+      toast.success('Report deleted successfully');
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete report');
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -125,20 +160,35 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
               ) : (
                 <div className="space-y-2">
                   {reports.map((report) => (
-                    <button
+                    <div
                       key={report.id}
-                      className={`btn btn-block ${selectedReport?.id === report.id ? 'btn-primary' : 'btn-ghost'} justify-start`}
-                      onClick={() => setSelectedReport(report)}
+                      className={`flex items-center justify-between p-3 rounded-lg border ${
+                        selectedReport?.id === report.id ? 'bg-primary/10 border-primary' : 'bg-base-100 border-base-300'
+                      } hover:bg-base-200 transition-colors`}
                     >
-                      <div className="text-left">
+                      <button
+                        className="flex-1 text-left"
+                        onClick={() => setSelectedReport(report)}
+                      >
                         <div className="font-semibold">
                           {new Date(report.date_range_start).toLocaleDateString()} - {new Date(report.date_range_end).toLocaleDateString()}
                         </div>
                         <div className="text-sm opacity-70">
                           Generated: {new Date(report.created_at).toLocaleDateString()}
                         </div>
-                      </div>
-                    </button>
+                      </button>
+                      <button
+                        className={`btn btn-sm btn-error btn-outline ml-2 ${isDeleting === report.id ? 'loading' : ''}`}
+                        onClick={() => handleDeleteReport(report.id)}
+                        disabled={isDeleting !== null}
+                      >
+                        {isDeleting === report.id ? 'Deleting...' : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
