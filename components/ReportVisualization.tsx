@@ -63,6 +63,8 @@ interface ReportVisualizationProps {
       workouts: Workout[];
     };
   };
+  onDeleteWorkout?: (workoutId: number) => void;
+  onDeleteExercise?: (workoutId: number, exerciseName: string) => void;
 }
 
 interface WeeklyAverage {
@@ -76,7 +78,7 @@ interface WeeklyAverage {
   avgFats: number;
 }
 
-export function ReportVisualization({ data }: ReportVisualizationProps) {
+export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }: ReportVisualizationProps) {
   // Process all data into a single daily format
   const processedDailyData = useMemo(() => {
     const dailyData = new Map<string, DailyData>();
@@ -357,6 +359,17 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                         <div key={workout.id} className="mb-6 last:mb-0">
                           <div className="flex items-center justify-between mb-4">
                             <h5 className="text-lg font-medium">{workout.title}</h5>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => onDeleteWorkout?.(workout.id)}
+                                className="btn btn-sm btn-ghost text-error"
+                                title={`Delete workout from ${formatDate(workout.date)}`}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                           {workout.exercises && workout.exercises.length > 0 && (
                             <div className="overflow-x-auto">
@@ -395,7 +408,24 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                       return (
                                         <tr key={idx} className="hover:bg-base-200/50">
                                           <td className="py-4 px-4 text-primary font-medium">
-                                            {exercise.name}
+                                            <div className="flex items-center gap-2">
+                                              <span>{exercise.name}</span>
+                                              <button
+                                                onClick={() => {
+                                                  // Delete from all workouts
+                                                  processedDailyData.forEach(day => {
+                                                    day.workouts = day.workouts?.filter(w => w.id !== workout.id) || [];
+                                                  });
+                                                  onDeleteWorkout?.(workout.id);
+                                                }}
+                                                className="btn btn-xs btn-ghost text-error"
+                                                title="Delete exercise from all workouts"
+                                              >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                              </button>
+                                            </div>
                                           </td>
                                           <td className="py-4 px-6 text-right">
                                             <div className="space-y-2">
@@ -639,19 +669,35 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                   return (
                     <div key={title} className="card bg-base-200">
                       <div className="card-body">
-                        <h4 className="card-title mb-4">{title}</h4>
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="card-title">{title}</h4>
+                          <div className="flex gap-2">
+                            {sortedWorkouts.map(workout => (
+                              <button
+                                key={workout.id}
+                                onClick={() => onDeleteWorkout?.(workout.id)}
+                                className="btn btn-sm btn-ghost text-error"
+                                title={`Delete workout from ${formatDate(workout.date)}`}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                         {sortedWorkouts[0].exercises && sortedWorkouts[0].exercises.length > 0 && (
                           <div className="overflow-x-auto">
                             <table className="w-full">
                               <thead>
                                 <tr className="border-b-2 border-base-300">
-                                  <th className="py-4 px-4 text-left font-semibold text-base">Exercise</th>
+                                  <th className="py-6 px-4 text-left font-semibold text-base w-1/4">Exercise</th>
                                   {[...sortedWorkouts].reverse().map(workout => (
-                                    <th key={workout.id} className="py-4 px-6 text-right font-semibold text-base">
+                                    <th key={workout.id} className="py-6 px-6 text-right font-semibold text-base w-[200px] whitespace-nowrap">
                                       Sets ({formatDate(workout.date)})
                                     </th>
                                   ))}
-                                  <th className="py-4 px-4 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
+                                  <th className="py-6 px-4 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-base-300">
@@ -662,8 +708,24 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                   )
                                   .map((exercise, idx) => (
                                     <tr key={idx} className="hover:bg-base-200/50">
-                                      <td className="py-4 px-4 text-primary font-medium">
-                                        {exercise.name}
+                                      <td className="py-6 px-4">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-primary font-medium">{exercise.name}</span>
+                                          <button
+                                            onClick={() => {
+                                              // Delete from all workouts
+                                              sortedWorkouts.forEach(workout => {
+                                                onDeleteExercise?.(workout.id, exercise.name);
+                                              });
+                                            }}
+                                            className="btn btn-xs btn-ghost text-error"
+                                            title="Delete exercise from all workouts"
+                                          >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                            </svg>
+                                          </button>
+                                        </div>
                                       </td>
                                       {[...sortedWorkouts].reverse().map(workout => {
                                         const matchingExercise = workout.exercises?.find(e => e.name === exercise.name);
@@ -684,15 +746,16 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                         }, {} as Record<string, { count: number; weight?: number; reps?: number; time?: number; distance?: number }>);
 
                                         return (
-                                          <td key={workout.id} className="py-4 px-6 text-right">
-                                            <div className="space-y-2">
+                                          <td key={workout.id} className="py-6 px-6 text-right">
+                                            <div className="flex flex-col items-end justify-center gap-2">
                                               {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
                                                 <div key={groupIdx} className="text-sm">
                                                   {[...Array(group.count)].map((_, i) => (
-                                                    <div key={i} className="font-medium">
-                                                      {group.reps || ''}{group.weight ? ` × ${group.weight} lbs` : ''}
-                                                      {group.time ? ` for ${group.time}s` : ''}
-                                                      {group.distance ? ` for ${group.distance} miles` : ''}
+                                                    <div key={i} className="font-medium whitespace-nowrap">
+                                                      {group.reps || ''}{group.weight ? ` × ${group.weight}` : ''}
+                                                      {group.weight ? <span className="text-xs ml-0.5">lbs</span> : ''}
+                                                      {group.time ? <span className="text-xs ml-0.5">{group.time}s</span> : ''}
+                                                      {group.distance ? <span className="text-xs ml-0.5">{group.distance}mi</span> : ''}
                                                     </div>
                                                   ))}
                                                 </div>
@@ -701,51 +764,12 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                           </td>
                                         );
                                       })}
-                                      <td className="py-4 px-4">
-                                        {(() => {
-                                          // Get the last workout only
-                                          const latestWorkout = sortedWorkouts[sortedWorkouts.length - 1];
-                                          
-                                          // Find the matching exercise in the latest workout
-                                          const latestExercise = latestWorkout.exercises?.find(e => e.name === exercise.name);
-                                          
-                                          // Set default note if no existing note
-                                          let defaultNote = exercise.notes;
-                                          if (!defaultNote && latestExercise?.stats && latestExercise.stats.length > 0) {
-                                            // Get all sets at the highest weight
-                                            const maxWeight = Math.max(...latestExercise.stats.map(s => s.weight || 0));
-                                            const setsAtMaxWeight = latestExercise.stats.filter(s => s.weight === maxWeight);
-                                            
-                                            // Check if all sets are at or near the top of the rep range
-                                            // Using rep range of 6-10
-                                            const TARGET_REPS = 10;
-                                            const THRESHOLD = TARGET_REPS - 1; // At or above 9 reps
-                                            
-                                            // Log for debugging
-                                            console.log(`Exercise: ${exercise.name}`);
-                                            console.log(`Max Weight: ${maxWeight}`);
-                                            console.log(`Sets at max weight:`, setsAtMaxWeight);
-                                            console.log(`All sets near max:`, setsAtMaxWeight.every(set => (set.reps || 0) >= THRESHOLD));
-                                            
-                                            const allSetsNearMax = setsAtMaxWeight.every(set => 
-                                              (set.reps || 0) >= THRESHOLD
-                                            );
-                                            
-                                            defaultNote = allSetsNearMax ? 
-                                              "Increase weight next session" : 
-                                              "Focus on adding reps";
-
-                                            console.log(`Default note:`, defaultNote);
-                                          }
-
-                                          return (
-                                            <ExerciseNotes
-                                              exerciseId={idx}
-                                              initialNotes={defaultNote}
-                                              onSave={() => {}}
-                                            />
-                                          );
-                                        })()}
+                                      <td className="py-6 px-4">
+                                        <ExerciseNotes
+                                          exerciseId={idx}
+                                          initialNotes={exercise.notes}
+                                          onSave={() => {}}
+                                        />
                                       </td>
                                     </tr>
                                   ))}

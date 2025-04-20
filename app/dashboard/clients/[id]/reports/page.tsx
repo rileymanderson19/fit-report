@@ -115,6 +115,92 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
     (document.getElementById('delete-modal') as HTMLDialogElement)?.close();
   };
 
+  const handleDeleteWorkout = async (workoutId: number) => {
+    if (!selectedReport) return;
+    
+    try {
+      // Create a deep copy of the report data
+      const newReportData = JSON.parse(JSON.stringify(selectedReport.report_data));
+      
+      // Remove the workout from workoutData
+      newReportData.workoutData.workouts = newReportData.workoutData.workouts.filter(
+        (w: any) => w.id !== workoutId
+      );
+
+      // Update the report in Supabase
+      const { error } = await supabase
+        .from('reports')
+        .update({ report_data: newReportData })
+        .eq('id', selectedReport.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setSelectedReport({
+        ...selectedReport,
+        report_data: newReportData
+      });
+
+      // Update reports list
+      setReports(reports.map(report => 
+        report.id === selectedReport.id 
+          ? { ...report, report_data: newReportData }
+          : report
+      ));
+
+      toast.success('Workout deleted successfully');
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      toast.error('Failed to delete workout');
+    }
+  };
+
+  const handleDeleteExercise = async (workoutId: number, exerciseName: string) => {
+    if (!selectedReport) return;
+    
+    try {
+      // Create a deep copy of the report data
+      const newReportData = JSON.parse(JSON.stringify(selectedReport.report_data));
+      
+      // Find the workout and remove the exercise
+      newReportData.workoutData.workouts = newReportData.workoutData.workouts.map((workout: any) => {
+        if (workout.id === workoutId) {
+          return {
+            ...workout,
+            exercises: workout.exercises.filter((e: any) => e.name !== exerciseName)
+          };
+        }
+        return workout;
+      });
+
+      // Update the report in Supabase
+      const { error } = await supabase
+        .from('reports')
+        .update({ report_data: newReportData })
+        .eq('id', selectedReport.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setSelectedReport({
+        ...selectedReport,
+        report_data: newReportData
+      });
+
+      // Update reports list
+      setReports(reports.map(report => 
+        report.id === selectedReport.id 
+          ? { ...report, report_data: newReportData }
+          : report
+      ));
+
+      toast.success('Exercise deleted successfully');
+    } catch (error) {
+      console.error('Error deleting exercise:', error);
+      toast.error('Failed to delete exercise');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -244,7 +330,20 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
         {/* Report Visualization */}
         <div className="lg:col-span-3">
           {selectedReport ? (
-            <ReportVisualization data={selectedReport.report_data} />
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title mb-4">Report Details</h2>
+                <div className="text-sm text-base-content/60 mb-6">
+                  <p>From: {new Date(selectedReport.date_range_start).toLocaleDateString()}</p>
+                  <p>To: {new Date(selectedReport.date_range_end).toLocaleDateString()}</p>
+                </div>
+                <ReportVisualization 
+                  data={selectedReport.report_data}
+                  onDeleteWorkout={handleDeleteWorkout}
+                  onDeleteExercise={handleDeleteExercise}
+                />
+              </div>
+            </div>
           ) : (
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
