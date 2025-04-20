@@ -31,6 +31,7 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
 
   useEffect(() => {
     const fetchClientAndReports = async () => {
@@ -70,14 +71,17 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
     fetchClientAndReports();
   }, [supabase, params.id]);
 
-  const handleDeleteReport = async (reportId: string) => {
-    if (!confirm("Are you sure you want to delete this report? This action cannot be undone.")) {
-      return;
-    }
+  const handleDeleteReport = async (report: Report) => {
+    setReportToDelete(report);
+    (document.getElementById('delete-modal') as HTMLDialogElement)?.showModal();
+  };
 
-    setIsDeleting(reportId);
+  const confirmDelete = async () => {
+    if (!reportToDelete) return;
+
+    setIsDeleting(reportToDelete.id);
     try {
-      const response = await fetch(`/api/reports/delete?id=${reportId}`, {
+      const response = await fetch(`/api/reports/delete?id=${reportToDelete.id}`, {
         method: 'DELETE',
       });
 
@@ -87,11 +91,11 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
       }
 
       // Remove the report from the state
-      setReports(reports.filter(r => r.id !== reportId));
+      setReports(reports.filter(r => r.id !== reportToDelete.id));
       
       // If the deleted report was selected, select the first available report
-      if (selectedReport?.id === reportId) {
-        const remainingReports = reports.filter(r => r.id !== reportId);
+      if (selectedReport?.id === reportToDelete.id) {
+        const remainingReports = reports.filter(r => r.id !== reportToDelete.id);
         setSelectedReport(remainingReports.length > 0 ? remainingReports[0] : null);
       }
 
@@ -101,7 +105,14 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
       toast.error(error instanceof Error ? error.message : 'Failed to delete report');
     } finally {
       setIsDeleting(null);
+      setReportToDelete(null);
+      (document.getElementById('delete-modal') as HTMLDialogElement)?.close();
     }
+  };
+
+  const cancelDelete = () => {
+    setReportToDelete(null);
+    (document.getElementById('delete-modal') as HTMLDialogElement)?.close();
   };
 
   if (isLoading) {
@@ -127,6 +138,42 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
 
   return (
     <div className="p-8">
+      {/* Delete Confirmation Modal */}
+      <dialog id="delete-modal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Delete Report</h3>
+          <p className="py-4">
+            Are you sure you want to delete the report from{' '}
+            {reportToDelete && (
+              <span className="font-semibold">
+                {new Date(reportToDelete.date_range_start).toLocaleDateString()} - {new Date(reportToDelete.date_range_end).toLocaleDateString()}
+              </span>
+            )}? 
+            <br />
+            <span className="text-error">This action cannot be undone.</span>
+          </p>
+          <div className="modal-action">
+            <button 
+              className="btn btn-ghost" 
+              onClick={cancelDelete}
+              disabled={isDeleting !== null}
+            >
+              Cancel
+            </button>
+            <button 
+              className={`btn btn-error ${isDeleting ? 'loading' : ''}`}
+              onClick={confirmDelete}
+              disabled={isDeleting !== null}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Report'}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button disabled={isDeleting !== null}>close</button>
+        </form>
+      </dialog>
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -178,15 +225,13 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
                         </div>
                       </button>
                       <button
-                        className={`btn btn-sm btn-error btn-outline ml-2 ${isDeleting === report.id ? 'loading' : ''}`}
-                        onClick={() => handleDeleteReport(report.id)}
+                        className={`btn btn-sm btn-error btn-outline ml-2`}
+                        onClick={() => handleDeleteReport(report)}
                         disabled={isDeleting !== null}
                       >
-                        {isDeleting === report.id ? 'Deleting...' : (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        )}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   ))}
