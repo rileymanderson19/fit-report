@@ -23,6 +23,8 @@ export default function ReportsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [reportData, setReportData] = useState<Record<string, any>>({});
   const [generatingProgress, setGeneratingProgress] = useState<Record<string, boolean>>({});
+  const [minReps, setMinReps] = useState<number>(6);
+  const [maxReps, setMaxReps] = useState<number>(10);
 
   // Fetch clients from Supabase
   const fetchClients = useCallback(async () => {
@@ -76,43 +78,7 @@ export default function ReportsPage() {
         throw new Error('Client does not have a Trainerize ID');
       }
 
-      // Fetch body stats
-      const bodyStatsResponse = await fetch('/api/trainerize/bodystats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userID: client.trainerize_id,
-          startDate: startDate!.toISOString().split('T')[0],
-          endDate: endDate!.toISOString().split('T')[0],
-          unitBodystats: 'inches',
-          unitWeight: 'lbs',
-        }),
-      });
-
-      // Fetch health data
-      const healthDataResponse = await fetch('/api/trainerize/health-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userID: client.trainerize_id,
-          type: 'step',
-          startDate: startDate!.toISOString().split('T')[0],
-          endDate: endDate!.toISOString().split('T')[0],
-        }),
-      });
-
-      // Fetch nutrition data
-      const nutritionDataResponse = await fetch('/api/trainerize/nutrition', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userID: client.trainerize_id,
-          startDate: startDate!.toISOString().split('T')[0],
-          endDate: endDate!.toISOString().split('T')[0],
-        }),
-      });
-
-      // Fetch workout data
+      // Fetch workout data first to analyze
       const workoutDataResponse = await fetch('/api/trainerize/workouts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,15 +86,76 @@ export default function ReportsPage() {
           userID: client.trainerize_id,
           startDate: startDate!.toISOString().split('T')[0],
           endDate: endDate!.toISOString().split('T')[0],
+          repRange: {
+            min: minReps,
+            max: maxReps
+          }
         }),
       });
 
-      const [bodyStatsData, healthData, nutritionData, workoutData] = await Promise.all([
-        bodyStatsResponse.json(),
-        healthDataResponse.json(),
-        nutritionDataResponse.json(),
-        workoutDataResponse.json()
+      // Fetch other data in parallel
+      const [workoutData, bodyStatsData, healthData, nutritionData] = await Promise.all([
+        workoutDataResponse.json(),
+        fetch('/api/trainerize/bodystats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userID: client.trainerize_id,
+            startDate: startDate!.toISOString().split('T')[0],
+            endDate: endDate!.toISOString().split('T')[0],
+            unitBodystats: 'inches',
+            unitWeight: 'lbs',
+          }),
+        }).then(res => res.json()),
+        fetch('/api/trainerize/health-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userID: client.trainerize_id,
+            type: 'step',
+            startDate: startDate!.toISOString().split('T')[0],
+            endDate: endDate!.toISOString().split('T')[0],
+          }),
+        }).then(res => res.json()),
+        fetch('/api/trainerize/nutrition', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userID: client.trainerize_id,
+            startDate: startDate!.toISOString().split('T')[0],
+            endDate: endDate!.toISOString().split('T')[0],
+          }),
+        }).then(res => res.json()),
       ]);
+
+      // Process workout data to add automatic notes
+      if (workoutData.workouts) {
+        workoutData.workouts = workoutData.workouts.map((workout: any) => {
+          if (workout.exercises) {
+            workout.exercises = workout.exercises.map((exercise: any) => {
+              if (exercise.stats && exercise.stats.length > 0) {
+                // Filter out any undefined reps
+                const validReps = exercise.stats.filter((stat: any) => typeof stat.reps === 'number');
+                
+                if (validReps.length > 0) {
+                  // Check if all sets are near the top of the rep range
+                  const highReps = validReps.every((stat: any) => stat.reps >= maxReps - 1);
+                  const lowReps = validReps.some((stat: any) => stat.reps < minReps);
+                  
+                  // Generate automatic note
+                  if (highReps) {
+                    exercise.notes = "Increase weight next session";
+                  } else if (!lowReps) {
+                    exercise.notes = "Focus on adding reps";
+                  }
+                }
+              }
+              return exercise;
+            });
+          }
+          return workout;
+        });
+      }
 
       const clientReportData = {
         bodyStats: bodyStatsData,
@@ -148,6 +175,10 @@ export default function ReportsPage() {
             from: startDate!.toISOString(),
             to: endDate!.toISOString(),
           },
+          repRange: {
+            min: minReps,
+            max: maxReps
+          }
         }),
       });
 
@@ -285,6 +316,50 @@ export default function ReportsPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Rep Range Selection */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="text-xl font-bold mb-4">Progressive Overload Settings</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-semibold">Minimum Reps</span>
+                  <span className="label-text-alt">Sets below this will not trigger notes</span>
+                </label>
+                <input 
+                  type="number" 
+                  className="input input-bordered w-full"
+                  value={minReps}
+                  onChange={(e) => setMinReps(Math.max(1, parseInt(e.target.value) || 1))}
+                  min="1"
+                />
+              </div>
+              
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-semibold">Maximum Reps</span>
+                  <span className="label-text-alt">Sets at or above (max-1) will suggest increasing weight</span>
+                </label>
+                <input 
+                  type="number" 
+                  className="input input-bordered w-full"
+                  value={maxReps}
+                  onChange={(e) => setMaxReps(Math.max(minReps + 1, parseInt(e.target.value) || minReps + 1))}
+                  min={minReps + 1}
+                />
+              </div>
+            </div>
+            <div className="mt-2 text-sm text-base-content/70">
+              <p>Notes will be automatically generated based on these ranges:</p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>If all sets are {maxReps-1}+ reps: "Increase weight next session"</li>
+                <li>If sets are within range: "Focus on adding reps"</li>
+                <li>If any sets are below {minReps} reps: No note will be added</li>
+              </ul>
             </div>
           </div>
         </div>
