@@ -10,7 +10,7 @@ interface Client {
   last_name: string;
   email: string;
   active: boolean;
-  trainerize_id: string;  // Add this field since we need it for the API calls
+  trainerize_id: string;
 }
 
 export default function ReportsPage() {
@@ -21,7 +21,8 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [clients, setClients] = useState<Client[]>([]);
-  const [reportData, setReportData] = useState<any>(null);
+  const [reportData, setReportData] = useState<Record<string, any>>({});
+  const [generatingProgress, setGeneratingProgress] = useState<Record<string, boolean>>({});
 
   // Fetch clients from Supabase
   const fetchClients = useCallback(async () => {
@@ -54,171 +55,141 @@ export default function ReportsPage() {
   }, [fetchClients]);
 
   const handleClientSelect = (clientId: string) => {
-    // Since we're only allowing one client at a time for now
-    setSelectedClients([clientId]);
+    setSelectedClients(prev => 
+      prev.includes(clientId) 
+        ? prev.filter(id => id !== clientId)
+        : [...prev, clientId]
+    );
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      // For now, just select the first client if selecting all
-      if (filteredClients.length > 0) {
-        setSelectedClients([filteredClients[0].id]);
-      }
+      setSelectedClients(filteredClients.map(client => client.id));
     } else {
       setSelectedClients([]);
     }
   };
 
-  const generateReport = async () => {
-    if (selectedClients.length === 0 || !startDate || !endDate) {
-      toast.error('Please select a client and date range');
-      return;
-    }
-
-    const selectedClient = selectedClients[0]; // Get the first (and only) selected client
-    const client = clients.find(c => c.id === selectedClient);
-    
-    if (!client?.trainerize_id) {
-      toast.error('Selected client does not have a Trainerize ID');
-      return;
-    }
-
-    setIsLoading(true);
-    setReportData(null);
-
+  const generateReportForClient = async (client: Client) => {
     try {
-      console.log('Fetching body stats...');
+      if (!client?.trainerize_id) {
+        throw new Error('Client does not have a Trainerize ID');
+      }
+
       // Fetch body stats
       const bodyStatsResponse = await fetch('/api/trainerize/bodystats', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userID: client.trainerize_id,
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
+          startDate: startDate!.toISOString().split('T')[0],
+          endDate: endDate!.toISOString().split('T')[0],
           unitBodystats: 'inches',
           unitWeight: 'lbs',
         }),
       });
 
-      if (!bodyStatsResponse.ok) {
-        const error = await bodyStatsResponse.json();
-        throw new Error(`Failed to fetch body stats: ${error.error}`);
-      }
-
-      console.log('Fetching health data...');
       // Fetch health data
       const healthDataResponse = await fetch('/api/trainerize/health-data', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userID: client.trainerize_id,
           type: 'step',
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
+          startDate: startDate!.toISOString().split('T')[0],
+          endDate: endDate!.toISOString().split('T')[0],
         }),
       });
 
-      if (!healthDataResponse.ok) {
-        const error = await healthDataResponse.json();
-        throw new Error(`Failed to fetch health data: ${error.error}`);
-      }
-
-      console.log('Fetching nutrition data...');
       // Fetch nutrition data
       const nutritionDataResponse = await fetch('/api/trainerize/nutrition', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userID: client.trainerize_id,
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
+          startDate: startDate!.toISOString().split('T')[0],
+          endDate: endDate!.toISOString().split('T')[0],
         }),
       });
 
-      if (!nutritionDataResponse.ok) {
-        const error = await nutritionDataResponse.json();
-        throw new Error(`Failed to fetch nutrition data: ${error.error}`);
-      }
-
-      console.log('Fetching workout data...');
       // Fetch workout data
       const workoutDataResponse = await fetch('/api/trainerize/workouts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userID: client.trainerize_id,
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
+          startDate: startDate!.toISOString().split('T')[0],
+          endDate: endDate!.toISOString().split('T')[0],
         }),
       });
 
-      if (!workoutDataResponse.ok) {
-        const error = await workoutDataResponse.json();
-        throw new Error(`Failed to fetch workout data: ${error.error}`);
-      }
+      const [bodyStatsData, healthData, nutritionData, workoutData] = await Promise.all([
+        bodyStatsResponse.json(),
+        healthDataResponse.json(),
+        nutritionDataResponse.json(),
+        workoutDataResponse.json()
+      ]);
 
-      console.log('Processing responses...');
-      // First get all responses
-      const bodyStatsData = await bodyStatsResponse.json();
-      const healthData = await healthDataResponse.json();
-      const nutritionData = await nutritionDataResponse.json();
-      const workoutData = await workoutDataResponse.json();
-
-      console.log('Response data:', {
-        bodyStatsData,
-        healthData,
-        nutritionData,
-        workoutData
-      });
-
-      console.log('Setting report data...');
-      const newReportData = {
+      const clientReportData = {
         bodyStats: bodyStatsData,
         healthData,
         nutritionData,
         workoutData,
       };
-      
-      setReportData(newReportData);
 
-      console.log('Storing report...');
       // Store the report in the database
-      const storeResponse = await fetch('/api/reports/store', {
+      await fetch('/api/reports/store', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clientId: selectedClient,
-          reportData: newReportData,
+          clientId: client.id,
+          reportData: clientReportData,
           dateRange: {
-            from: startDate.toISOString(),
-            to: endDate.toISOString(),
+            from: startDate!.toISOString(),
+            to: endDate!.toISOString(),
           },
         }),
       });
 
-      if (!storeResponse.ok) {
-        const error = await storeResponse.json();
-        throw new Error(`Failed to store report: ${error.error}`);
-      }
-
-      toast.success('Report generated successfully');
+      return clientReportData;
     } catch (error) {
-      console.error('Error generating report:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to generate report');
-    } finally {
-      setIsLoading(false);
+      console.error(`Error generating report for ${client.first_name} ${client.last_name}:`, error);
+      throw error;
     }
+  };
+
+  const generateReport = async () => {
+    if (selectedClients.length === 0 || !startDate || !endDate) {
+      toast.error('Please select at least one client and date range');
+      return;
+    }
+
+    setIsLoading(true);
+    setReportData({});
+
+    const selectedClientObjects = clients.filter(c => selectedClients.includes(c.id));
+    const newReportData: Record<string, any> = {};
+    const progress: Record<string, boolean> = {};
+
+    for (const client of selectedClientObjects) {
+      try {
+        progress[client.id] = true;
+        setGeneratingProgress({...progress});
+        
+        const clientReport = await generateReportForClient(client);
+        newReportData[client.id] = clientReport;
+        
+        toast.success(`Report generated for ${client.first_name} ${client.last_name}`);
+      } catch (error) {
+        toast.error(`Failed to generate report for ${client.first_name} ${client.last_name}`);
+      } finally {
+        progress[client.id] = false;
+        setGeneratingProgress({...progress});
+      }
+    }
+
+    setReportData(newReportData);
+    setIsLoading(false);
   };
 
   const filteredClients = clients.filter(client =>
@@ -228,13 +199,18 @@ export default function ReportsPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Generate Report</h1>
+      <h1 className="text-3xl font-bold mb-6">Generate Reports</h1>
       
       <div className="bg-base-100 p-6 rounded-lg shadow-xl border border-base-300 space-y-6">
         {/* Client Selection */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
-            <h2 className="text-xl font-bold mb-4">Select Client</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Select Clients</h2>
+              <div className="text-sm text-base-content/70">
+                {selectedClients.length} client{selectedClients.length !== 1 ? 's' : ''} selected
+              </div>
+            </div>
             
             {/* Search Bar */}
             <div className="flex items-center justify-between gap-4 mb-6">
@@ -262,7 +238,7 @@ export default function ReportsPage() {
                         <input 
                           type="checkbox" 
                           className="checkbox"
-                          checked={selectedClients.length === 1 && filteredClients.length > 0}
+                          checked={selectedClients.length === filteredClients.length && filteredClients.length > 0}
                           onChange={handleSelectAll}
                         />
                       </label>
@@ -270,6 +246,7 @@ export default function ReportsPage() {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Trainerize ID</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -288,11 +265,20 @@ export default function ReportsPage() {
                       <td>{`${client.first_name} ${client.last_name}`}</td>
                       <td>{client.email}</td>
                       <td>{client.trainerize_id || 'Not set'}</td>
+                      <td>
+                        {generatingProgress[client.id] ? (
+                          <span className="loading loading-spinner loading-xs"></span>
+                        ) : reportData[client.id] ? (
+                          <span className="text-success">Complete</span>
+                        ) : selectedClients.includes(client.id) ? (
+                          <span className="text-base-content/50">Pending</span>
+                        ) : null}
+                      </td>
                     </tr>
                   ))}
                   {filteredClients.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="text-center py-4">
+                      <td colSpan={5} className="text-center py-4">
                         {clients.length === 0 ? 'No clients imported yet' : 'No clients found matching your search'}
                       </td>
                     </tr>
@@ -337,25 +323,35 @@ export default function ReportsPage() {
             onClick={generateReport}
             disabled={selectedClients.length === 0 || !startDate || !endDate || isLoading}
           >
-            {isLoading ? 'Generating Report...' : 'Generate Report'}
+            {isLoading ? 'Generating Reports...' : 'Generate Reports'}
           </button>
         </div>
       </div>
 
       {/* Report Results Section */}
-      {reportData ? (
-        <div className="mt-8">
-          <div className="bg-base-100 p-6 rounded-lg shadow-xl border border-base-300">
-            <h2 className="text-xl font-semibold mb-4">Report Results</h2>
-            <pre className="whitespace-pre-wrap">{JSON.stringify(reportData, null, 2)}</pre>
-          </div>
+      {Object.keys(reportData).length > 0 && (
+        <div className="mt-8 space-y-6">
+          {Object.entries(reportData).map(([clientId, data]) => {
+            const client = clients.find(c => c.id === clientId);
+            return (
+              <div key={clientId} className="bg-base-100 p-6 rounded-lg shadow-xl border border-base-300">
+                <h2 className="text-xl font-semibold mb-4">
+                  Report for {client?.first_name} {client?.last_name}
+                </h2>
+                <pre className="whitespace-pre-wrap">{JSON.stringify(data, null, 2)}</pre>
+              </div>
+            );
+          })}
         </div>
-      ) : (
+      )}
+      
+      {!isLoading && selectedClients.length > 0 && Object.keys(reportData).length === 0 && (
         <div className="mt-8 bg-base-100 p-6 rounded-lg shadow-xl border border-base-300">
-          <h2 className="text-xl font-semibold mb-4">Report Results</h2>
           <div className="alert alert-info">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span>Select a client and timeframe above to generate a report</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Select a date range and click Generate Reports to create reports for the selected clients</span>
           </div>
         </div>
       )}
