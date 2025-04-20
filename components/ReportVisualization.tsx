@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ExerciseNotes } from './ExerciseNotes';
 
 interface WorkoutExercise {
@@ -77,17 +77,6 @@ interface WeeklyAverage {
 }
 
 export function ReportVisualization({ data }: ReportVisualizationProps) {
-  const [workoutNotes, setWorkoutNotes] = useState<Record<string, string>>({});
-
-  const handleSaveNotes = (exerciseId: number, notes: string) => {
-    setWorkoutNotes(prev => ({
-      ...prev,
-      [exerciseId]: notes
-    }));
-    // Here you would typically make an API call to save the notes
-    // For now, we're just storing them in component state
-  };
-
   // Process all data into a single daily format
   const processedDailyData = useMemo(() => {
     const dailyData = new Map<string, DailyData>();
@@ -427,7 +416,7 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                             <ExerciseNotes
                                               exerciseId={idx}
                                               initialNotes={exercise.notes}
-                                              onSave={(notes) => handleSaveNotes(idx, notes)}
+                                              onSave={() => {}}
                                             />
                                           </td>
                                         </tr>
@@ -470,7 +459,7 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                 </tr>
               </thead>
               <tbody>
-                {weeklyAverages.map((week, index) => {
+                {weeklyAverages.map((week) => {
                   // Calculate number of workouts for this week
                   const weekStart = new Date(week.weekStart);
                   const weekEnd = new Date(week.weekEnd);
@@ -636,7 +625,7 @@ export function ReportVisualization({ data }: ReportVisualizationProps) {
                                                 <ExerciseNotes
                                                   exerciseId={idx}
                                                   initialNotes={exercise.notes}
-                                                  onSave={(notes) => handleSaveNotes(idx, notes)}
+                                                  onSave={() => {}}
                                                 />
                                               </td>
                                             </tr>
