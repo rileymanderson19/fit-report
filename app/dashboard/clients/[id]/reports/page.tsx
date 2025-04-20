@@ -332,11 +332,6 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
           {selectedReport ? (
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <h2 className="card-title mb-4">Report Details</h2>
-                <div className="text-sm text-base-content/60 mb-6">
-                  <p>From: {new Date(selectedReport.date_range_start).toLocaleDateString()}</p>
-                  <p>To: {new Date(selectedReport.date_range_end).toLocaleDateString()}</p>
-                </div>
                 <ReportVisualization 
                   data={selectedReport.report_data}
                   onDeleteWorkout={handleDeleteWorkout}
