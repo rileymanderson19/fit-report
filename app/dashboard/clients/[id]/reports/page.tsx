@@ -338,10 +338,10 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Reports List */}
         <div className="lg:col-span-1">
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="card-title">Available Reports</h2>
+          <div className="card bg-base-200/50 backdrop-blur-sm shadow-xl">
+            <div className="card-body p-4">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="card-title text-lg font-semibold">Available Reports</h2>
                 {selectedReport && (
                   <button
                     className={`btn btn-primary btn-sm ${isCapturing ? 'loading' : ''}`}
@@ -350,11 +350,10 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
                   >
                     {isCapturing ? 'Capturing...' : (
                       <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M3 3a2 2 0 012-2h10a2 2 0 012 2v1h2a2 2 0 012 2v12a2 2 0 01-2 2H3a2 2 0 01-2-2V4a2 2 0 012-2zm12 1v1H5V4a1 1 0 011-1h8a1 1 0 011 1zM4 7v10h12V7H4z" />
                         </svg>
-                        Capture Report
+                        Capture
                       </>
                     )}
                   </button>
@@ -367,29 +366,32 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
                   <span>No reports available yet</span>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {reports.map((report) => (
                     <div
                       key={report.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border ${
-                        selectedReport?.id === report.id ? 'bg-primary/10 border-primary' : 'bg-base-100 border-base-300'
-                      } hover:bg-base-200 transition-colors`}
+                      className={`group relative flex flex-col p-4 rounded-xl transition-all duration-200 ${
+                        selectedReport?.id === report.id 
+                          ? 'bg-primary/10 border-2 border-primary shadow-lg' 
+                          : 'bg-base-200 hover:bg-base-300 border border-base-300'
+                      }`}
                     >
                       <button
                         className="flex-1 text-left"
                         onClick={() => setSelectedReport(report)}
                       >
-                        <div className="font-semibold">
+                        <div className="font-semibold text-base">
                           {new Date(report.date_range_start).toLocaleDateString()} - {new Date(report.date_range_end).toLocaleDateString()}
                         </div>
-                        <div className="text-sm opacity-70">
-                          Generated: {new Date(report.created_at).toLocaleDateString()}
+                        <div className="text-sm text-base-content/60 mt-1">
+                          Generated {new Date(report.created_at).toLocaleDateString()}
                         </div>
                       </button>
                       <button
-                        className={`btn btn-sm btn-error btn-outline ml-2`}
+                        className={`absolute top-2 right-2 btn btn-circle btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-error hover:text-white`}
                         onClick={() => handleDeleteReport(report)}
                         disabled={isDeleting !== null}
+                        title="Delete report"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

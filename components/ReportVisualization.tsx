@@ -353,17 +353,17 @@ export function ReportVisualization({
 
           {/* Workouts Section */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">Daily Workouts</h3>
-            <div className="space-y-6">
+            <h3 className="text-xl font-semibold mb-6">Daily Workouts</h3>
+            <div className="space-y-4">
               {processedDailyData
                 .filter(day => day.workouts && day.workouts.length > 0)
                 .map((day) => (
                   <div key={day.date} className="card bg-base-200">
-                    <div className="card-body">
-                      <h4 className="card-title text-lg mb-4">{formatDate(day.date)}</h4>
+                    <div className="card-body p-6">
+                      <h4 className="card-title text-lg mb-6">{formatDate(day.date)}</h4>
                       {day.workouts!.map((workout) => (
-                        <div key={workout.id} className="mb-6 last:mb-0">
-                          <div className="flex items-center justify-between mb-4">
+                        <div key={workout.id} className="mb-4 last:mb-0">
+                          <div className="flex items-center justify-between mb-6">
                             <h5 className="text-lg font-medium">{workout.title}</h5>
                             {!isScreenshotMode && (
                               <div className="flex gap-2">
@@ -381,12 +381,12 @@ export function ReportVisualization({
                           </div>
                           {workout.exercises && workout.exercises.length > 0 && (
                             <div className="overflow-x-auto">
-                              <table className="w-full">
+                              <table className="table w-full">
                                 <thead>
                                   <tr className="border-b-2 border-base-300">
-                                    <th className="py-4 px-4 text-left font-semibold text-base">Exercise</th>
-                                    <th className="py-4 px-6 text-right font-semibold text-base">Sets</th>
-                                    <th className="py-4 px-4 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
+                                    <th className="py-4 px-6 text-left font-semibold text-base w-1/4">Exercise</th>
+                                    <th className="py-4 px-6 text-right font-semibold text-base w-[200px] whitespace-nowrap">Sets</th>
+                                    <th className="py-4 px-6 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-base-300">
@@ -395,73 +395,48 @@ export function ReportVisualization({
                                       !exercise.name.toLowerCase().includes('walking') &&
                                       !exercise.name.toLowerCase().includes('walk')
                                     )
-                                    .map((exercise, idx) => {
-                                      // Group sets that have the same weight and reps
-                                      const groupedSets = exercise.stats?.reduce((acc, stat) => {
-                                        const key = `${stat.weight}-${stat.reps}-${stat.time}-${stat.distance}`;
-                                        if (!acc[key]) {
-                                          acc[key] = {
-                                            count: 1,
-                                            weight: stat.weight,
-                                            reps: stat.reps,
-                                            time: stat.time,
-                                            distance: stat.distance
-                                          };
-                                        } else {
-                                          acc[key].count++;
-                                        }
-                                        return acc;
-                                      }, {} as Record<string, { count: number; weight?: number; reps?: number; time?: number; distance?: number }>);
-
-                                      return (
-                                        <tr key={idx} className="hover:bg-base-200/50">
-                                          <td className="py-4 px-4 text-primary font-medium">
-                                            <div className="flex items-center gap-2">
-                                              <span>{exercise.name}</span>
-                                              {!isScreenshotMode && (
-                                                <button
-                                                  onClick={() => {
-                                                    // Delete from all workouts
-                                                    processedDailyData.forEach(day => {
-                                                      day.workouts = day.workouts?.filter(w => w.id !== workout.id) || [];
-                                                    });
-                                                    onDeleteWorkout?.(workout.id);
-                                                  }}
-                                                  className="btn btn-xs btn-ghost text-error"
-                                                  title="Delete exercise from all workouts"
-                                                >
-                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                  </svg>
-                                                </button>
-                                              )}
-                                            </div>
-                                          </td>
-                                          <td className="py-4 px-6 text-right">
-                                            <div className="space-y-2">
-                                            {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
-                                                <div key={groupIdx} className="text-sm">
-                                                {[...Array(group.count)].map((_, i) => (
-                                                    <div key={i} className="font-medium">
-                                                      {group.reps || ''}{group.weight ? ` × ${group.weight} lbs` : ''}
-                                                    {group.time ? ` for ${group.time}s` : ''}
-                                                    {group.distance ? ` for ${group.distance} miles` : ''}
-                                                  </div>
-                                                ))}
+                                    .map((exercise, idx) => (
+                                      <tr key={idx} className="hover:bg-base-200/50">
+                                        <td className="py-4 px-6">
+                                          <div className="flex items-center gap-3">
+                                            <span className="text-primary font-medium">{exercise.name}</span>
+                                            {!isScreenshotMode && (
+                                              <button
+                                                onClick={() => {
+                                                  processedDailyData.forEach(day => {
+                                                    day.workouts = day.workouts?.filter(w => w.id !== workout.id) || [];
+                                                  });
+                                                  onDeleteWorkout?.(workout.id);
+                                                }}
+                                                className="btn btn-xs btn-ghost text-error"
+                                                title="Delete exercise from all workouts"
+                                              >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                </svg>
+                                              </button>
+                                            )}
+                                          </div>
+                                        </td>
+                                        <td className="py-4 px-6 text-right">
+                                          <div className="flex flex-col items-end gap-1.5">
+                                          {exercise.stats?.map((stat, groupIdx) => (
+                                              <div key={groupIdx} className="font-medium whitespace-nowrap">
+                                                {stat.reps} × {stat.weight}
+                                                <span className="text-sm ml-1 text-base-content/80">lbs</span>
                                               </div>
-                                            ))}
-                                            </div>
-                                          </td>
-                                          <td className="py-4 px-4">
-                                            <ExerciseNotes
-                                              exerciseId={idx}
-                                              initialNotes={exercise.notes}
-                                              onSave={() => {}}
-                                            />
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
+                                          ))}
+                                          </div>
+                                        </td>
+                                        <td className="py-4 px-6">
+                                          <ExerciseNotes
+                                            exerciseId={idx}
+                                            initialNotes={exercise.notes}
+                                            onSave={() => {}}
+                                          />
+                                        </td>
+                                      </tr>
+                                    ))}
                                 </tbody>
                               </table>
                             </div>
@@ -704,16 +679,16 @@ export function ReportVisualization({
                         </div>
                         {sortedWorkouts[0].exercises && sortedWorkouts[0].exercises.length > 0 && (
                           <div className="overflow-x-auto">
-                            <table className="w-full">
+                            <table className="table w-full">
                               <thead>
                                 <tr className="border-b border-base-300">
-                                  <th className="py-6 px-4 text-left font-semibold text-base w-1/4">Exercise</th>
+                                  <th className="py-6 px-6 text-left font-semibold text-base w-1/4">Exercise</th>
                                   {[...sortedWorkouts].reverse().map(workout => (
                                     <th key={workout.id} className="py-6 px-6 text-right font-semibold text-base w-[200px] whitespace-nowrap">
                                       Sets ({formatDate(workout.date)})
                                     </th>
                                   ))}
-                                  <th className="py-6 px-4 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
+                                  <th className="py-6 px-6 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-base-300">
@@ -724,8 +699,8 @@ export function ReportVisualization({
                                   )
                                   .map((exercise, idx) => (
                                     <tr key={idx} className="hover:bg-base-200/70">
-                                      <td className="py-6 px-4">
-                                        <div className="flex items-center gap-2">
+                                      <td className="py-6 px-6">
+                                        <div className="flex items-center gap-3">
                                           <span className="text-primary font-medium">{exercise.name}</span>
                                           {!isScreenshotMode && (
                                             <button
@@ -764,24 +739,20 @@ export function ReportVisualization({
 
                                         return (
                                           <td key={workout.id} className="py-6 px-6 text-right">
-                                            <div className="flex flex-col items-end justify-center gap-2">
+                                            <div className="flex flex-col items-end gap-1.5">
                                               {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
-                                                <div key={groupIdx} className="text-sm">
-                                                  {[...Array(group.count)].map((_, i) => (
-                                                    <div key={i} className="font-medium whitespace-nowrap">
-                                                      {group.reps || ''}{group.weight ? ` × ${group.weight}` : ''}
-                                                      {group.weight ? <span className="text-xs ml-0.5">lbs</span> : ''}
-                                                      {group.time ? <span className="text-xs ml-0.5">{group.time}s</span> : ''}
-                                                      {group.distance ? <span className="text-xs ml-0.5">{group.distance}mi</span> : ''}
-                                                    </div>
-                                                  ))}
+                                                <div key={groupIdx} className="font-medium whitespace-nowrap">
+                                                  {group.reps || ''}{group.weight ? ` × ${group.weight}` : ''}
+                                                  {group.weight ? <span className="text-sm ml-1 text-base-content/80">lbs</span> : ''}
+                                                  {group.time ? <span className="text-sm ml-1 text-base-content/80">{group.time}s</span> : ''}
+                                                  {group.distance ? <span className="text-sm ml-1 text-base-content/80">{group.distance}mi</span> : ''}
                                                 </div>
                                               ))}
                                             </div>
                                           </td>
                                         );
                                       })}
-                                      <td className="py-6 px-4">
+                                      <td className="py-6 px-6">
                                         <ExerciseNotes
                                           exerciseId={idx}
                                           initialNotes={exercise.notes}
