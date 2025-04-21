@@ -65,6 +65,7 @@ interface ReportVisualizationProps {
   };
   onDeleteWorkout?: (workoutId: number) => void;
   onDeleteExercise?: (workoutId: number, exerciseName: string) => void;
+  isScreenshotMode?: boolean;
 }
 
 interface WeeklyAverage {
@@ -78,7 +79,12 @@ interface WeeklyAverage {
   avgFats: number;
 }
 
-export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }: ReportVisualizationProps) {
+export function ReportVisualization({ 
+  data, 
+  onDeleteWorkout, 
+  onDeleteExercise,
+  isScreenshotMode = false 
+}: ReportVisualizationProps) {
   // Process all data into a single daily format
   const processedDailyData = useMemo(() => {
     const dailyData = new Map<string, DailyData>();
@@ -359,17 +365,19 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
                         <div key={workout.id} className="mb-6 last:mb-0">
                           <div className="flex items-center justify-between mb-4">
                             <h5 className="text-lg font-medium">{workout.title}</h5>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => onDeleteWorkout?.(workout.id)}
-                                className="btn btn-sm btn-ghost text-error"
-                                title={`Delete workout from ${formatDate(workout.date)}`}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            </div>
+                            {!isScreenshotMode && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => onDeleteWorkout?.(workout.id)}
+                                  className="btn btn-sm btn-ghost text-error"
+                                  title={`Delete workout from ${formatDate(workout.date)}`}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
                           </div>
                           {workout.exercises && workout.exercises.length > 0 && (
                             <div className="overflow-x-auto">
@@ -410,21 +418,23 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
                                           <td className="py-4 px-4 text-primary font-medium">
                                             <div className="flex items-center gap-2">
                                               <span>{exercise.name}</span>
-                                              <button
-                                                onClick={() => {
-                                                  // Delete from all workouts
-                                                  processedDailyData.forEach(day => {
-                                                    day.workouts = day.workouts?.filter(w => w.id !== workout.id) || [];
-                                                  });
-                                                  onDeleteWorkout?.(workout.id);
-                                                }}
-                                                className="btn btn-xs btn-ghost text-error"
-                                                title="Delete exercise from all workouts"
-                                              >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                </svg>
-                                              </button>
+                                              {!isScreenshotMode && (
+                                                <button
+                                                  onClick={() => {
+                                                    // Delete from all workouts
+                                                    processedDailyData.forEach(day => {
+                                                      day.workouts = day.workouts?.filter(w => w.id !== workout.id) || [];
+                                                    });
+                                                    onDeleteWorkout?.(workout.id);
+                                                  }}
+                                                  className="btn btn-xs btn-ghost text-error"
+                                                  title="Delete exercise from all workouts"
+                                                >
+                                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                  </svg>
+                                                </button>
+                                              )}
                                             </div>
                                           </td>
                                           <td className="py-4 px-6 text-right">
@@ -473,57 +483,61 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
         // Multi-Week View
         <div className="space-y-8">
           {/* Weekly Averages */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto mb-8">
             <h3 className="text-xl font-semibold mb-4">Weekly Averages</h3>
-            <table className="table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th>Week</th>
-                  <th>Weight (lbs)</th>
-                  <th>Steps</th>
-                  <th>Calories</th>
-                  <th>Protein (g)</th>
-                  <th>Carbs (g)</th>
-                  <th>Fats (g)</th>
-                  <th>Workouts</th>
-                </tr>
-              </thead>
-              <tbody>
-                {weeklyAverages.map((week) => {
-                  // Calculate number of workouts for this week
-                  const weekStart = new Date(week.weekStart);
-                  const weekEnd = new Date(week.weekEnd);
-                  const workoutsThisWeek = processedDailyData
-                    .filter(day => {
-                      const date = new Date(day.date);
-                      return date >= weekStart && date <= weekEnd && day.workouts && day.workouts.length > 0;
-                    })
-                    .reduce((total, day) => total + (day.workouts?.length || 0), 0);
-
-                  return (
-                    <tr key={week.weekStart}>
-                      <td>{`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}</td>
-                      <td>{formatNumber(week.avgWeight)}</td>
-                      <td>{formatNumber(week.avgSteps, 0)}</td>
-                      <td>{formatNumber(week.avgCalories, 0)}</td>
-                      <td>{formatNumber(week.avgProtein)}</td>
-                      <td>{formatNumber(week.avgCarbs)}</td>
-                      <td>{formatNumber(week.avgFats)}</td>
-                      <td>{workoutsThisWeek} workouts</td>
+            <div className="card bg-base-200/50">
+              <div className="card-body p-0">
+                <table className="table w-full">
+                  <thead>
+                    <tr className="border-b border-base-300">
+                      <th className="bg-transparent">Week</th>
+                      <th className="bg-transparent">Weight (lbs)</th>
+                      <th className="bg-transparent">Steps</th>
+                      <th className="bg-transparent">Calories</th>
+                      <th className="bg-transparent">Protein (g)</th>
+                      <th className="bg-transparent">Carbs (g)</th>
+                      <th className="bg-transparent">Fats (g)</th>
+                      <th className="bg-transparent">Workouts</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {weeklyAverages.map((week, idx) => {
+                      // Calculate number of workouts for this week
+                      const weekStart = new Date(week.weekStart);
+                      const weekEnd = new Date(week.weekEnd);
+                      const workoutsThisWeek = processedDailyData
+                        .filter(day => {
+                          const date = new Date(day.date);
+                          return date >= weekStart && date <= weekEnd && day.workouts && day.workouts.length > 0;
+                        })
+                        .reduce((total, day) => total + (day.workouts?.length || 0), 0);
+
+                      return (
+                        <tr key={week.weekStart} className={idx % 2 === 0 ? 'bg-transparent' : 'bg-base-200/30'}>
+                          <td>{`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}</td>
+                          <td>{formatNumber(week.avgWeight)}</td>
+                          <td>{formatNumber(week.avgSteps, 0)}</td>
+                          <td>{formatNumber(week.avgCalories, 0)}</td>
+                          <td>{formatNumber(week.avgProtein)}</td>
+                          <td>{formatNumber(week.avgCarbs)}</td>
+                          <td>{formatNumber(week.avgFats)}</td>
+                          <td>{workoutsThisWeek} workouts</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           {/* Week-over-Week Changes */}
           {weeklyChanges.length > 0 && (
             <div>
               <h3 className="text-xl font-semibold mb-6">Week-over-Week Changes</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-6">
                 {/* Avg Weight */}
-                <div className="card bg-base-200 shadow-lg">
+                <div className="card bg-base-200/50 shadow-lg">
                   <div className="card-body">
                     <div className="text-sm text-base-content/60">Avg Weight</div>
                     <div className="flex items-baseline gap-2">
@@ -541,7 +555,7 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
                 </div>
 
                 {/* Avg Steps */}
-                <div className="card bg-base-200 shadow-lg">
+                <div className="card bg-base-200/50 shadow-lg">
                   <div className="card-body">
                     <div className="text-sm text-base-content/60">Avg Steps</div>
                     <div className="flex items-baseline gap-2">
@@ -559,7 +573,7 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
                 </div>
 
                 {/* Avg Calories */}
-                <div className="card bg-base-200 shadow-lg">
+                <div className="card bg-base-200/50 shadow-lg">
                   <div className="card-body">
                     <div className="text-sm text-base-content/60">Avg Calories</div>
                     <div className="flex items-baseline gap-2">
@@ -577,7 +591,7 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
                 </div>
 
                 {/* Avg Protein */}
-                <div className="card bg-base-200 shadow-lg">
+                <div className="card bg-base-200/50 shadow-lg">
                   <div className="card-body">
                     <div className="text-sm text-base-content/60">Avg Protein</div>
                     <div className="flex items-baseline gap-2">
@@ -595,7 +609,7 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
                 </div>
 
                 {/* Avg Carbs */}
-                <div className="card bg-base-200 shadow-lg">
+                <div className="card bg-base-200/50 shadow-lg">
                   <div className="card-body">
                     <div className="text-sm text-base-content/60">Avg Carbs</div>
                     <div className="flex items-baseline gap-2">
@@ -613,7 +627,7 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
                 </div>
 
                 {/* Avg Fats */}
-                <div className="card bg-base-200 shadow-lg">
+                <div className="card bg-base-200/50 shadow-lg">
                   <div className="card-body">
                     <div className="text-sm text-base-content/60">Avg Fats</div>
                     <div className="flex items-baseline gap-2">
@@ -667,30 +681,32 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
                   );
 
                   return (
-                    <div key={title} className="card bg-base-200">
+                    <div key={title} className="card bg-base-200/50 mb-6">
                       <div className="card-body">
                         <div className="flex justify-between items-center mb-4">
-                          <h4 className="card-title">{title}</h4>
-                          <div className="flex gap-2">
-                            {sortedWorkouts.map(workout => (
-                              <button
-                                key={workout.id}
-                                onClick={() => onDeleteWorkout?.(workout.id)}
-                                className="btn btn-sm btn-ghost text-error"
-                                title={`Delete workout from ${formatDate(workout.date)}`}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            ))}
-                          </div>
+                          <h4 className="card-title text-xl">{title}</h4>
+                          {!isScreenshotMode && (
+                            <div className="flex gap-2">
+                              {sortedWorkouts.map(workout => (
+                                <button
+                                  key={workout.id}
+                                  onClick={() => onDeleteWorkout?.(workout.id)}
+                                  className="btn btn-sm btn-ghost text-error"
+                                  title={`Delete workout from ${formatDate(workout.date)}`}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         {sortedWorkouts[0].exercises && sortedWorkouts[0].exercises.length > 0 && (
                           <div className="overflow-x-auto">
                             <table className="w-full">
                               <thead>
-                                <tr className="border-b-2 border-base-300">
+                                <tr className="border-b border-base-300">
                                   <th className="py-6 px-4 text-left font-semibold text-base w-1/4">Exercise</th>
                                   {[...sortedWorkouts].reverse().map(workout => (
                                     <th key={workout.id} className="py-6 px-6 text-right font-semibold text-base w-[200px] whitespace-nowrap">
@@ -707,24 +723,25 @@ export function ReportVisualization({ data, onDeleteWorkout, onDeleteExercise }:
                                     !exercise.name.toLowerCase().includes('walk')
                                   )
                                   .map((exercise, idx) => (
-                                    <tr key={idx} className="hover:bg-base-200/50">
+                                    <tr key={idx} className="hover:bg-base-200/70">
                                       <td className="py-6 px-4">
                                         <div className="flex items-center gap-2">
                                           <span className="text-primary font-medium">{exercise.name}</span>
-                                          <button
-                                            onClick={() => {
-                                              // Delete from all workouts
-                                              sortedWorkouts.forEach(workout => {
-                                                onDeleteExercise?.(workout.id, exercise.name);
-                                              });
-                                            }}
-                                            className="btn btn-xs btn-ghost text-error"
-                                            title="Delete exercise from all workouts"
-                                          >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                            </svg>
-                                          </button>
+                                          {!isScreenshotMode && (
+                                            <button
+                                              onClick={() => {
+                                                sortedWorkouts.forEach(workout => {
+                                                  onDeleteExercise?.(workout.id, exercise.name);
+                                                });
+                                              }}
+                                              className="btn btn-xs btn-ghost text-error"
+                                              title="Delete exercise from all workouts"
+                                            >
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                              </svg>
+                                            </button>
+                                          )}
                                         </div>
                                       </td>
                                       {[...sortedWorkouts].reverse().map(workout => {

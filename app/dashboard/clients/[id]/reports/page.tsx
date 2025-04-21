@@ -32,6 +32,7 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   useEffect(() => {
     const fetchClientAndReports = async () => {
@@ -201,6 +202,62 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
     }
   };
 
+  const captureAndSendReport = async () => {
+    if (!selectedReport || !client) return;
+    
+    setIsCapturing(true);
+    try {
+      // Wait for re-render with screenshot mode
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Get the report element
+      const reportElement = document.getElementById('report-container');
+      if (!reportElement) throw new Error('Report container not found');
+
+      // Apply dark theme styles
+      const darkThemeStyles = document.createElement('style');
+      darkThemeStyles.textContent = `
+        #report-container {
+          background: #1d232a !important;
+        }
+        #report-container .card {
+          background-color: #191e24 !important;
+        }
+        #report-container tr:nth-child(even) {
+          background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        #report-container .border-base-300 {
+          border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+      `;
+      document.head.appendChild(darkThemeStyles);
+
+      // Use html-to-image to capture the report
+      const canvas = await import('html-to-image');
+      const dataUrl = await canvas.toPng(reportElement, {
+        quality: 1,
+        pixelRatio: 2,
+        backgroundColor: '#1d232a'
+      });
+
+      // Clean up styles
+      document.head.removeChild(darkThemeStyles);
+
+      // Create a download link
+      const link = document.createElement('a');
+      link.download = `${client.first_name}_${client.last_name}_report_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      toast.success('Report captured successfully');
+    } catch (error) {
+      console.error('Error capturing report:', error);
+      toast.error('Failed to capture report');
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -283,7 +340,26 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
         <div className="lg:col-span-1">
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title mb-4">Available Reports</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="card-title">Available Reports</h2>
+                {selectedReport && (
+                  <button
+                    className={`btn btn-primary btn-sm ${isCapturing ? 'loading' : ''}`}
+                    onClick={captureAndSendReport}
+                    disabled={isCapturing}
+                  >
+                    {isCapturing ? 'Capturing...' : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                        Capture Report
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
               
               {reports.length === 0 ? (
                 <div className="alert alert-info">
@@ -330,12 +406,13 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
         {/* Report Visualization */}
         <div className="lg:col-span-3">
           {selectedReport ? (
-            <div className="card bg-base-100 shadow-xl">
+            <div id="report-container" className="card bg-base-100 shadow-xl">
               <div className="card-body">
                 <ReportVisualization 
                   data={selectedReport.report_data}
                   onDeleteWorkout={handleDeleteWorkout}
                   onDeleteExercise={handleDeleteExercise}
+                  isScreenshotMode={isCapturing}
                 />
               </div>
             </div>
