@@ -403,8 +403,8 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Report Results Section */}
-      {Object.keys(reportData).length > 0 && (
+      {/* Report Results Section - Only show for single client */}
+      {Object.keys(reportData).length === 1 && (
         <div className="mt-8 space-y-6">
           {Object.entries(reportData).map(([clientId, data]) => {
             const client = clients.find(c => c.id === clientId);

@@ -287,7 +287,10 @@ export function ReportVisualization({
   }, [weeklyAverages]);
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', { 
+    const date = new Date(dateStr);
+    // Add one day to account for timezone offset
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric'
     });
@@ -721,31 +724,15 @@ export function ReportVisualization({
                                       </td>
                                       {[...sortedWorkouts].reverse().map(workout => {
                                         const matchingExercise = workout.exercises?.find(e => e.name === exercise.name);
-                                        const groupedSets = matchingExercise?.stats?.reduce((acc, stat) => {
-                                          const key = `${stat.weight}-${stat.reps}-${stat.time}-${stat.distance}`;
-                                          if (!acc[key]) {
-                                            acc[key] = {
-                                              count: 1,
-                                              weight: stat.weight,
-                                              reps: stat.reps,
-                                              time: stat.time,
-                                              distance: stat.distance
-                                            };
-                                          } else {
-                                            acc[key].count++;
-                                          }
-                                          return acc;
-                                        }, {} as Record<string, { count: number; weight?: number; reps?: number; time?: number; distance?: number }>);
-
                                         return (
                                           <td key={workout.id} className="py-6 px-6 text-right">
                                             <div className="flex flex-col items-end gap-1.5">
-                                              {groupedSets && Object.values(groupedSets).map((group, groupIdx) => (
-                                                <div key={groupIdx} className="font-medium whitespace-nowrap">
-                                                  {group.reps || ''}{group.weight ? ` × ${group.weight}` : ''}
-                                                  {group.weight ? <span className="text-sm ml-1 text-base-content/80">lbs</span> : ''}
-                                                  {group.time ? <span className="text-sm ml-1 text-base-content/80">{group.time}s</span> : ''}
-                                                  {group.distance ? <span className="text-sm ml-1 text-base-content/80">{group.distance}mi</span> : ''}
+                                              {matchingExercise?.stats?.map((stat, statIdx) => (
+                                                <div key={statIdx} className="font-medium whitespace-nowrap">
+                                                  {stat.reps || ''}{stat.weight ? ` × ${stat.weight}` : ''}
+                                                  {stat.weight ? <span className="text-sm ml-1 text-base-content/80">lbs</span> : ''}
+                                                  {stat.time ? <span className="text-sm ml-1 text-base-content/80">{stat.time}s</span> : ''}
+                                                  {stat.distance ? <span className="text-sm ml-1 text-base-content/80">{stat.distance}mi</span> : ''}
                                                 </div>
                                               ))}
                                             </div>

@@ -239,6 +239,22 @@ export default function ClientsPage() {
         <div className="modal-box w-11/12 max-w-5xl">
           <h3 className="font-bold text-lg mb-4">Import Clients from Trainerize</h3>
           
+          {/* Search Bar */}
+          <div className="form-control mb-6">
+            <input
+              type="text"
+              placeholder="Search clients by name or email..."
+              className="input input-bordered w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <label className="label">
+              <span className="label-text-alt text-base-content/60">
+                {filteredClients.length} client{filteredClients.length !== 1 ? 's' : ''} found
+              </span>
+            </label>
+          </div>
+          
           <div className="overflow-x-auto">
             <table className="table w-full">
               <thead>
