@@ -223,6 +223,13 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
         #report-container .card {
           background-color: #191e24 !important;
         }
+        #report-container .overflow-x-auto::-webkit-scrollbar {
+          display: none !important;
+        }
+        #report-container .overflow-x-auto {
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
         #report-container tr:nth-child(even) {
           background-color: rgba(255, 255, 255, 0.05) !important;
         }
@@ -280,156 +287,134 @@ export default function ClientReportsPage({ params }: { params: { id: string } }
   }
 
   return (
-    <div className="p-8">
-      {/* Delete Confirmation Modal */}
-      <dialog id="delete-modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Delete Report</h3>
-          <p className="py-4">
-            Are you sure you want to delete the report from{' '}
-            {reportToDelete && (
-              <span className="font-semibold">
-                {new Date(reportToDelete.date_range_start).toLocaleDateString()} - {new Date(reportToDelete.date_range_end).toLocaleDateString()}
-              </span>
-            )}? 
-            <br />
-            <span className="text-error">This action cannot be undone.</span>
-          </p>
-          <div className="modal-action">
-            <button 
-              className="btn btn-ghost" 
-              onClick={cancelDelete}
-              disabled={isDeleting !== null}
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Reports List Sidebar */}
+        <div className="w-full lg:w-1/4 space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Reports</h2>
+            <Link
+              href={`/dashboard/clients/${params.id}/reports/new`}
+              className="btn btn-primary btn-sm"
             >
-              Cancel
-            </button>
-            <button 
-              className={`btn btn-error ${isDeleting ? 'loading' : ''}`}
-              onClick={confirmDelete}
-              disabled={isDeleting !== null}
-            >
-              {isDeleting ? 'Deleting...' : 'Delete Report'}
-            </button>
+              New Report
+            </Link>
           </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button disabled={isDeleting !== null}>close</button>
-        </form>
-      </dialog>
-
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <Link href="/dashboard/clients" className="btn btn-ghost mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L4.414 9H17a1 1 0 110 2H4.414l5.293 5.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-            Back to Clients
-          </Link>
-          <h1 className="text-3xl font-bold">{client.first_name} {client.last_name}'s Reports</h1>
-          <p className="text-base-content/60">{client.email}</p>
-        </div>
-        <Link href="/dashboard/reports" className="btn btn-primary">
-          Generate New Report
-        </Link>
-      </div>
-
-      {/* Reports List and Visualization */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Reports List */}
-        <div className="lg:col-span-1">
-          <div className="card bg-base-200/50 backdrop-blur-sm shadow-xl">
-            <div className="card-body p-4">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="card-title text-lg font-semibold">Available Reports</h2>
-                {selectedReport && (
+          
+          <div className="grid gap-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
+            {reports.map((report) => (
+              <div
+                key={report.id}
+                className={`group relative flex flex-col p-4 rounded-xl transition-all duration-200 ${
+                  selectedReport?.id === report.id 
+                    ? 'bg-primary/10 border-2 border-primary shadow-lg' 
+                    : 'bg-base-200 hover:bg-base-300 border border-base-300'
+                }`}
+                onClick={() => setSelectedReport(report)}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-semibold text-base">
+                      {new Date(report.date_range_start).toLocaleDateString()} - {new Date(report.date_range_end).toLocaleDateString()}
+                    </div>
+                    <div className="text-sm text-base-content/60 mt-1">
+                      Created: {new Date(report.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
                   <button
-                    className={`btn btn-primary btn-sm ${isCapturing ? 'loading' : ''}`}
-                    onClick={captureAndSendReport}
-                    disabled={isCapturing}
+                    className={`btn btn-ghost btn-xs text-error opacity-0 group-hover:opacity-100 transition-opacity duration-200`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteReport(report);
+                    }}
+                    disabled={isDeleting === report.id}
                   >
-                    {isCapturing ? 'Capturing...' : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M3 3a2 2 0 012-2h10a2 2 0 012 2v1h2a2 2 0 012 2v12a2 2 0 01-2 2H3a2 2 0 01-2-2V4a2 2 0 012-2zm12 1v1H5V4a1 1 0 011-1h8a1 1 0 011 1zM4 7v10h12V7H4z" />
-                        </svg>
-                        Capture
-                      </>
+                    {isDeleting === report.id ? (
+                      <span className="loading loading-spinner loading-xs" />
+                    ) : (
+                      'Delete'
                     )}
                   </button>
-                )}
+                </div>
               </div>
-              
-              {reports.length === 0 ? (
-                <div className="alert alert-info">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  <span>No reports available yet</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Report Visualization */}
+        <div className="w-full lg:w-3/4">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body p-6">
+              {selectedReport ? (
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h2 className="text-2xl font-bold">
+                      Report for {client?.first_name} {client?.last_name}
+                    </h2>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={captureAndSendReport}
+                      disabled={isCapturing}
+                    >
+                      {isCapturing ? (
+                        <span className="loading loading-spinner loading-sm" />
+                      ) : (
+                        'Capture Report'
+                      )}
+                    </button>
+                  </div>
+                  
+                  <div id="report-container" className={`space-y-8 ${isCapturing ? 'p-8 rounded-lg' : ''}`}>
+                    <ReportVisualization
+                      data={selectedReport.report_data}
+                      onDeleteWorkout={handleDeleteWorkout}
+                      onDeleteExercise={handleDeleteExercise}
+                      isScreenshotMode={isCapturing}
+                    />
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {reports.map((report) => (
-                    <div
-                      key={report.id}
-                      className={`group relative flex flex-col p-4 rounded-xl transition-all duration-200 ${
-                        selectedReport?.id === report.id 
-                          ? 'bg-primary/10 border-2 border-primary shadow-lg' 
-                          : 'bg-base-200 hover:bg-base-300 border border-base-300'
-                      }`}
-                    >
-                      <button
-                        className="flex-1 text-left"
-                        onClick={() => setSelectedReport(report)}
-                      >
-                        <div className="font-semibold text-base">
-                          {new Date(report.date_range_start).toLocaleDateString()} - {new Date(report.date_range_end).toLocaleDateString()}
-                        </div>
-                        <div className="text-sm text-base-content/60 mt-1">
-                          Generated {new Date(report.created_at).toLocaleDateString()}
-                        </div>
-                      </button>
-                      <button
-                        className={`absolute top-2 right-2 btn btn-circle btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-error hover:text-white`}
-                        onClick={() => handleDeleteReport(report)}
-                        disabled={isDeleting !== null}
-                        title="Delete report"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
+                <div className="text-center py-12">
+                  <p className="text-lg text-base-content/70">
+                    {reports.length > 0
+                      ? 'Select a report to view details'
+                      : 'No reports available'}
+                  </p>
                 </div>
               )}
             </div>
           </div>
         </div>
-
-        {/* Report Visualization */}
-        <div className="lg:col-span-3">
-          {selectedReport ? (
-            <div id="report-container" className="card bg-base-100 shadow-xl">
-              <div className="card-body">
-                <ReportVisualization 
-                  data={selectedReport.report_data}
-                  onDeleteWorkout={handleDeleteWorkout}
-                  onDeleteExercise={handleDeleteExercise}
-                  isScreenshotMode={isCapturing}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="card bg-base-100 shadow-xl">
-              <div className="card-body">
-                <div className="alert alert-info">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  <span>Select a report to view details</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <dialog id="delete-modal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Confirm Delete</h3>
+          <p className="py-4">
+            Are you sure you want to delete this report? This action cannot be undone.
+          </p>
+          <div className="modal-action">
+            <button className="btn btn-ghost" onClick={cancelDelete} disabled={isDeleting !== null}>
+              Cancel
+            </button>
+            <button
+              className="btn btn-error"
+              onClick={confirmDelete}
+              disabled={isDeleting !== null}
+            >
+              {isDeleting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                'Delete'
+              )}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
     </div>
   );
 } 
