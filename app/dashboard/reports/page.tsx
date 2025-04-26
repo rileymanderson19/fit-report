@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
-import { ScheduleReportModal } from '@/components/ScheduleReportModal';
 
 interface Client {
   id: string;
@@ -26,7 +25,6 @@ export default function ReportsPage() {
   const [generatingProgress, setGeneratingProgress] = useState<Record<string, boolean>>({});
   const [minReps, setMinReps] = useState<number>(6);
   const [maxReps, setMaxReps] = useState<number>(10);
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   // Fetch clients from Supabase
   const fetchClients = useCallback(async () => {
@@ -394,14 +392,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Run Report Button */}
-        <div className="flex justify-end mt-6 gap-3">
-          <button 
-            className="btn btn-secondary"
-            onClick={() => setIsScheduleModalOpen(true)}
-            disabled={selectedClients.length === 0}
-          >
-            Schedule Report
-          </button>
+        <div className="flex justify-end mt-6">
           <button 
             className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
             onClick={generateReport}
@@ -439,14 +430,6 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
-
-      <ScheduleReportModal
-        isOpen={isScheduleModalOpen}
-        onClose={() => setIsScheduleModalOpen(false)}
-        selectedClients={selectedClients}
-        minReps={minReps}
-        maxReps={maxReps}
-      />
     </div>
   );
 } 
