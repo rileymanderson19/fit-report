@@ -26,6 +26,16 @@ export default function ReportsPage() {
   const [minReps, setMinReps] = useState<number>(6);
   const [maxReps, setMaxReps] = useState<number>(10);
 
+  // Add pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
+
+  // Add handler for search query changes
+  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page when search query changes
+  };
+
   // Fetch clients from Supabase
   const fetchClients = useCallback(async () => {
     try {
@@ -66,9 +76,12 @@ export default function ReportsPage() {
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedClients(filteredClients.map(client => client.id));
+      const newSelectedClients = new Set([...selectedClients]);
+      currentClients.forEach(client => newSelectedClients.add(client.id));
+      setSelectedClients(Array.from(newSelectedClients));
     } else {
-      setSelectedClients([]);
+      const currentClientIds = new Set(currentClients.map(client => client.id));
+      setSelectedClients(selectedClients.filter(id => !currentClientIds.has(id)));
     }
   };
 
@@ -228,6 +241,37 @@ export default function ReportsPage() {
     client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Add pagination logic
+  const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentClients = filteredClients.slice(startIndex, endIndex);
+
+  // Add pagination controls component
+  const PaginationControls = ({ totalPages, currentPage, onPageChange }: { totalPages: number; currentPage: number; onPageChange: (page: number) => void }) => {
+    return (
+      <div className="flex justify-center items-center gap-2 mt-4">
+        <button
+          className="btn btn-sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+        <span className="text-sm">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          className="btn btn-sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Generate Reports</h1>
@@ -251,13 +295,13 @@ export default function ReportsPage() {
                   placeholder="Search clients..."
                   className="input input-bordered w-full"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchQueryChange}
                 />
               </div>
             </div>
 
             <p className="text-base-content/60 mb-6">
-              Showing {filteredClients.length} active clients
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredClients.length)} of {filteredClients.length} active clients
             </p>
             
             <div className="overflow-x-auto">
@@ -269,7 +313,7 @@ export default function ReportsPage() {
                         <input 
                           type="checkbox" 
                           className="checkbox"
-                          checked={selectedClients.length === filteredClients.length && filteredClients.length > 0}
+                          checked={currentClients.length > 0 && currentClients.every(client => selectedClients.includes(client.id))}
                           onChange={handleSelectAll}
                         />
                       </label>
@@ -281,7 +325,7 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredClients.map((client) => (
+                  {currentClients.map((client) => (
                     <tr key={client.id} className={selectedClients.includes(client.id) ? 'bg-base-200' : ''}>
                       <td>
                         <label>
@@ -317,6 +361,14 @@ export default function ReportsPage() {
                 </tbody>
               </table>
             </div>
+
+            {filteredClients.length > itemsPerPage && (
+              <PaginationControls
+                totalPages={totalPages}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </div>
         </div>
 

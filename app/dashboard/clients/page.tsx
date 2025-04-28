@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -30,6 +30,16 @@ export default function ClientsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Add pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
+
+  // Add handler for search query changes
+  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page when search query changes
+  };
 
   // Fetch imported clients from Supabase
   const fetchImportedClients = useCallback(async () => {
@@ -150,11 +160,48 @@ export default function ClientsPage() {
     client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Add pagination logic
+  const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentClients = filteredClients.slice(startIndex, endIndex);
+
   // Filter imported clients based on search query
   const filteredImportedClients = importedClients.filter(client =>
     `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Add pagination logic for imported clients
+  const totalImportedPages = Math.ceil(filteredImportedClients.length / itemsPerPage);
+  const startImportedIndex = (currentPage - 1) * itemsPerPage;
+  const endImportedIndex = startImportedIndex + itemsPerPage;
+  const currentImportedClients = filteredImportedClients.slice(startImportedIndex, endImportedIndex);
+
+  // Add pagination controls component
+  const PaginationControls = ({ totalPages, currentPage, onPageChange }: { totalPages: number; currentPage: number; onPageChange: (page: number) => void }) => {
+    return (
+      <div className="flex justify-center items-center gap-2 mt-4">
+        <button
+          className="btn btn-sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+        <span className="text-sm">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          className="btn btn-sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="p-8">
@@ -168,7 +215,7 @@ export default function ClientsPage() {
             placeholder="Search clients..."
             className="input input-bordered w-full"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchQueryChange}
           />
         </div>
         <button 
@@ -183,12 +230,12 @@ export default function ClientsPage() {
         </button>
       </div>
 
-      {/* Imported Clients Table */}
+      {/* Update Imported Clients Table */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <h2 className="text-xl font-bold mb-4">Imported Clients</h2>
           <p className="text-base-content/60 mb-6">
-            Showing {filteredImportedClients.length} imported clients
+            Showing {startImportedIndex + 1}-{Math.min(endImportedIndex, filteredImportedClients.length)} of {filteredImportedClients.length} imported clients
           </p>
           
           <div className="overflow-x-auto">
@@ -202,7 +249,7 @@ export default function ClientsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredImportedClients.map((client) => (
+                {currentImportedClients.map((client) => (
                   <tr key={client.id} className="hover">
                     <td>{`${client.first_name} ${client.last_name}`}</td>
                     <td>{client.email}</td>
@@ -223,7 +270,7 @@ export default function ClientsPage() {
                 ))}
                 {filteredImportedClients.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="text-center py-4">
+                    <td colSpan={4} className="text-center py-4">
                       No imported clients found
                     </td>
                   </tr>
@@ -231,10 +278,18 @@ export default function ClientsPage() {
               </tbody>
             </table>
           </div>
+
+          {filteredImportedClients.length > itemsPerPage && (
+            <PaginationControls
+              totalPages={totalImportedPages}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </div>
       </div>
 
-      {/* Trainerize Clients Modal */}
+      {/* Update Trainerize Clients Modal */}
       <dialog id="trainerize_modal" className={`modal ${isModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box w-11/12 max-w-5xl">
           <h3 className="font-bold text-lg mb-4">Import Clients from Trainerize</h3>
@@ -246,11 +301,11 @@ export default function ClientsPage() {
               placeholder="Search clients by name or email..."
               className="input input-bordered w-full"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchQueryChange}
             />
             <label className="label">
               <span className="label-text-alt text-base-content/60">
-                {filteredClients.length} client{filteredClients.length !== 1 ? 's' : ''} found
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredClients.length)} of {filteredClients.length} clients
               </span>
             </label>
           </div>
@@ -264,7 +319,7 @@ export default function ClientsPage() {
                       <input
                         type="checkbox"
                         className="checkbox"
-                        checked={selectedClients.length === clients.length}
+                        checked={selectedClients.length === currentClients.length && currentClients.length > 0}
                         onChange={toggleSelectAll}
                       />
                     </label>
@@ -274,7 +329,7 @@ export default function ClientsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredClients.map((client) => (
+                {currentClients.map((client) => (
                   <tr key={client.id} className="hover">
                     <td>
                       <label>
@@ -307,6 +362,14 @@ export default function ClientsPage() {
               </tbody>
             </table>
           </div>
+
+          {filteredClients.length > itemsPerPage && (
+            <PaginationControls
+              totalPages={totalPages}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
+          )}
 
           <div className="modal-action">
             <button 
