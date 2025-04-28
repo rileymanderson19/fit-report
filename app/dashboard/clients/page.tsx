@@ -26,11 +26,10 @@ export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [clients, setClients] = useState<TrainerizeClient[]>([]);
   const [importedClients, setImportedClients] = useState<ImportedClient[]>([]);
-  const [selectedClients, setSelectedClients] = useState<number[]>([]);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [clientToDelete, setClientToDelete] = useState<ImportedClient | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Add pagination state
@@ -109,7 +108,7 @@ export default function ClientsPage() {
     try {
       // Get the selected clients' data
       const clientsToImport = clients.filter(client => 
-        selectedClients.includes(client.id)
+        selectedClients.includes(client.id.toString())
       );
 
       // Send the clients to our import endpoint
@@ -140,19 +139,22 @@ export default function ClientsPage() {
     }
   };
 
-  const toggleSelectAll = () => {
-    if (selectedClients.length === clients.length) {
-      setSelectedClients([]);
-    } else {
-      setSelectedClients(clients.map(client => client.id));
-    }
+  const handleClientSelect = (clientId: string) => {
+    setSelectedClients(prev => 
+      prev.includes(clientId) 
+        ? prev.filter(id => id !== clientId)
+        : [...prev, clientId]
+    );
   };
 
-  const toggleSelectClient = (clientId: number) => {
-    if (selectedClients.includes(clientId)) {
-      setSelectedClients(selectedClients.filter(id => id !== clientId));
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const newSelectedClients = new Set([...selectedClients]);
+      currentImportedClients.forEach(client => newSelectedClients.add(client.id));
+      setSelectedClients(Array.from(newSelectedClients));
     } else {
-      setSelectedClients([...selectedClients, clientId]);
+      const currentClientIds = new Set(currentImportedClients.map(client => client.id));
+      setSelectedClients(selectedClients.filter(id => !currentClientIds.has(id)));
     }
   };
 
@@ -205,41 +207,37 @@ export default function ClientsPage() {
     );
   };
 
-  const handleDeleteClient = async (client: ImportedClient) => {
-    setClientToDelete(client);
+  const handleDeleteSelected = () => {
+    if (selectedClients.length === 0) return;
     (document.getElementById('delete-client-modal') as HTMLDialogElement)?.showModal();
   };
 
   const confirmDelete = async () => {
-    if (!clientToDelete) return;
-
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/clients/delete?id=${clientToDelete.id}`, {
-        method: 'DELETE',
-      });
+      // Delete each selected client
+      for (const clientId of selectedClients) {
+        const response = await fetch(`/api/clients/delete?id=${clientId}`, {
+          method: 'DELETE',
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete client');
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to delete client');
+        }
       }
 
-      // Remove the client from the state
-      setImportedClients(importedClients.filter(c => c.id !== clientToDelete.id));
-      toast.success('Client deleted successfully');
+      // Remove the clients from the state
+      setImportedClients(importedClients.filter(c => !selectedClients.includes(c.id)));
+      setSelectedClients([]); // Clear selection
+      toast.success(`Successfully deleted ${selectedClients.length} client(s)`);
     } catch (error) {
-      console.error('Error deleting client:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete client');
+      console.error('Error deleting clients:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete clients');
     } finally {
       setIsDeleting(false);
-      setClientToDelete(null);
       (document.getElementById('delete-client-modal') as HTMLDialogElement)?.close();
     }
-  };
-
-  const cancelDelete = () => {
-    setClientToDelete(null);
-    (document.getElementById('delete-client-modal') as HTMLDialogElement)?.close();
   };
 
   return (
@@ -257,16 +255,26 @@ export default function ClientsPage() {
             onChange={handleSearchQueryChange}
           />
         </div>
-        <button 
-          className={`btn btn-outline ${isLoading ? 'loading' : ''}`}
-          onClick={fetchClients}
-          disabled={isLoading}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd"/>
-          </svg>
-          {isLoading ? 'Loading...' : 'Load Clients'}
-        </button>
+        <div className="flex gap-2">
+          {selectedClients.length > 0 && (
+            <button 
+              className="btn btn-error btn-outline"
+              onClick={handleDeleteSelected}
+            >
+              Delete Selected ({selectedClients.length})
+            </button>
+          )}
+          <button 
+            className={`btn btn-outline ${isLoading ? 'loading' : ''}`}
+            onClick={fetchClients}
+            disabled={isLoading}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd"/>
+            </svg>
+            {isLoading ? 'Loading...' : 'Load Clients'}
+          </button>
+        </div>
       </div>
 
       {/* Update Imported Clients Table */}
@@ -281,43 +289,47 @@ export default function ClientsPage() {
             <table className="table w-full">
               <thead>
                 <tr>
+                  <th>
+                    <label>
+                      <input 
+                        type="checkbox" 
+                        className="checkbox"
+                        checked={currentImportedClients.length > 0 && currentImportedClients.every(client => selectedClients.includes(client.id))}
+                        onChange={handleSelectAll}
+                      />
+                    </label>
+                  </th>
                   <th>Name</th>
-                  <th>Email</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>Reports</th>
                 </tr>
               </thead>
               <tbody>
                 {currentImportedClients.map((client) => (
                   <tr key={client.id} className="hover">
-                    <td>{`${client.first_name} ${client.last_name}`}</td>
-                    <td>{client.email}</td>
                     <td>
-                      <span className={`badge ${client.active ? 'badge-success' : 'badge-error'}`}>
-                        {client.active ? 'Active' : 'Inactive'}
-                      </span>
+                      <label>
+                        <input 
+                          type="checkbox" 
+                          className="checkbox"
+                          checked={selectedClients.includes(client.id)}
+                          onChange={() => handleClientSelect(client.id)}
+                        />
+                      </label>
                     </td>
+                    <td>{`${client.first_name} ${client.last_name}`}</td>
                     <td>
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/dashboard/clients/${client.id}/reports`}
-                          className="btn btn-sm btn-outline"
-                        >
-                          View Reports
-                        </Link>
-                        <button
-                          className="btn btn-sm btn-error btn-outline"
-                          onClick={() => handleDeleteClient(client)}
-                        >
-                          Delete
-                        </button>
-                      </div>
+                      <Link
+                        href={`/dashboard/clients/${client.id}/reports`}
+                        className="btn btn-sm btn-outline"
+                      >
+                        View Reports
+                      </Link>
                     </td>
                   </tr>
                 ))}
                 {filteredImportedClients.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="text-center py-4">
+                    <td colSpan={3} className="text-center py-4">
                       No imported clients found
                     </td>
                   </tr>
@@ -335,6 +347,41 @@ export default function ClientsPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Client Confirmation Modal */}
+      <dialog id="delete-client-modal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Confirm Delete</h3>
+          <p className="py-4">
+            Are you sure you want to delete {selectedClients.length} client(s)? This will also delete all their reports. This action cannot be undone.
+          </p>
+          <div className="modal-action">
+            <button 
+              className="btn btn-ghost" 
+              onClick={() => {
+                (document.getElementById('delete-client-modal') as HTMLDialogElement)?.close();
+              }} 
+              disabled={isDeleting}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-error"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                'Delete'
+              )}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
 
       {/* Update Trainerize Clients Modal */}
       <dialog id="trainerize_modal" className={`modal ${isModalOpen ? 'modal-open' : ''}`}>
@@ -367,7 +414,7 @@ export default function ClientsPage() {
                         type="checkbox"
                         className="checkbox"
                         checked={selectedClients.length === currentClients.length && currentClients.length > 0}
-                        onChange={toggleSelectAll}
+                        onChange={handleSelectAll}
                       />
                     </label>
                   </th>
@@ -383,8 +430,8 @@ export default function ClientsPage() {
                         <input
                           type="checkbox"
                           className="checkbox"
-                          checked={selectedClients.includes(client.id)}
-                          onChange={() => toggleSelectClient(client.id)}
+                          checked={selectedClients.includes(client.id.toString())}
+                          onChange={() => handleClientSelect(client.id.toString())}
                         />
                       </label>
                     </td>
@@ -439,35 +486,6 @@ export default function ClientsPage() {
         </div>
         <form method="dialog" className="modal-backdrop">
           <button onClick={() => setIsModalOpen(false)}>close</button>
-        </form>
-      </dialog>
-
-      {/* Delete Client Confirmation Modal */}
-      <dialog id="delete-client-modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Confirm Delete</h3>
-          <p className="py-4">
-            Are you sure you want to delete {clientToDelete?.first_name} {clientToDelete?.last_name}? This will also delete all their reports. This action cannot be undone.
-          </p>
-          <div className="modal-action">
-            <button className="btn btn-ghost" onClick={cancelDelete} disabled={isDeleting}>
-              Cancel
-            </button>
-            <button
-              className="btn btn-error"
-              onClick={confirmDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : (
-                'Delete'
-              )}
-            </button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
         </form>
       </dialog>
     </div>
