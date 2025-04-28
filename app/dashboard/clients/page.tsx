@@ -171,10 +171,12 @@ export default function ClientsPage() {
   const currentClients = filteredClients.slice(startIndex, endIndex);
 
   // Filter imported clients based on search query
-  const filteredImportedClients = importedClients.filter(client =>
-    `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredImportedClients = importedClients
+    .filter(client =>
+      `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => a.first_name.localeCompare(b.first_name));
 
   // Add pagination logic for imported clients
   const totalImportedPages = Math.ceil(filteredImportedClients.length / itemsPerPage);

@@ -263,10 +263,12 @@ export default function ReportsPage() {
     setIsLoading(false);
   };
 
-  const filteredClients = clients.filter(client =>
-    `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredClients = clients
+    .filter(client =>
+      `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => a.first_name.localeCompare(b.first_name));
 
   // Add pagination logic
   const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
