@@ -405,7 +405,6 @@ export default function ReportsPage() {
               <div className="form-control w-full">
                 <label className="label">
                   <span className="label-text font-semibold">Minimum Reps</span>
-                  <span className="label-text-alt">Sets below this will not trigger notes</span>
                 </label>
                 <input 
                   type="number" 
@@ -419,7 +418,6 @@ export default function ReportsPage() {
               <div className="form-control w-full">
                 <label className="label">
                   <span className="label-text font-semibold">Maximum Reps</span>
-                  <span className="label-text-alt">Sets at or above (max-1) will suggest increasing weight</span>
                 </label>
                 <input 
                   type="number" 
@@ -430,41 +428,38 @@ export default function ReportsPage() {
                 />
               </div>
             </div>
-            <div className="mt-2 text-sm text-base-content/70">
-              <p>Notes will be automatically generated based on these ranges:</p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>If all sets are {maxReps-1}+ reps: &ldquo;Increase weight next session&rdquo;</li>
-                <li>If sets are within range: &ldquo;Focus on adding reps&rdquo;</li>
-                <li>If any sets are below {minReps} reps: No note will be added</li>
-              </ul>
-            </div>
           </div>
         </div>
 
         {/* Timeframe Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-semibold">Start Date</span>
-            </label>
-            <input 
-              type="date" 
-              className="input input-bordered w-full"
-              value={startDate?.toISOString().split('T')[0] || ''}
-              onChange={(e) => setStartDate(new Date(e.target.value))}
-            />
-          </div>
-          
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-semibold">End Date</span>
-            </label>
-            <input 
-              type="date" 
-              className="input input-bordered w-full"
-              value={endDate?.toISOString().split('T')[0] || ''}
-              onChange={(e) => setEndDate(new Date(e.target.value))}
-            />
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="text-xl font-bold mb-4">Timeframe Selection</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-semibold">Start Date</span>
+                </label>
+                <input 
+                  type="date" 
+                  className="input input-bordered w-full"
+                  value={startDate?.toISOString().split('T')[0] || ''}
+                  onChange={(e) => setStartDate(new Date(e.target.value))}
+                />
+              </div>
+              
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-semibold">End Date</span>
+                </label>
+                <input 
+                  type="date" 
+                  className="input input-bordered w-full"
+                  value={endDate?.toISOString().split('T')[0] || ''}
+                  onChange={(e) => setEndDate(new Date(e.target.value))}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
