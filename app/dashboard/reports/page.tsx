@@ -143,27 +143,52 @@ export default function ReportsPage() {
 
       // Process workout data to add automatic notes
       if (workoutData.workouts) {
+        console.log('Processing workouts with rep range:', { minReps, maxReps });
+        
         workoutData.workouts = workoutData.workouts.map((workout: any) => {
           if (workout.exercises) {
             workout.exercises = workout.exercises.map((exercise: any) => {
               if (exercise.stats && exercise.stats.length > 0) {
                 // Filter out any undefined reps
                 const validReps = exercise.stats.filter((stat: any) => typeof stat.reps === 'number');
+                console.log(`Exercise ${exercise.name}:`, {
+                  stats: exercise.stats,
+                  validReps: validReps
+                });
                 
                 if (validReps.length > 0) {
-                  // Check if all sets are near the top of the rep range
-                  const highReps = validReps.every((stat: any) => stat.reps >= maxReps - 1);
-                  const lowReps = validReps.some((stat: any) => stat.reps < minReps);
+                  // Check if this is a bodyweight movement (only reps are recorded)
+                  const isBodyweightMovement = validReps.every((stat: any) => 
+                    typeof stat.reps === 'number' && 
+                    (!stat.weight || stat.weight === 0)
+                  );
+
+                  // Check if all sets are at or above the top of rep range
+                  const allSetsAtTopRange = validReps.every((stat: any) => stat.reps >= maxReps - 1);
                   
-                  // Generate automatic note
-                  if (highReps) {
-                    exercise.notes = "Increase weight next session";
-                  } else if (!lowReps) {
-                    exercise.notes = "Focus on adding reps";
+                  // Simplified logic: if not at top range, always focus on adding reps
+                  if (isBodyweightMovement) {
+                    exercise.notes = allSetsAtTopRange 
+                      ? "Focus on increasing the number of reps next session"
+                      : "Focus on adding reps";
+                  } else {
+                    exercise.notes = allSetsAtTopRange 
+                      ? "Increase weight next session"
+                      : "Focus on adding reps";
                   }
                 }
               }
-              return exercise;
+              
+              // Create a new object with all exercise data
+              const processedExercise = {
+                name: exercise.name,
+                sets: exercise.sets,
+                stats: exercise.stats,
+                notes: exercise.notes || "Focus on adding reps" // Default to adding reps if no other note is set
+              };
+              
+              console.log(`Processed exercise ${exercise.name}:`, processedExercise);
+              return processedExercise;
             });
           }
           return workout;
@@ -176,6 +201,8 @@ export default function ReportsPage() {
         nutritionData,
         workoutData,
       };
+
+      console.log('Final processed workout data:', JSON.stringify(workoutData.workouts, null, 2));
 
       // Store the report in the database
       await fetch('/api/reports/store', {
