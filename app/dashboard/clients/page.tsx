@@ -30,6 +30,8 @@ export default function ClientsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<ImportedClient | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Add pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -203,6 +205,43 @@ export default function ClientsPage() {
     );
   };
 
+  const handleDeleteClient = async (client: ImportedClient) => {
+    setClientToDelete(client);
+    (document.getElementById('delete-client-modal') as HTMLDialogElement)?.showModal();
+  };
+
+  const confirmDelete = async () => {
+    if (!clientToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/clients/delete?id=${clientToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete client');
+      }
+
+      // Remove the client from the state
+      setImportedClients(importedClients.filter(c => c.id !== clientToDelete.id));
+      toast.success('Client deleted successfully');
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete client');
+    } finally {
+      setIsDeleting(false);
+      setClientToDelete(null);
+      (document.getElementById('delete-client-modal') as HTMLDialogElement)?.close();
+    }
+  };
+
+  const cancelDelete = () => {
+    setClientToDelete(null);
+    (document.getElementById('delete-client-modal') as HTMLDialogElement)?.close();
+  };
+
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Clients</h1>
@@ -259,12 +298,20 @@ export default function ClientsPage() {
                       </span>
                     </td>
                     <td>
-                      <Link
-                        href={`/dashboard/clients/${client.id}/reports`}
-                        className="btn btn-sm btn-outline"
-                      >
-                        View Reports
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/dashboard/clients/${client.id}/reports`}
+                          className="btn btn-sm btn-outline"
+                        >
+                          View Reports
+                        </Link>
+                        <button
+                          className="btn btn-sm btn-error btn-outline"
+                          onClick={() => handleDeleteClient(client)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -392,6 +439,35 @@ export default function ClientsPage() {
         </div>
         <form method="dialog" className="modal-backdrop">
           <button onClick={() => setIsModalOpen(false)}>close</button>
+        </form>
+      </dialog>
+
+      {/* Delete Client Confirmation Modal */}
+      <dialog id="delete-client-modal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Confirm Delete</h3>
+          <p className="py-4">
+            Are you sure you want to delete {clientToDelete?.first_name} {clientToDelete?.last_name}? This will also delete all their reports. This action cannot be undone.
+          </p>
+          <div className="modal-action">
+            <button className="btn btn-ghost" onClick={cancelDelete} disabled={isDeleting}>
+              Cancel
+            </button>
+            <button
+              className="btn btn-error"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                'Delete'
+              )}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
         </form>
       </dialog>
     </div>
