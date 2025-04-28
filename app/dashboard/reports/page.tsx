@@ -77,11 +77,11 @@ export default function ReportsPage() {
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       const newSelectedClients = new Set([...selectedClients]);
-      currentClients.forEach(client => newSelectedClients.add(client.id));
+      filteredClients.forEach(client => newSelectedClients.add(client.id));
       setSelectedClients(Array.from(newSelectedClients));
     } else {
-      const currentClientIds = new Set(currentClients.map(client => client.id));
-      setSelectedClients(selectedClients.filter(id => !currentClientIds.has(id)));
+      const filteredClientIds = new Set(filteredClients.map(client => client.id));
+      setSelectedClients(selectedClients.filter(id => !filteredClientIds.has(id)));
     }
   };
 
@@ -313,7 +313,7 @@ export default function ReportsPage() {
                         <input 
                           type="checkbox" 
                           className="checkbox"
-                          checked={currentClients.length > 0 && currentClients.every(client => selectedClients.includes(client.id))}
+                          checked={filteredClients.length > 0 && filteredClients.every(client => selectedClients.includes(client.id))}
                           onChange={handleSelectAll}
                         />
                       </label>
