@@ -25,7 +25,7 @@ const SidebarItem = ({ href, children, isActive = false }: SidebarItemProps) => 
 
 export default function Sidebar({ currentPath = "" }: { currentPath?: string }) {
   return (
-    <aside className="w-64 h-screen bg-base-200 border-r border-base-300 flex flex-col shadow-lg">
+    <aside className="w-64 h-screen bg-base-200 border-r border-base-300 flex flex-col shadow-lg relative">
       <div className="p-6 border-b border-base-300 bg-base-200">
         <Link href="/dashboard" className="flex items-center text-xl font-bold text-primary">
           <span>FitReport</span>
@@ -55,7 +55,7 @@ export default function Sidebar({ currentPath = "" }: { currentPath?: string }) 
         </SidebarItem>
       </div>
       
-      <div className="mt-auto border-t border-base-300 p-6 bg-base-200">
+      <div className="mt-auto border-t border-base-300 p-6 bg-base-200 relative z-[100]">
         <ButtonAccount />
       </div>
     </aside>
