@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 interface Client {
   id: string;
@@ -28,7 +29,7 @@ export default function ReportsPage() {
 
   // Add pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 25;
+  const itemsPerPage = 10;
 
   // Add handler for search query changes
   const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -348,9 +349,7 @@ export default function ReportsPage() {
                       </label>
                     </th>
                     <th>Name</th>
-                    <th>Email</th>
-                    <th>Trainerize ID</th>
-                    <th>Status</th>
+                    <th>Reports</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -367,22 +366,19 @@ export default function ReportsPage() {
                         </label>
                       </td>
                       <td>{`${client.first_name} ${client.last_name}`}</td>
-                      <td>{client.email}</td>
-                      <td>{client.trainerize_id || 'Not set'}</td>
                       <td>
-                        {generatingProgress[client.id] ? (
-                          <span className="loading loading-spinner loading-xs"></span>
-                        ) : reportData[client.id] ? (
-                          <span className="text-success">Complete</span>
-                        ) : selectedClients.includes(client.id) ? (
-                          <span className="text-base-content/50">Pending</span>
-                        ) : null}
+                        <Link
+                          href={`/dashboard/clients/${client.id}/reports`}
+                          className="btn btn-sm btn-outline"
+                        >
+                          View Reports
+                        </Link>
                       </td>
                     </tr>
                   ))}
                   {filteredClients.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-4">
+                      <td colSpan={3} className="text-center py-4">
                         {clients.length === 0 ? 'No clients imported yet' : 'No clients found matching your search'}
                       </td>
                     </tr>
