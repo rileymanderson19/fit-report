@@ -18,6 +18,10 @@ const links: {
     label: "Pricing",
   },
   {
+    href: "/#how-it-works",
+    label: "How It Works",
+  },
+  {
     href: "/#faq",
     label: "FAQ",
   },
