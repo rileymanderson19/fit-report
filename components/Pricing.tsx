@@ -12,8 +12,11 @@ const Pricing = () => {
         <div className="flex flex-col text-center w-full mb-20">
           <p className="font-medium text-primary mb-8">Pricing</p>
           <h2 className="font-bold text-3xl lg:text-5xl tracking-tight">
-            Save hours of repetitive code and ship faster!
+            Simple, transparent pricing
           </h2>
+          <p className="mt-4 text-xl text-base-content/80">
+            Choose the plan that works best for you
+          </p>
         </div>
 
         <div className="relative flex justify-center flex-col lg:flex-row items-center lg:items-stretch gap-8">
@@ -21,18 +24,14 @@ const Pricing = () => {
             <div key={plan.priceId} className="relative w-full max-w-lg">
               {plan.isFeatured && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                  <span
-                    className={`badge text-xs text-primary-content font-semibold border-0 bg-primary`}
-                  >
-                    POPULAR
+                  <span className="badge text-xs text-primary-content font-semibold border-0 bg-primary">
+                    SAVE 21%
                   </span>
                 </div>
               )}
 
               {plan.isFeatured && (
-                <div
-                  className={`absolute -inset-[1px] rounded-[9px] bg-primary z-10`}
-                ></div>
+                <div className="absolute -inset-[1px] rounded-[9px] bg-primary z-10"></div>
               )}
 
               <div className="relative flex flex-col h-full gap-5 lg:gap-8 z-10 bg-base-100 p-8 rounded-lg">
@@ -46,26 +45,32 @@ const Pricing = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  {plan.priceAnchor && (
-                    <div className="flex flex-col justify-end mb-[4px] text-lg ">
-                      <p className="relative">
-                        <span className="absolute bg-base-content h-[1.5px] inset-x-0 top-[53%]"></span>
-                        <span className="text-base-content/80">
-                          ${plan.priceAnchor}
-                        </span>
+                
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2 items-end">
+                    <p className="text-5xl tracking-tight font-extrabold">
+                      ${plan.price}
+                    </p>
+                    <div className="flex flex-col justify-end mb-2">
+                      <p className="text-sm text-base-content/60 font-semibold">
+                        /mo
                       </p>
                     </div>
-                  )}
-                  <p className={`text-5xl tracking-tight font-extrabold`}>
-                    ${plan.price}
-                  </p>
-                  <div className="flex flex-col justify-end mb-[4px]">
-                    <p className="text-xs text-base-content/60 uppercase font-semibold">
-                      USD
-                    </p>
                   </div>
+                  
+                  {plan.billingPeriod === "yearly" && (
+                    <p className="text-sm text-base-content/80">
+                      Billed annually (${plan.price * 12})
+                    </p>
+                  )}
+                  
+                  {plan.priceAnchor && (
+                    <p className="text-sm text-base-content/60">
+                      <span className="line-through">${plan.priceAnchor}/mo</span>
+                    </p>
+                  )}
                 </div>
+
                 {plan.features && (
                   <ul className="space-y-2.5 leading-relaxed text-base flex-1">
                     {plan.features.map((feature, i) => (
@@ -82,18 +87,17 @@ const Pricing = () => {
                             clipRule="evenodd"
                           />
                         </svg>
-
-                        <span>{feature.name} </span>
+                        <span>{feature.name}</span>
                       </li>
                     ))}
                   </ul>
                 )}
-                <div className="space-y-2">
-                  <ButtonCheckout priceId={plan.priceId} />
 
-                  <p className="flex items-center justify-center gap-2 text-sm text-center text-base-content/80 font-medium relative">
-                    Pay once. Access forever.
-                  </p>
+                <div className="space-y-2">
+                  <ButtonCheckout 
+                    priceId={plan.priceId} 
+                    className={`btn btn-block ${plan.isFeatured ? 'btn-primary' : 'btn-outline'}`}
+                  />
                 </div>
               </div>
             </div>

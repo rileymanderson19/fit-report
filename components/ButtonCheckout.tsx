@@ -11,9 +11,11 @@ import config from "@/config";
 const ButtonCheckout = ({
   priceId,
   mode = "subscription",
+  className = "btn btn-primary btn-block",
 }: {
   priceId: string;
   mode?: "payment" | "subscription";
+  className?: string;
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -45,7 +47,7 @@ const ButtonCheckout = ({
 
   return (
     <button
-      className="btn btn-primary btn-block group"
+      className={`${className} group`}
       onClick={() => handlePayment()}
     >
       {isLoading ? (

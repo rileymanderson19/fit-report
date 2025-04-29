@@ -282,7 +282,6 @@ export default function ClientsPage() {
       {/* Update Imported Clients Table */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="text-xl font-bold mb-4">Imported Clients</h2>
           <p className="text-base-content/60 mb-6">
             Showing {startImportedIndex + 1}-{Math.min(endImportedIndex, filteredImportedClients.length)} of {filteredImportedClients.length} imported clients
           </p>

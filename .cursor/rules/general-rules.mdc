@@ -71,3 +71,6 @@ alwaysApply: false
 # Other Rules
 - All new components should go in the /components and be named like example-component.tsx unless otherwise specified
 - All new pages go in /app
+
+## Agent Requests
+- For each agent request, I want you to follow this approach: Take a step back and really think through the request. Start by reading through the relevant files in the codebase — do this intelligently until you feel you have all the context you need to write a good plan. Once you've done this, and you're sure you know everything you need to, write a comprehensive plan for how you will tackle this. Don't DO the task, just plan it out. Make sure you're not adding additional scope I didn't request.

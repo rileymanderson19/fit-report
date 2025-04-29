@@ -20,48 +20,37 @@ const config = {
     // Create multiple plans in your Stripe dashboard, then add them here. You can add as many plans as you want, just make sure to add the priceId
     plans: [
       {
-        // REQUIRED — we use this to find the plan in the webhook (for instance if you want to update the user's credits based on the plan)
         priceId:
           process.env.NODE_ENV === "development"
-            ? "price_1REyI72ceCzkqxuBEJy3ZPfS"
+            ? "price_1RJMNY2ceCzkqxuBUDsHHBns"
             : "price_1REyI72ceCzkqxuBEJy3ZPfS",
-        //  REQUIRED - Name of the plan, displayed on the pricing page
-        name: "Starter",
-        // A friendly description of the plan, displayed on the pricing page. Tip: explain why this plan and not others
-        description: "Perfect for small projects",
-        // The price you want to display, the one user will be charged on Stripe.
-        price: 79,
-        // If you have an anchor price (i.e. $29) that you want to display crossed out, put it here. Otherwise, leave it empty
-       // priceAnchor: 149,
+        name: "Monthly",
+        description: "Flexible month-to-month billing",
+        price: 100,
+        billingPeriod: "monthly",
         features: [
-          {
-            name: "NextJS boilerplate",
-          },
-          { name: "User oauth" },
-          { name: "Database" },
-          { name: "Emails" },
+          { name: "Full access to all features" },
+          { name: "Unlimited reports" },
+          { name: "Priority support" },
+          { name: "Cancel anytime" },
         ],
       },
       {
         priceId:
           process.env.NODE_ENV === "development"
-            ? "price_1REyI72ceCzkqxuBEJy3ZPfS"
-            : "price_1REyI72ceCzkqxuBEJy3ZPfS",
-        // This plan will look different on the pricing page, it will be highlighted. You can only have one plan with isFeatured: true
+            ? "price_1RJMUf2ceCzkqxuByTGQ0ts4"
+            : "price_1RJMUf2ceCzkqxuByTGQ0ts4",
         isFeatured: true,
-        name: "Advanced",
-        description: "You need more power",
-        price: 149,
-        priceAnchor: 299,
+        name: "Annual",
+        description: "Save 21% with annual billing",
+        price: 79,
+        priceAnchor: 100,
+        billingPeriod: "yearly",
         features: [
-          {
-            name: "NextJS boilerplate",
-          },
-          { name: "User oauth" },
-          { name: "Database" },
-          { name: "Emails" },
-          { name: "1 year of updates" },
-          { name: "24/7 support" },
+          { name: "Everything in Monthly plan" },
+          { name: "21% discount" },
+          { name: "Lock in lower price" },
+          { name: "Priority support" },
         ],
       },
     ],
@@ -74,11 +63,11 @@ const config = {
   },
   resend: {
     // REQUIRED — Email 'From' field to be used when sending magic login links
-    fromNoReply: `ShipFast <noreply@resend.shipfa.st>`,
+    fromNoReply: `FitReport <noreply@fitreport.app>`,
     // REQUIRED — Email 'From' field to be used when sending other emails, like abandoned carts, updates etc..
-    fromAdmin: `Marc at ShipFast <marc@resend.shipfa.st>`,
+    fromAdmin: `Riley at FitReport <riley@rileymanderson.com>`,
     // Email shown to customer if need support. Leave empty if not needed => if empty, set up Crisp above, otherwise you won't be able to offer customer support."
-    supportEmail: "marc.louvion@gmail.com",
+    supportEmail: "riley@rileymanderson.com",
   },
   colors: {
     // REQUIRED — The DaisyUI theme to use (added to the main layout.js). Leave blank for default (light & dark mode). If you any other theme than light/dark, you need to add it in config.tailwind.js in daisyui.themes.
