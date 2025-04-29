@@ -1,6 +1,6 @@
 import Image from "next/image";
-import TestimonialsAvatars from "./TestimonialsAvatars";
-import config from "@/config";
+// import TestimonialsAvatars from "./TestimonialsAvatars";
+// import config from "@/config";
 
 const Hero = () => {
   return (
@@ -21,13 +21,13 @@ const Hero = () => {
           </button>
         </div>
 
-        <div className="flex flex-col items-center lg:items-start gap-3">
+        {/* <div className="flex flex-col items-center lg:items-start gap-3">
           <TestimonialsAvatars priority={true} />
           <div className="flex flex-col items-center lg:items-start gap-1">
             <p className="text-sm opacity-70">Trusted by 1000+ fitness professionals</p>
             <p className="text-sm opacity-70">Average 4 hours saved per week on client reporting</p>
           </div>
-        </div>
+        </div> */}
       </div>
       <div className="lg:w-full">
         <Image
