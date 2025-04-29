@@ -13,22 +13,73 @@ interface FAQItemProps {
 
 const faqList: FAQItemProps[] = [
   {
-    question: "What do I get exactly?",
-    answer: <div className="space-y-2 leading-relaxed">Loreum Ipseum</div>,
+    question: "How does FitReport help me track progress?",
+    answer: (
+      <div className="space-y-2 leading-relaxed">
+        <p>FitReport automatically tracks and visualizes key metrics including:</p>
+        <ul className="list-disc pl-4">
+          <li>Strength progression across exercises</li>
+          <li>Body measurements and composition changes</li>
+          <li>Workout volume and intensity trends</li>
+          <li>Personal records and milestones</li>
+        </ul>
+        <p>All your data is presented in easy-to-understand charts and reports, making it simple to spot trends and make informed decisions about your training.</p>
+      </div>
+    ),
   },
   {
-    question: "Can I get a refund?",
+    question: "I'm a personal trainer. How can FitReport help my business?",
+    answer: (
+      <div className="space-y-2 leading-relaxed">
+        <p>FitReport provides powerful tools for trainers:</p>
+        <ul className="list-disc pl-4">
+          <li>Manage multiple clients from a single dashboard</li>
+          <li>Create and assign personalized workout plans</li>
+          <li>Track client progress and generate professional reports</li>
+          <li>Communicate with clients through the built-in messaging system</li>
+          <li>Schedule sessions and manage your calendar</li>
+        </ul>
+        <p>This helps you save time on admin work and focus more on what matters - helping your clients achieve their goals.</p>
+      </div>
+    ),
+  },
+  {
+    question: "Can I import data from other fitness apps?",
+    answer: (
+      <div className="space-y-2 leading-relaxed">
+        <p>Yes! FitReport supports importing data from popular fitness apps and devices including:</p>
+        <ul className="list-disc pl-4">
+          <li>Apple Health</li>
+          <li>Google Fit</li>
+          <li>Strava</li>
+          <li>MyFitnessPal</li>
+          <li>Most major fitness wearables</li>
+        </ul>
+        <p>This means you can keep your existing workout history while transitioning to FitReport.</p>
+      </div>
+    ),
+  },
+  {
+    question: "Is there a free trial available?",
     answer: (
       <p>
-        Yes! You can request a refund within 7 days of your purchase. Reach out
-        by email.
+        Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can upgrade to a paid plan at any time during or after your trial.
       </p>
     ),
   },
   {
-    question: "I have another question",
+    question: "What kind of support do you offer?",
     answer: (
-      <div className="space-y-2 leading-relaxed">Cool, contact us by email</div>
+      <div className="space-y-2 leading-relaxed">
+        <p>We provide comprehensive support to ensure your success:</p>
+        <ul className="list-disc pl-4">
+          <li>24/7 email support</li>
+          <li>Live chat during business hours</li>
+          <li>Detailed documentation and video tutorials</li>
+          <li>Regular webinars for trainers</li>
+          <li>Private Facebook community for users</li>
+        </ul>
+      </div>
     ),
   },
 ];

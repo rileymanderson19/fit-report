@@ -7,23 +7,33 @@ const Hero = () => {
     <section className="max-w-7xl mx-auto bg-base-100 flex flex-col lg:flex-row items-center justify-center gap-16 lg:gap-20 px-8 py-8 lg:py-20">
       <div className="flex flex-col gap-10 lg:gap-14 items-center justify-center text-center lg:text-left lg:items-start">
         <h1 className="font-extrabold text-4xl lg:text-6xl tracking-tight md:-mb-4">
-          Ship your startup in days, not weeks
+          Cut your client reporting time in half
         </h1>
         <p className="text-lg opacity-80 leading-relaxed">
-          The NextJS boilerplate with all you need to build your SaaS, AI tool,
-          or any other web app. From idea to production in 5 minutes.
+          FitReport consolidates all your client data into one powerful dashboard. Stop jumping between screens and start delivering better insights in less time.
         </p>
-        <button className="btn btn-primary btn-wide">
-          Get {config.appName}
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <button className="btn btn-primary btn-wide">
+            Start Free Trial
+          </button>
+          <button className="btn btn-outline btn-wide">
+            See the Dashboard
+          </button>
+        </div>
 
-        <TestimonialsAvatars priority={true} />
+        <div className="flex flex-col items-center lg:items-start gap-3">
+          <TestimonialsAvatars priority={true} />
+          <div className="flex flex-col items-center lg:items-start gap-1">
+            <p className="text-sm opacity-70">Trusted by 1000+ fitness professionals</p>
+            <p className="text-sm opacity-70">Average 4 hours saved per week on client reporting</p>
+          </div>
+        </div>
       </div>
       <div className="lg:w-full">
         <Image
-          src="https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=3540&q=80"
-          alt="Product Demo"
-          className="w-full"
+          src="/dashboard-preview.jpg"
+          alt="FitReport's consolidated client dashboard showing nutrition, training, and progress metrics"
+          className="w-full rounded-lg shadow-2xl"
           priority={true}
           width={500}
           height={500}

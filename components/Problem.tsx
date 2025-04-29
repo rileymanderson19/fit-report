@@ -21,11 +21,15 @@ const Arrow = ({ extraStyle }: { extraStyle: string }) => {
     </svg>
   );
 };
-const Step = ({ emoji, text }: { emoji: string; text: string }) => {
+
+const Step = ({ emoji, text, subtext }: { emoji: string; text: string; subtext?: string }) => {
   return (
     <div className="w-full md:w-48 flex flex-col gap-2 items-center justify-center">
       <span className="text-4xl">{emoji}</span>
-      <h3 className="font-bold">{text}</h3>
+      <div className="text-center">
+        <h3 className="font-bold">{text}</h3>
+        {subtext && <p className="text-sm opacity-80 mt-1">{subtext}</p>}
+      </div>
     </div>
   );
 };
@@ -44,23 +48,35 @@ const Problem = () => {
     <section className="bg-neutral text-neutral-content">
       <div className="max-w-7xl mx-auto px-8 py-16 md:py-32 text-center">
         <h2 className="max-w-3xl mx-auto font-extrabold text-4xl md:text-5xl tracking-tight mb-6 md:mb-8">
-          80% of startups fail because founders never launch
+          The hidden cost of scattered client data
         </h2>
         <p className="max-w-xl mx-auto text-lg opacity-90 leading-relaxed mb-12 md:mb-20">
-          Emails, DNS records, user authentication... There&apos;s so much going
-          on.
+          Trainers spend up to 5 hours per week jumping between different screens to piece together client insights.
+          That&apos;s time you could spend growing your business.
         </p>
 
         <div className="flex flex-col md:flex-row justify-center items-center md:items-start gap-6">
-          <Step emoji="🧑‍💻" text="8 hrs to add Stripe" />
+          <Step 
+            emoji="🔍" 
+            text="Scattered Data" 
+            subtext="Nutrition, workouts, and progress spread across multiple screens"
+          />
 
           <Arrow extraStyle="max-md:-scale-x-100 md:-rotate-90" />
 
-          <Step emoji="😮‍💨" text="Struggle to find time" />
+          <Step 
+            emoji="⏰" 
+            text="Time Wasted" 
+            subtext="Hours spent piecing together client insights"
+          />
 
           <Arrow extraStyle="md:-scale-x-100 md:-rotate-90" />
 
-          <Step emoji="😔" text="Quit project" />
+          <Step 
+            emoji="😓" 
+            text="Quality Suffers" 
+            subtext="Less time for personalized client attention"
+          />
         </div>
       </div>
     </section>
