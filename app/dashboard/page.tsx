@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { createClient } from "@/libs/supabase/server";
 import ButtonCheckout from "@/components/ButtonCheckout";
 import config from "@/config";
+import Link from "next/link";
 
 // This is a private page: It's protected by the layout.js component which ensures the user is authenticated.
 // It's a server compoment which means you can fetch data (like the user profile) before the page is rendered.
@@ -68,7 +69,7 @@ export default async function Dashboard() {
                     </div>
                     <p className="text-base-content/80">Enter your Trainerize credentials to connect your account</p>
                     <div className="card-actions justify-end mt-4">
-                      <button className="btn btn-primary btn-sm">Configure</button>
+                      <Link href="/dashboard/trainerize" className="btn btn-primary btn-sm">Configure</Link>
                     </div>
                   </div>
                 </div>
@@ -81,7 +82,7 @@ export default async function Dashboard() {
                     </div>
                     <p className="text-base-content/80">Import your client list from your Trainerize account</p>
                     <div className="card-actions justify-end mt-4">
-                      <button className="btn btn-primary btn-sm">Import</button>
+                      <Link href="/dashboard/clients" className="btn btn-primary btn-sm">Import</Link>
                     </div>
                   </div>
                 </div>
@@ -94,7 +95,7 @@ export default async function Dashboard() {
                     </div>
                     <p className="text-base-content/80">Schedule and run reports for your clients</p>
                     <div className="card-actions justify-end mt-4">
-                      <button className="btn btn-primary btn-sm">Create</button>
+                      <Link href="/dashboard/reports" className="btn btn-primary btn-sm">Create</Link>
                     </div>
                   </div>
                 </div>
