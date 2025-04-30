@@ -168,10 +168,10 @@ const FeaturesAccordion = () => {
 
   return (
     <section
-      className="py-24 md:py-32 space-y-24 md:space-y-32 max-w-7xl mx-auto text-white"
+      className="w-full py-24 md:py-32 space-y-24 md:space-y-32"
       id="features"
     >
-      <div className="px-8">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="font-extrabold text-4xl lg:text-6xl tracking-tight mb-12 md:mb-24">
           Spend less time on admin
           <span className="bg-primary/20 text-primary px-2 md:px-4 ml-1 md:ml-1.5 leading-relaxed whitespace-nowrap">

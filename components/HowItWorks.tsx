@@ -63,28 +63,28 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section id="how-it-works" className="text-white">
-      <div className="py-24 px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col text-center w-full mb-20">
-          <h2 className="sm:text-5xl text-4xl font-extrabold mb-8">
+    <section id="how-it-works" className="w-full text-white">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="flex flex-col text-center w-full mb-24">
+          <h2 className="sm:text-6xl text-5xl font-extrabold mb-10">
             How It Works
           </h2>
-          <p className="lg:w-2/3 mx-auto leading-relaxed text-base opacity-80">
+          <p className="lg:w-2/3 mx-auto text-xl leading-relaxed opacity-80">
             Get started in minutes and transform your fitness journey with our simple three-step process.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-12 gap-y-20 md:grid-cols-3">
           {steps.map((step, index) => (
             <div key={index} className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 inline-flex items-center justify-center rounded-full bg-primary/10 text-primary mb-5">
+              <div className="w-20 h-20 inline-flex items-center justify-center rounded-full bg-primary/10 text-primary mb-6">
                 {step.icon}
               </div>
               <div className="flex-grow">
-                <h3 className="text-xl font-semibold mb-3">
+                <h3 className="text-2xl font-semibold mb-4">
                   {step.title}
                 </h3>
-                <p className="leading-relaxed opacity-80">
+                <p className="text-lg leading-relaxed opacity-80">
                   {step.description}
                 </p>
               </div>

@@ -45,17 +45,17 @@ const Step = ({ emoji, text, subtext }: { emoji: string; text: string; subtext?:
 // - Features: "ShipFast has user auth, Stripe, emails all set up for you"
 const Problem = () => {
   return (
-    <section className="text-white">
-      <div className="max-w-7xl mx-auto px-8 py-16 md:py-32 text-center">
-        <h2 className="max-w-3xl mx-auto font-extrabold text-4xl md:text-5xl tracking-tight mb-6 md:mb-8">
+    <section className="w-full text-white">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-36 text-center">
+        <h2 className="max-w-4xl mx-auto font-extrabold text-4xl md:text-6xl tracking-tight mb-8 md:mb-10">
           The hidden cost of scattered client data
         </h2>
-        <p className="max-w-xl mx-auto text-lg opacity-90 leading-relaxed mb-12 md:mb-20">
+        <p className="max-w-2xl mx-auto text-xl opacity-90 leading-relaxed mb-16 md:mb-24">
           Trainers spend up to 5 hours per week jumping between different screens to piece together client insights.
           That&apos;s time you could spend growing your business.
         </p>
 
-        <div className="flex flex-col md:flex-row justify-center items-center md:items-start gap-6">
+        <div className="flex flex-col md:flex-row justify-center items-center md:items-start gap-8">
           <Step 
             emoji="🔍" 
             text="Scattered Data" 

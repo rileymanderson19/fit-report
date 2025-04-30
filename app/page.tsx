@@ -15,19 +15,17 @@ export default function Home() {
       <Suspense>
         <Header />
       </Suspense>
-      <div className="relative">
-        <Hero />
-        <div className="bg-gradient-to-b from-[#241f35] to-black">
-          <main>
-            <Problem />
-            <HowItWorks />
-            <FeaturesAccordion />
-            <Pricing />
-            <FAQ />
-            <CTA />
-          </main>
-          <Footer />
-        </div>
+      <Hero />
+      <div className="bg-gradient-to-b from-[#241f35] to-black w-full">
+        <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+          <Problem />
+          <HowItWorks />
+          <FeaturesAccordion />
+          <Pricing />
+          <FAQ />
+          <CTA />
+        </main>
+        <Footer />
       </div>
     </div>
   )

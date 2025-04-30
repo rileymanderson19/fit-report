@@ -7,8 +7,8 @@ import ButtonCheckout from "./ButtonCheckout";
 
 const Pricing = () => {
   return (
-    <section className="overflow-hidden text-white" id="pricing">
-      <div className="py-24 px-8 max-w-5xl mx-auto">
+    <section className="w-full overflow-hidden text-white" id="pricing">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="flex flex-col text-center w-full mb-20">
           <p className="font-medium text-primary mb-8">Pricing</p>
           <h2 className="font-bold text-3xl lg:text-5xl tracking-tight">
