@@ -63,13 +63,13 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section id="how-it-works" className="bg-base-200">
+    <section id="how-it-works" className="text-white">
       <div className="py-24 px-8 max-w-7xl mx-auto">
         <div className="flex flex-col text-center w-full mb-20">
-          <h2 className="sm:text-5xl text-4xl font-extrabold text-base-content mb-8">
+          <h2 className="sm:text-5xl text-4xl font-extrabold mb-8">
             How It Works
           </h2>
-          <p className="lg:w-2/3 mx-auto leading-relaxed text-base text-base-content/80">
+          <p className="lg:w-2/3 mx-auto leading-relaxed text-base opacity-80">
             Get started in minutes and transform your fitness journey with our simple three-step process.
           </p>
         </div>
@@ -81,10 +81,10 @@ const HowItWorks = () => {
                 {step.icon}
               </div>
               <div className="flex-grow">
-                <h3 className="text-xl font-semibold text-base-content mb-3">
+                <h3 className="text-xl font-semibold mb-3">
                   {step.title}
                 </h3>
-                <p className="leading-relaxed text-base-content/80">
+                <p className="leading-relaxed opacity-80">
                   {step.description}
                 </p>
               </div>
