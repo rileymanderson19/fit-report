@@ -11,21 +11,23 @@ import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
-    <div className="relative">
+    <div className="relative min-h-screen">
       <Suspense>
         <Header />
       </Suspense>
-      <Hero />
-      <div className="bg-gradient-to-b from-[#241f35] to-black">
-        <main>
-          <Problem />
-          <HowItWorks />
-          <FeaturesAccordion />
-          <Pricing />
-          <FAQ />
-          <CTA />
-        </main>
-        <Footer />
+      <div className="relative">
+        <Hero />
+        <div className="bg-gradient-to-b from-[#241f35] to-black">
+          <main>
+            <Problem />
+            <HowItWorks />
+            <FeaturesAccordion />
+            <Pricing />
+            <FAQ />
+            <CTA />
+          </main>
+          <Footer />
+        </div>
       </div>
     </div>
   )

@@ -41,7 +41,7 @@ const Header = () => {
   }, [searchParams]);
 
   return (
-    <header className="bg-gradient-to-b from-[#1a1625] to-[#1f1b2e]">
+    <header className="sticky top-0 z-50 bg-gradient-to-b from-[#1a1625] to-[#1f1b2e] backdrop-blur-sm bg-opacity-80">
       <nav
         className="container flex items-center justify-between px-8 py-4 mx-auto"
         aria-label="Global"

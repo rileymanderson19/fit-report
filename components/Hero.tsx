@@ -16,18 +16,28 @@ const Hero = () => {
     <section className="bg-gradient-to-b from-[#1f1b2e] to-[#241f35] pt-4">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-16 lg:gap-20 px-8 py-8 lg:py-20">
         <div className="flex flex-col gap-10 lg:gap-14 items-center justify-center text-center lg:text-left lg:items-start">
-          <h1 className="font-extrabold text-4xl lg:text-6xl tracking-tight md:-mb-4">
-            Cut your client reporting time in half
-          </h1>
-          <p className="text-lg opacity-80 leading-relaxed">
-            FitReport consolidates all your client data into one powerful dashboard. Stop jumping between screens and start delivering better insights in less time.
+          <div className="flex flex-col gap-6">
+            <span className="px-4 py-2 rounded-full bg-[#2a2937] text-sm text-gray-300 font-medium w-fit">
+              Trainerize Enhanced Reporting
+            </span>
+            <h1 className="font-extrabold text-4xl lg:text-6xl tracking-tight">
+              <span className="bg-gradient-to-r from-emerald-400 to-[#86b6c6] inline-block text-transparent bg-clip-text">Focus on Clients,</span>
+              <br />
+              <span className="text-white">Not Data Entry</span>
+            </h1>
+          </div>
+          <p className="text-lg text-gray-300 leading-relaxed max-w-2xl">
+            FitReport connects to Trainerize to provide enhanced analytics and automated reporting, so you can spend less time navigating data screens and more time helping clients achieve their fitness goals.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <button 
               className="btn btn-primary btn-wide"
               onClick={handleScrollToPricing}
             >
-              Start Free Trial
+              Start Free Trial →
+            </button>
+            <button className="btn btn-outline text-white border-white/20 hover:bg-white/10 btn-wide">
+              Watch Demo
             </button>
           </div>
 
