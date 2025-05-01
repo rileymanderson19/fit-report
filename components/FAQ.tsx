@@ -91,7 +91,7 @@ const FaqItem = ({ item }: { item: FAQItemProps }) => {
   return (
     <li>
       <button
-        className="relative flex gap-2 items-center w-full py-5 text-base font-semibold text-left border-t md:text-lg border-base-content/10"
+        className="relative flex gap-2 items-center w-full py-5 text-lg font-semibold text-left border-t border-base-content/10"
         onClick={(e) => {
           e.preventDefault();
           setIsOpen(!isOpen);
@@ -99,7 +99,7 @@ const FaqItem = ({ item }: { item: FAQItemProps }) => {
         aria-expanded={isOpen}
       >
         <span
-          className={`flex-1 text-base-content ${isOpen ? "text-primary" : ""}`}
+          className={`flex-1 text-base-content ${isOpen ? "text-emerald-400" : ""}`}
         >
           {item?.question}
         </span>
@@ -138,7 +138,7 @@ const FaqItem = ({ item }: { item: FAQItemProps }) => {
             : { maxHeight: 0, opacity: 0 }
         }
       >
-        <div className="pb-5 leading-relaxed">{item?.answer}</div>
+        <div className="pb-5 text-lg text-gray-400 leading-relaxed">{item?.answer}</div>
       </div>
     </li>
   );
@@ -147,19 +147,21 @@ const FaqItem = ({ item }: { item: FAQItemProps }) => {
 const FAQ = () => {
   return (
     <section className="w-full text-white" id="faq">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 flex flex-col md:flex-row gap-12">
-        <div className="flex flex-col text-left basis-1/2">
-          <p className="inline-block font-semibold text-primary mb-4">FAQ</p>
-          <p className="sm:text-4xl text-3xl font-extrabold">
-            Frequently Asked Questions
-          </p>
-        </div>
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+        <div className="flex flex-col md:flex-row gap-12">
+          <div className="flex flex-col text-left basis-1/2">
+            <p className="inline-block font-semibold text-emerald-400 text-lg mb-4">FAQ</p>
+            <h2 className="text-5xl lg:text-6xl font-bold tracking-tight">
+              Frequently Asked Questions
+            </h2>
+          </div>
 
-        <ul className="basis-1/2">
-          {faqList.map((item, i) => (
-            <FaqItem key={i} item={item} />
-          ))}
-        </ul>
+          <ul className="basis-1/2">
+            {faqList.map((item, i) => (
+              <FaqItem key={i} item={item} />
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );

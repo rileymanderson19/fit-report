@@ -19,12 +19,12 @@ const steps = [
 const HowItWorks = () => {
   return (
     <section id="how-it-works" className="w-full text-white">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="flex flex-col text-center w-full mb-16">
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
+          <h2 className="text-5xl lg:text-6xl font-bold tracking-tight mb-6">
             How It <span className="text-emerald-400">Works</span>
           </h2>
-          <p className="mt-6 text-xl text-gray-400">
+          <p className="text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
             Get started in minutes and see immediate improvements in your reporting workflow.
           </p>
         </div>
@@ -41,12 +41,12 @@ const HowItWorks = () => {
                   {index % 2 === 0 ? (
                     <>
                       <div className="flex items-center gap-6 mb-6">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-xl font-medium">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-2xl font-medium">
                           {step.number}
                         </div>
-                        <h3 className="text-3xl font-bold">{step.title}</h3>
+                        <h3 className="text-3xl lg:text-4xl font-bold">{step.title}</h3>
                       </div>
-                      <p className="text-gray-400 text-right max-w-xl text-xl leading-relaxed">{step.description}</p>
+                      <p className="text-lg text-gray-400 text-right max-w-xl leading-relaxed">{step.description}</p>
                     </>
                   ) : (
                     <div className="aspect-[4/3] w-full max-w-lg rounded-xl bg-[#1a2e2a] p-6">
@@ -68,12 +68,12 @@ const HowItWorks = () => {
                   ) : (
                     <>
                       <div className="flex items-center gap-6 mb-6">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-xl font-medium">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-2xl font-medium">
                           {step.number}
                         </div>
-                        <h3 className="text-3xl font-bold">{step.title}</h3>
+                        <h3 className="text-3xl lg:text-4xl font-bold">{step.title}</h3>
                       </div>
-                      <p className="text-gray-400 text-left max-w-xl text-xl leading-relaxed">{step.description}</p>
+                      <p className="text-lg text-gray-400 text-left max-w-xl leading-relaxed">{step.description}</p>
                     </>
                   )}
                 </div>
@@ -83,7 +83,7 @@ const HowItWorks = () => {
         </div>
 
         <div className="flex justify-center mt-16">
-          <button className="btn bg-emerald-500 hover:bg-emerald-600 border-none text-white px-8 text-lg">
+          <button className="btn btn-primary btn-lg text-white">
             Start Your Integration Now
           </button>
         </div>
