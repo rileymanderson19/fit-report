@@ -19,71 +19,59 @@ const steps = [
 const HowItWorks = () => {
   return (
     <section id="how-it-works" className="w-full text-white">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-        <div className="flex flex-col text-center w-full mb-16">
-          <h2 className="text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex flex-col text-center mb-12 md:mb-16">
+          <h2 className="text-4xl xs:text-5xl md:text-6xl font-bold tracking-tight mb-4 md:mb-6">
             How It <span className="text-emerald-400">Works</span>
           </h2>
-          <p className="text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base xs:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
             Get started in minutes and see immediate improvements in your reporting workflow.
           </p>
         </div>
 
+        {/* Steps */}
         <div className="relative">
-          {/* Vertical Line */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-px bg-gray-800" />
+          {/* Vertical Line - Hidden on mobile, shown on lg screens */}
+          <div className="hidden lg:block absolute left-1/2 transform -translate-x-1/2 h-full w-px bg-gray-800" />
 
-          <div className="relative space-y-32">
+          {/* Steps Container */}
+          <div className="relative flex flex-col gap-12 md:gap-16 lg:gap-32">
             {steps.map((step, index) => (
-              <div key={index} className="flex items-stretch">
-                {/* Left Side */}
-                <div className="w-1/2 pr-16 flex flex-col items-end justify-center">
-                  {index % 2 === 0 ? (
-                    <>
-                      <div className="flex items-center gap-6 mb-6">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-2xl font-medium">
-                          {step.number}
-                        </div>
-                        <h3 className="text-3xl lg:text-4xl font-bold">{step.title}</h3>
-                      </div>
-                      <p className="text-lg text-gray-400 text-right max-w-xl leading-relaxed">{step.description}</p>
-                    </>
-                  ) : (
-                    <div className="aspect-[4/3] w-full max-w-lg rounded-xl bg-[#1a2e2a] p-6">
-                      <div className="w-full h-full rounded-lg bg-[#162522] flex items-center justify-center text-gray-600">
-                        Step {index + 1} Visualization
-                      </div>
+              <div key={index} className="flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-16">
+                {/* Step Content - Always on left for mobile, alternates on desktop */}
+                <div className={`w-full lg:w-1/2 flex flex-col gap-4 ${
+                  index % 2 === 0 ? 'lg:pr-16 lg:items-end lg:text-right' : 'lg:pl-16 lg:items-start lg:text-left order-1 lg:order-2'
+                }`}>
+                  <div className="flex items-center gap-4 xs:gap-6">
+                    <div className="w-12 h-12 xs:w-16 xs:h-16 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-lg xs:text-2xl font-medium shrink-0">
+                      {step.number}
                     </div>
-                  )}
+                    <h3 className="text-2xl xs:text-3xl lg:text-4xl font-bold">{step.title}</h3>
+                  </div>
+                  <p className="text-base xs:text-lg text-gray-400 leading-relaxed max-w-xl">
+                    {step.description}
+                  </p>
                 </div>
 
-                {/* Right Side */}
-                <div className="w-1/2 pl-16 flex flex-col items-start justify-center">
-                  {index % 2 === 0 ? (
-                    <div className="aspect-[4/3] w-full max-w-lg rounded-xl bg-[#1a2e2a] p-6">
-                      <div className="w-full h-full rounded-lg bg-[#162522] flex items-center justify-center text-gray-600">
-                        Step {index + 1} Visualization
-                      </div>
+                {/* Step Visualization - Always on right for mobile, alternates on desktop */}
+                <div className={`w-full lg:w-1/2 ${
+                  index % 2 === 0 ? 'order-2 lg:order-1' : 'order-1 lg:order-1'
+                }`}>
+                  <div className="aspect-[16/10] w-full rounded-xl bg-[#1a2e2a] p-4 xs:p-6">
+                    <div className="w-full h-full rounded-lg bg-[#162522] flex items-center justify-center text-gray-600">
+                      Step {index + 1} Visualization
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-6 mb-6">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-2xl font-medium">
-                          {step.number}
-                        </div>
-                        <h3 className="text-3xl lg:text-4xl font-bold">{step.title}</h3>
-                      </div>
-                      <p className="text-lg text-gray-400 text-left max-w-xl leading-relaxed">{step.description}</p>
-                    </>
-                  )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="flex justify-center mt-16">
-          <button className="btn btn-primary btn-lg text-white">
+        {/* CTA Button */}
+        <div className="flex justify-center mt-12 md:mt-16">
+          <button className="btn btn-primary btn-lg text-white w-full xs:w-auto">
             Start Your Integration Now
           </button>
         </div>

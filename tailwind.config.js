@@ -7,6 +7,28 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        primary: {
+          DEFAULT: '#5B6AFF', // Enhanced contrast version of previous #7480ff
+          dark: '#4857DB',
+          light: '#8490FF'
+        },
+        secondary: {
+          DEFAULT: '#2A2D3E',
+          dark: '#1E2132',
+          light: '#363A4F'
+        },
+        text: {
+          DEFAULT: '#FFFFFF',
+          muted: '#B4B4B4', // Enhanced contrast for muted text
+          dark: '#1A1A1A'
+        },
+        background: {
+          DEFAULT: '#1A1A1A',
+          alt: '#232323',
+          card: '#2A2A2A'
+        }
+      },
       backgroundImage: {
         gradient:
           "linear-gradient(60deg, #f79533, #f37055, #ef4e7b, #a166ab, #5073b8, #1098ad, #07b39b, #6fba82)",
@@ -55,6 +77,10 @@ module.exports = {
           "100%": { backgroundPosition: "0% 50%" },
         },
       },
+      screens: {
+        'xs': '375px',
+        // ... existing breakpoints ...
+      }
     },
   },
   plugins: [require("daisyui")],

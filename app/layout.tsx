@@ -1,44 +1,55 @@
-import { ReactNode } from "react";
+import React from "react";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Viewport } from "next";
-import { getSEOTags } from "@/libs/seo";
 import ClientLayout from "@/components/LayoutClient";
-import config from "@/config";
 import "./globals.css";
 import { Toaster } from 'sonner';
+import config from '@/config'
 
-const font = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
-export const viewport: Viewport = {
-	// Will use the primary color of your theme to show a nice theme color in the URL bar of supported browsers
-	themeColor: config.colors.main,
-	width: "device-width",
-	initialScale: 1,
-};
-
-// This adds default SEO tags to all pages in our app.
-// You can override them in each page passing params to getSOTags() function.
-export const metadata = {
-	...getSEOTags(),
-	icons: {
-		icon: [
-			{ url: '/favicon.ico' },
-			{ url: '/icon.png' },
-		],
-		apple: [
-			{ url: '/apple-icon.png' },
-		],
+export const metadata: Metadata = {
+	title: {
+		template: `%s | ${config.appName}`,
+		default: config.appName,
 	},
+	description: config.appDescription,
+	metadataBase: new URL(config.siteUrl),
+	openGraph: {
+		title: config.appName,
+		description: config.appDescription,
+		url: config.siteUrl,
+		siteName: config.appName,
+		locale: 'en_US',
+		type: 'website',
+	},
+	twitter: {
+		card: 'summary_large_image',
+		title: config.appName,
+		description: config.appDescription,
+	},
+	robots: {
+		index: true,
+		follow: true,
+	},
+	manifest: '/manifest.json',
+	viewport: {
+		width: "device-width",
+		initialScale: 1,
+		maximumScale: 5,
+		userScalable: true,
+	},
+	themeColor: "#1f1b2e",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
 	return (
-		<html
-			lang="en"
-			data-theme={config.colors.theme}
-			className={font.className}
-		>
-			<body>
+		<html lang="en" className="scroll-smooth">
+			<body className={`${inter.className} antialiased`}>
 				{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
 				<ClientLayout>{children}</ClientLayout>
 				<Toaster />
