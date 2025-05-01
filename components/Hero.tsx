@@ -14,10 +14,10 @@ const Hero = () => {
 
   return (
     <section className="w-full bg-gradient-to-b from-[#1f1b2e] to-[#241f35] pt-4">
-      <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row items-center justify-center gap-16 lg:gap-24 px-4 sm:px-6 lg:px-8 py-8 lg:py-24">
-        <div className="flex flex-col gap-10 lg:gap-16 items-center justify-center text-center lg:text-left lg:items-start">
+      <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-16 lg:gap-0 px-4 sm:px-6 lg:px-8 py-8 lg:py-24">
+        <div className="w-full lg:w-[60%] flex flex-col gap-6 lg:gap-8 items-center justify-center text-center lg:text-left lg:items-start">
           <div className="flex flex-col gap-6">
-            <span className="px-4 py-2 rounded-full bg-[#2a2937] text-sm text-gray-300 font-medium w-fit">
+            <span className="px-6 py-2.5 rounded-full bg-[#1A1A1A] border border-[#333333] text-sm text-gray-300 font-medium w-fit shadow-[0_0_15px_rgba(0,0,0,0.5)] glow-effect">
               Trainerize Enhanced Reporting
             </span>
             <h1 className="font-extrabold text-5xl lg:text-7xl tracking-tight">
@@ -31,7 +31,7 @@ const Hero = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <button 
-              className="btn btn-primary btn-wide text-lg"
+              className="btn btn-primary btn-wide text-lg text-white"
               onClick={handleScrollToPricing}
             >
               Start Free Trial →
@@ -40,8 +40,6 @@ const Hero = () => {
               Watch Demo
             </button>
           </div>
-          <p className="text-sm text-gray-400">No credit card required. 14-day free trial.</p>
-
           {/* <div className="flex flex-col items-center lg:items-start gap-3">
             <TestimonialsAvatars priority={true} />
             <div className="flex flex-col items-center lg:items-start gap-1">
@@ -50,7 +48,7 @@ const Hero = () => {
             </div>
           </div> */}
         </div>
-        <div className="lg:w-full">
+        <div className="w-full lg:w-[40%]">
           <Image
             src="/dashboard-preview.jpg"
             alt="FitReport's consolidated client dashboard showing nutrition, training, and progress metrics"
