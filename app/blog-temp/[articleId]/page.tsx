@@ -3,44 +3,36 @@ import Script from "next/script";
 import { articles } from "../_assets/content";
 import BadgeCategory from "../_assets/components/BadgeCategory";
 import Avatar from "../_assets/components/Avatar";
-import { getSEOTags } from "@/libs/seo";
 import config from "@/config";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { articleId: string };
-}) {
-  const article = articles.find((article) => article.slug === params.articleId);
-
-  return getSEOTags({
-    title: article.title,
-    description: article.description,
-    canonicalUrlRelative: `/blog/${article.slug}`,
-    extraTags: {
-      openGraph: {
-        title: article.title,
-        description: article.description,
-        url: `/blog/${article.slug}`,
-        images: [
-          {
-            url: article.image.urlRelative,
-            width: 1200,
-            height: 660,
-          },
-        ],
-        locale: "en_US",
-        type: "website",
-      },
-    },
-  });
+type Props = {
+  params: { articleId: string }
 }
 
-export default async function Article({
-  params,
-}: {
-  params: { articleId: string };
-}) {
+export async function generateMetadata({ params }: Props) {
+  const article = articles.find((article) => article.slug === params.articleId);
+
+  return {
+    title: article.title,
+    description: article.description,
+    openGraph: {
+      title: article.title,
+      description: article.description,
+      url: `/blog/${article.slug}`,
+      images: [
+        {
+          url: article.image.urlRelative,
+          width: 1200,
+          height: 660,
+        },
+      ],
+      locale: "en_US",
+      type: "website",
+    },
+  };
+}
+
+export default function Page({ params }: Props) {
   const article = articles.find((article) => article.slug === params.articleId);
   const articlesRelated = articles
     .filter(
