@@ -20,7 +20,7 @@ const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
 export default function GridFeatures() {
   const features = [
     {
-      icon: <BarChart3 className="h-10 w-10 text-emerald-400" />,
+      icon: <BarChart3 className="h-10 w-10 text-[#5B6AFF]" />,
       title: "Enhanced Analytics",
       description: "Transform Trainerize data into actionable insights with customizable dashboards showing client progress at a glance.",
     },
@@ -30,7 +30,7 @@ export default function GridFeatures() {
       description: "Visualize client progress over time with detailed charts and metrics that highlight improvements and identify areas needing attention.",
     },
     {
-      icon: <Calendar className="h-10 w-10 text-emerald-400" />,
+      icon: <Calendar className="h-10 w-10 text-[#5B6AFF]" />,
       title: "Automated Reporting",
       description: "Schedule and send professional reports to clients automatically, saving hours of manual data compilation each week.",
     },
@@ -41,7 +41,7 @@ export default function GridFeatures() {
       <div className="max-w-[1600px] mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-            <span className="text-emerald-400">Features</span>{" "}
+            <span className="bg-gradient-to-r from-[#5B6AFF] to-[#A166AB] inline-block text-transparent bg-clip-text">Features</span>{" "}
             <span className="text-white">Trainers Love</span>
           </h2>
           <p className="text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">

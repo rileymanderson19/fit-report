@@ -2,7 +2,7 @@ import themes from "daisyui/src/theming/themes";
 import { ConfigProps } from "./types/config";
 
 
-const config = {
+const config: ConfigProps = {
   // REQUIRED
   appName: "FitReport",
   // REQUIRED: a short description of your app for SEO tags (can be overwritten)
@@ -11,7 +11,7 @@ const config = {
   domainName: "shipfa.st",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
-    //id: "",
+    id: "",
     // Hide Crisp by default, except on route "/". Crisp is toggled with <ButtonSupport/>. If you want to show Crisp on every routes, just remove this below
     onlyShowOnRoutes: ["/"],
   },
@@ -84,6 +84,4 @@ const config = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://fitreport.app',
 } as const;
 
-type Config = typeof config;
 export default config;
-export type { Config as ConfigProps };

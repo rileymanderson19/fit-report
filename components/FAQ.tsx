@@ -150,7 +150,7 @@ const FAQ = () => {
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="flex flex-col md:flex-row gap-12">
           <div className="flex flex-col text-left basis-1/2">
-            <p className="inline-block font-semibold text-emerald-400 text-lg mb-4">FAQ</p>
+            <p className="inline-block font-semibold text-[#5B6AFF] text-lg mb-4">FAQ</p>
             <h2 className="text-5xl lg:text-6xl font-bold tracking-tight">
               Frequently Asked Questions
             </h2>

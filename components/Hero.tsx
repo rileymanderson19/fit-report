@@ -28,7 +28,7 @@ const Hero = () => {
 
             {/* Heading */}
             <h1 className="font-extrabold text-4xl xs:text-5xl md:text-6xl lg:text-7xl tracking-tight">
-              <span className="bg-gradient-to-r from-emerald-400 to-[#86b6c6] inline-block text-transparent bg-clip-text leading-tight">
+              <span className="bg-gradient-to-r from-[#5B6AFF] to-[#A166AB] inline-block text-transparent bg-clip-text leading-tight">
                 Focus on Clients,
               </span>
               <br />

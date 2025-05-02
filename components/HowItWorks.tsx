@@ -23,7 +23,7 @@ const HowItWorks = () => {
         {/* Header */}
         <div className="flex flex-col text-center mb-12 md:mb-16">
           <h2 className="text-4xl xs:text-5xl md:text-6xl font-bold tracking-tight mb-4 md:mb-6">
-            How It <span className="text-emerald-400">Works</span>
+            How It <span className="bg-gradient-to-r from-[#5B6AFF] to-[#A166AB] inline-block text-transparent bg-clip-text">Works</span>
           </h2>
           <p className="text-base xs:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
             Get started in minutes and see immediate improvements in your reporting workflow.
@@ -44,7 +44,7 @@ const HowItWorks = () => {
                   index % 2 === 0 ? 'lg:pr-16 lg:items-end lg:text-right' : 'lg:pl-16 lg:items-start lg:text-left order-1 lg:order-2'
                 }`}>
                   <div className="flex items-center gap-4 xs:gap-6">
-                    <div className="w-12 h-12 xs:w-16 xs:h-16 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-lg xs:text-2xl font-medium shrink-0">
+                    <div className="w-12 h-12 xs:w-16 xs:h-16 rounded-full bg-gradient-to-br from-[#5B6AFF] to-[#A166AB] flex items-center justify-center text-lg xs:text-2xl font-medium shrink-0">
                       {step.number}
                     </div>
                     <h3 className="text-2xl xs:text-3xl lg:text-4xl font-bold">{step.title}</h3>
