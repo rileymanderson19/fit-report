@@ -41,13 +41,6 @@ export default function Sidebar({ currentPath = "" }: { currentPath?: string }) 
         </SidebarItem>
         
         <SidebarItem 
-          href="/dashboard/reports" 
-          isActive={currentPath.startsWith("/dashboard/reports")}
-        >
-          Reports
-        </SidebarItem>
-        
-        <SidebarItem 
           href="/dashboard/trainerize" 
           isActive={currentPath.startsWith("/dashboard/trainerize")}
         >
