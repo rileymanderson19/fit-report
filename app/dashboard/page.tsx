@@ -95,7 +95,7 @@ export default async function Dashboard() {
                     </div>
                     <p className="text-base-content/80">Schedule and run reports for your clients</p>
                     <div className="card-actions justify-end mt-4">
-                      <Link href="/dashboard/reports" className="btn btn-primary btn-sm">Create</Link>
+                      <Link href="/dashboard/clients?tab=reports" className="btn btn-primary btn-sm">Create</Link>
                     </div>
                   </div>
                 </div>
