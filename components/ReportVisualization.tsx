@@ -301,6 +301,10 @@ export function ReportVisualization({
   };
 
   const formatChange = (change: { diff: number, percent: number }, decimals: number = 1) => {
+    // Check if either value is NaN or if percent would be infinite (previous value was 0)
+    if (isNaN(change.diff) || isNaN(change.percent) || !isFinite(change.percent)) {
+      return 'N/A';
+    }
     const sign = change.diff >= 0 ? '+' : '';
     const formattedDiff = formatNumber(change.diff, decimals);
     const formattedPercent = formatNumber(change.percent, 1);
@@ -522,12 +526,20 @@ export function ReportVisualization({
                       <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgWeight)}</div>
                       <div className="text-xl">lbs</div>
                       <div className="text-sm text-base-content/80">
-                        {weeklyChanges[weeklyChanges.length - 1].weight.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].weight.diff).toFixed(1)}
+                        {!isNaN(weeklyChanges[weeklyChanges.length - 1].weight.diff) && (
+                          <>
+                            {weeklyChanges[weeklyChanges.length - 1].weight.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].weight.diff).toFixed(1)}
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgWeight)} lbs</div>
                     <div className="text-sm text-base-content/80">
-                      {weeklyChanges[weeklyChanges.length - 1].weight.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].weight.percent)}%
+                      {isNaN(weeklyChanges[weeklyChanges.length - 1].weight.percent) || !isFinite(weeklyChanges[weeklyChanges.length - 1].weight.percent) ? (
+                        'N/A'
+                      ) : (
+                        <>{weeklyChanges[weeklyChanges.length - 1].weight.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].weight.percent)}%</>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -540,12 +552,20 @@ export function ReportVisualization({
                       <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgSteps, 0)}</div>
                       <div className="text-xl">steps</div>
                       <div className="text-sm text-base-content/80">
-                        {weeklyChanges[weeklyChanges.length - 1].steps.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].steps.diff).toFixed(0)}
+                        {!isNaN(weeklyChanges[weeklyChanges.length - 1].steps.diff) && (
+                          <>
+                            {weeklyChanges[weeklyChanges.length - 1].steps.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].steps.diff).toFixed(0)}
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgSteps, 0)} steps</div>
                     <div className="text-sm text-base-content/80">
-                      {weeklyChanges[weeklyChanges.length - 1].steps.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].steps.percent)}%
+                      {isNaN(weeklyChanges[weeklyChanges.length - 1].steps.percent) || !isFinite(weeklyChanges[weeklyChanges.length - 1].steps.percent) ? (
+                        'N/A'
+                      ) : (
+                        <>{weeklyChanges[weeklyChanges.length - 1].steps.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].steps.percent)}%</>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -558,12 +578,20 @@ export function ReportVisualization({
                       <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgCalories, 0)}</div>
                       <div className="text-xl">calories</div>
                       <div className="text-sm text-base-content/80">
-                        {weeklyChanges[weeklyChanges.length - 1].calories.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].calories.diff).toFixed(0)}
+                        {!isNaN(weeklyChanges[weeklyChanges.length - 1].calories.diff) && (
+                          <>
+                            {weeklyChanges[weeklyChanges.length - 1].calories.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].calories.diff).toFixed(0)}
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgCalories, 0)} calories</div>
                     <div className="text-sm text-base-content/80">
-                      {weeklyChanges[weeklyChanges.length - 1].calories.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].calories.percent)}%
+                      {isNaN(weeklyChanges[weeklyChanges.length - 1].calories.percent) || !isFinite(weeklyChanges[weeklyChanges.length - 1].calories.percent) ? (
+                        'N/A'
+                      ) : (
+                        <>{weeklyChanges[weeklyChanges.length - 1].calories.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].calories.percent)}%</>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -576,12 +604,20 @@ export function ReportVisualization({
                       <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgProtein)}</div>
                       <div className="text-xl">g</div>
                       <div className="text-sm text-base-content/80">
-                        {weeklyChanges[weeklyChanges.length - 1].protein.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].protein.diff).toFixed(1)}
+                        {!isNaN(weeklyChanges[weeklyChanges.length - 1].protein.diff) && (
+                          <>
+                            {weeklyChanges[weeklyChanges.length - 1].protein.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].protein.diff).toFixed(1)}
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgProtein)}g</div>
                     <div className="text-sm text-base-content/80">
-                      {weeklyChanges[weeklyChanges.length - 1].protein.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].protein.percent)}%
+                      {isNaN(weeklyChanges[weeklyChanges.length - 1].protein.percent) || !isFinite(weeklyChanges[weeklyChanges.length - 1].protein.percent) ? (
+                        'N/A'
+                      ) : (
+                        <>{weeklyChanges[weeklyChanges.length - 1].protein.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].protein.percent)}%</>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -594,12 +630,20 @@ export function ReportVisualization({
                       <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgCarbs)}</div>
                       <div className="text-xl">g</div>
                       <div className="text-sm text-base-content/80">
-                        {weeklyChanges[weeklyChanges.length - 1].carbs.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].carbs.diff).toFixed(1)}
+                        {!isNaN(weeklyChanges[weeklyChanges.length - 1].carbs.diff) && (
+                          <>
+                            {weeklyChanges[weeklyChanges.length - 1].carbs.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].carbs.diff).toFixed(1)}
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgCarbs)}g</div>
                     <div className="text-sm text-base-content/80">
-                      {weeklyChanges[weeklyChanges.length - 1].carbs.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].carbs.percent)}%
+                      {isNaN(weeklyChanges[weeklyChanges.length - 1].carbs.percent) || !isFinite(weeklyChanges[weeklyChanges.length - 1].carbs.percent) ? (
+                        'N/A'
+                      ) : (
+                        <>{weeklyChanges[weeklyChanges.length - 1].carbs.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].carbs.percent)}%</>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -612,12 +656,20 @@ export function ReportVisualization({
                       <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgFats)}</div>
                       <div className="text-xl">g</div>
                       <div className="text-sm text-base-content/80">
-                        {weeklyChanges[weeklyChanges.length - 1].fats.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].fats.diff).toFixed(1)}
+                        {!isNaN(weeklyChanges[weeklyChanges.length - 1].fats.diff) && (
+                          <>
+                            {weeklyChanges[weeklyChanges.length - 1].fats.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].fats.diff).toFixed(1)}
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgFats)}g</div>
                     <div className="text-sm text-base-content/80">
-                      {weeklyChanges[weeklyChanges.length - 1].fats.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].fats.percent)}%
+                      {isNaN(weeklyChanges[weeklyChanges.length - 1].fats.percent) || !isFinite(weeklyChanges[weeklyChanges.length - 1].fats.percent) ? (
+                        'N/A'
+                      ) : (
+                        <>{weeklyChanges[weeklyChanges.length - 1].fats.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].fats.percent)}%</>
+                      )}
                     </div>
                   </div>
                 </div>
