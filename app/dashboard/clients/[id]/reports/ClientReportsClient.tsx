@@ -37,6 +37,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   useEffect(() => {
     const fetchClientAndReports = async () => {
@@ -343,6 +344,39 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
     }
   };
 
+  const handleDeleteAllReports = () => {
+    (document.getElementById('delete-all-modal') as HTMLDialogElement)?.showModal();
+  };
+
+  const confirmDeleteAll = async () => {
+    setIsDeletingAll(true);
+    try {
+      const response = await fetch(`/api/reports/delete-all?clientId=${clientId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete reports');
+      }
+
+      // Clear all reports from state
+      setReports([]);
+      setSelectedReport(null);
+      toast.success('All reports deleted successfully');
+    } catch (error) {
+      console.error('Error deleting reports:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete reports');
+    } finally {
+      setIsDeletingAll(false);
+      (document.getElementById('delete-all-modal') as HTMLDialogElement)?.close();
+    }
+  };
+
+  const cancelDeleteAll = () => {
+    (document.getElementById('delete-all-modal') as HTMLDialogElement)?.close();
+  };
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -371,12 +405,27 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
         <div className="w-full lg:w-1/4 space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Reports</h2>
-            <Link
-              href={`/dashboard/clients/${clientId}/reports/new`}
-              className="btn btn-primary btn-sm"
-            >
-              New Report
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                href={`/dashboard/clients/${clientId}/reports/new`}
+                className="btn btn-primary btn-sm"
+              >
+                New Report
+              </Link>
+              {reports.length > 0 && (
+                <button
+                  onClick={handleDeleteAllReports}
+                  className="btn btn-error btn-sm"
+                  disabled={isDeletingAll}
+                >
+                  {isDeletingAll ? (
+                    <span className="loading loading-spinner loading-xs" />
+                  ) : (
+                    'Delete All'
+                  )}
+                </button>
+              )}
+            </div>
           </div>
           
           <div className="grid gap-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
@@ -464,6 +513,40 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
           </div>
         </div>
       </div>
+
+      {/* Delete All Confirmation Modal */}
+      <dialog id="delete-all-modal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Delete All Reports</h3>
+          <p className="py-4">
+            Are you sure you want to delete all reports for {client?.first_name} {client?.last_name}? 
+            This will delete {reports.length} report{reports.length !== 1 ? 's' : ''} and cannot be undone.
+          </p>
+          <div className="modal-action">
+            <button 
+              className="btn btn-ghost" 
+              onClick={cancelDeleteAll} 
+              disabled={isDeletingAll}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-error"
+              onClick={confirmDeleteAll}
+              disabled={isDeletingAll}
+            >
+              {isDeletingAll ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                'Delete All Reports'
+              )}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
 
       {/* Delete Confirmation Modal */}
       <dialog id="delete-modal" className="modal modal-bottom sm:modal-middle">

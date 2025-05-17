@@ -399,7 +399,7 @@ export default function ClientsPage() {
             className={`tab ${activeTab === 'clients' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('clients')}
           >
-            Manage Clients
+            Clients
           </button>
           <button 
             className={`tab ${activeTab === 'reports' ? 'tab-active' : ''}`}
