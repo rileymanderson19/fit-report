@@ -218,14 +218,85 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
       const reportElement = document.getElementById('report-container');
       if (!reportElement) throw new Error('Report container not found');
 
-      // Apply dark theme styles
-      const darkThemeStyles = document.createElement('style');
-      darkThemeStyles.textContent = `
+      // Apply optimized styles for capture
+      const captureStyles = document.createElement('style');
+      captureStyles.textContent = `
         #report-container {
-          background: #1d232a !important;
+          background: white !important;
+          padding: 40px !important;
+          color: #1a1a1a !important;
+          font-size: 16px !important;
+        }
+        #report-container h3 {
+          color: #1a1a1a !important;
+          font-size: 24px !important;
+          font-weight: 600 !important;
+          margin-bottom: 20px !important;
         }
         #report-container .card {
-          background-color: #191e24 !important;
+          background: #f8fafc !important;
+          border: 1px solid #e2e8f0 !important;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+          margin-bottom: 24px !important;
+        }
+        #report-container .card-body {
+          padding: 24px !important;
+        }
+        #report-container table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          margin-bottom: 16px !important;
+          background: white !important;
+        }
+        #report-container th {
+          background: #f1f5f9 !important;
+          color: #1a1a1a !important;
+          font-weight: 600 !important;
+          text-align: left !important;
+          padding: 12px 16px !important;
+          border-bottom: 2px solid #e2e8f0 !important;
+        }
+        #report-container td {
+          padding: 12px 16px !important;
+          border-bottom: 1px solid #e2e8f0 !important;
+          color: #1a1a1a !important;
+        }
+        #report-container tr:nth-child(even) {
+          background: #f8fafc !important;
+        }
+        #report-container .text-base-content {
+          color: #1a1a1a !important;
+        }
+        #report-container .text-base-content\\/60,
+        #report-container .text-base-content\\/80 {
+          color: #64748b !important;
+        }
+        #report-container .text-primary {
+          color: #2563eb !important;
+        }
+        #report-container .font-medium {
+          font-weight: 500 !important;
+        }
+        #report-container .font-semibold {
+          font-weight: 600 !important;
+        }
+        #report-container .text-xl {
+          font-size: 20px !important;
+        }
+        #report-container .text-lg {
+          font-size: 18px !important;
+        }
+        #report-container .border-base-300 {
+          border-color: #e2e8f0 !important;
+        }
+        #report-container .bg-base-200 {
+          background: #f8fafc !important;
+        }
+        #report-container .bg-base-200\\/50 {
+          background: #f8fafc !important;
+        }
+        #report-container .bg-base-200\\/30 {
+          background: #f8fafc !important;
         }
         #report-container .overflow-x-auto::-webkit-scrollbar {
           display: none !important;
@@ -234,25 +305,28 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
           -ms-overflow-style: none !important;
           scrollbar-width: none !important;
         }
-        #report-container tr:nth-child(even) {
-          background-color: rgba(255, 255, 255, 0.05) !important;
-        }
-        #report-container .border-base-300 {
-          border-color: rgba(255, 255, 255, 0.1) !important;
+        @media print {
+          #report-container {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
         }
       `;
-      document.head.appendChild(darkThemeStyles);
+      document.head.appendChild(captureStyles);
 
-      // Use html-to-image to capture the report
+      // Use html-to-image with optimized settings
       const canvas = await import('html-to-image');
       const dataUrl = await canvas.toPng(reportElement, {
         quality: 1,
         pixelRatio: 2,
-        backgroundColor: '#1d232a'
+        backgroundColor: '#ffffff',
+        style: {
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        }
       });
 
       // Clean up styles
-      document.head.removeChild(darkThemeStyles);
+      document.head.removeChild(captureStyles);
 
       // Create a download link
       const link = document.createElement('a');
