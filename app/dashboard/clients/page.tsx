@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { PaginationControls } from '@/components/PaginationControls';
 import { ScheduleReportModal } from '@/components/ScheduleReportModal';
 
@@ -24,6 +25,7 @@ interface TrainerizeClient {
 }
 
 export default function ClientsPage() {
+  const router = useRouter();
   const supabase = createClient();
   
   // Shared state
@@ -330,6 +332,11 @@ export default function ClientsPage() {
 
     setReportData(newReportData);
     setIsLoading(false);
+
+    // Redirect if only one client's report was generated successfully
+    if (selectedClients.length === 1 && Object.keys(newReportData).length === 1) {
+      router.push(`/dashboard/clients/${selectedClients[0]}/reports`);
+    }
   };
 
   const handleClientSelect = (clientId: string) => {
