@@ -4,21 +4,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
-
-interface TrainerizeClient {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
+import { PaginationControls } from '@/components/PaginationControls';
+import { ScheduleReportModal } from '@/components/ScheduleReportModal';
 
 interface Client {
   id: string;
-  trainerize_id: number;
   first_name: string;
   last_name: string;
   email: string;
   active: boolean;
+  trainerize_id?: string;
+}
+
+interface TrainerizeClient {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
 }
 
 export default function ClientsPage() {
@@ -46,6 +48,37 @@ export default function ClientsPage() {
   const [minReps, setMinReps] = useState<number>(6);
   const [maxReps, setMaxReps] = useState<number>(10);
   const [activeTab, setActiveTab] = useState<'clients' | 'reports'>('clients');
+
+  // Handle URL parameters
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const selectedClient = searchParams.get('selectedClient');
+    const tab = searchParams.get('tab');
+
+    if (selectedClient) {
+      setSelectedClients([selectedClient]);
+    }
+
+    if (tab === 'reports') {
+      setActiveTab('reports');
+    }
+
+    // Set default date range when coming from "New Report"
+    if (selectedClient && tab === 'reports') {
+      const today = new Date();
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 7);
+      
+      setStartDate(sevenDaysAgo);
+      setEndDate(today);
+    }
+
+    // Clean up URL parameters after handling them
+    if (selectedClient || tab) {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
 
   // Fetch clients from Supabase
   const fetchClients = useCallback(async () => {
@@ -89,8 +122,8 @@ export default function ClientsPage() {
 
       const mappedClients = data.users.map((user: any) => ({
         id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        first_name: user.firstName,
+        last_name: user.lastName,
         email: user.email
       }));
 
@@ -104,39 +137,34 @@ export default function ClientsPage() {
     }
   };
 
-  const handleImport = async () => {
-    if (selectedClients.length === 0) {
-      toast.error('Please select at least one client to import');
-      return;
-    }
-
+  const handleImportClients = async () => {
     setIsImporting(true);
     try {
-      const clientsToImport = trainerizeClients.filter(client => 
-        selectedClients.includes(client.id.toString())
-      );
+      // Import each selected client
+      for (const trainerizeClient of trainerizeClients) {
+        if (clients.some(c => c.trainerize_id === trainerizeClient.id)) {
+          continue; // Skip if already imported
+        }
 
-      const response = await fetch('/api/clients/import', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ clients: clientsToImport }),
-      });
+        const { error } = await supabase
+          .from('clients')
+          .insert({
+            first_name: trainerizeClient.first_name,
+            last_name: trainerizeClient.last_name,
+            email: trainerizeClient.email,
+            trainerize_id: trainerizeClient.id,
+            active: true
+          });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to import clients');
+        if (error) throw error;
       }
 
-      toast.success(`Successfully imported ${selectedClients.length} clients`);
-      setSelectedClients([]);
+      toast.success('Clients imported successfully');
+      fetchClients();
       setIsModalOpen(false);
-      await fetchClients();
     } catch (error) {
       console.error('Error importing clients:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to import selected clients');
+      toast.error('Failed to import clients');
     } finally {
       setIsImporting(false);
     }
@@ -680,23 +708,31 @@ export default function ClientsPage() {
                   </th>
                   <th>Name</th>
                   <th>Email</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {trainerizeClients.map((client) => (
-                  <tr key={client.id} className="hover">
+                  <tr key={client.id}>
                     <td>
                       <label>
                         <input
                           type="checkbox"
                           className="checkbox"
-                          checked={selectedClients.includes(client.id.toString())}
-                          onChange={() => handleClientSelect(client.id.toString())}
+                          checked={selectedClients.includes(client.id)}
+                          onChange={() => handleClientSelect(client.id)}
                         />
                       </label>
                     </td>
-                    <td>{`${client.firstName} ${client.lastName}`}</td>
+                    <td>{client.first_name} {client.last_name}</td>
                     <td>{client.email}</td>
+                    <td>
+                      {clients.some(c => c.trainerize_id === client.id) ? (
+                        <span className="text-success">Imported</span>
+                      ) : (
+                        <span className="text-base-content/60">Not Imported</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {trainerizeClients.length === 0 && !isLoading && (
@@ -720,7 +756,7 @@ export default function ClientsPage() {
           <div className="modal-action">
             <button 
               className={`btn btn-primary ${isImporting ? 'loading' : ''}`}
-              onClick={handleImport}
+              onClick={handleImportClients}
               disabled={isImporting || selectedClients.length === 0}
             >
               Import Selected ({selectedClients.length})
