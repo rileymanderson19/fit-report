@@ -45,13 +45,13 @@ export default function Home() {
             <Pricing />
           </div>
           
-          {/* FAQ section - better mobile readability */}
+          {/* FAQ section - better mobile readability
           <div 
             id="faq" 
             className="scroll-mt-14 sm:scroll-mt-16 py-8 xs:py-12 sm:py-16 lg:py-24"
           >
             <FAQ />
-          </div>
+          </div> */}
           
           {/* CTA section - mobile-optimized margins */}
           <div className="py-8 xs:py-12 sm:py-16 lg:py-24">

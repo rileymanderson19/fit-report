@@ -1,22 +1,31 @@
+"use client";
+
 const steps = [
   {
     title: "Connect Your Account",
-    description: "Link FitReport to your existing Trainerize account with our secure one-click integration. No technical skills required.",
+    description: "Link FitReport to your existing Trainerize account with our secure one-click integration.",
     number: "01"
   },
   {
-    title: "Customize Reports",
-    description: "Select the metrics and data points most relevant to your training style and client goals from our template library.",
+    title: "Import Your Clients",
+    description: "Import your clients from Trainerize.",
     number: "02"
   },
   {
-    title: "Automate Delivery",
-    description: "Schedule automated reports to be delivered to clients or review them yourself on any device, anywhere.",
+    title: "Generate Reports",
+    description: "Generate reports enhanced reports to provide better insights to your clients, and save you time.",
     number: "03"
   }
 ];
 
 const HowItWorks = () => {
+  const handleScrollToPricing = () => {
+    const pricingSection = document.getElementById('pricing');
+    if (pricingSection) {
+      pricingSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section id="how-it-works" className="w-full text-white py-16 md:py-24 lg:py-32">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,8 +64,11 @@ const HowItWorks = () => {
 
         {/* CTA Button */}
         <div className="flex justify-center mt-16 md:mt-24">
-          <button className="btn btn-primary btn-lg text-white w-full xs:w-auto min-h-[4rem] text-lg xs:text-xl px-12 transform transition-transform hover:scale-105">
-            Start Your Integration Now
+          <button 
+            onClick={handleScrollToPricing}
+            className="btn btn-primary btn-lg text-white w-full xs:w-auto min-h-[4rem] text-lg xs:text-xl px-12 transform transition-transform hover:scale-105"
+          >
+            Try FitReport Now →
           </button>
         </div>
       </div>

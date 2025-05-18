@@ -22,7 +22,7 @@ export default function GridFeatures() {
     {
       icon: <BarChart3 className="h-10 w-10 text-[#5B6AFF]" />,
       title: "Enhanced Analytics",
-      description: "Transform Trainerize data into actionable insights with customizable dashboards showing client progress at a glance.",
+      description: "Transform Trainerize data into actionable insights with dashboards showing client progress at a glance.",
     },
     {
       icon: <LineChart className="h-10 w-10 text-purple-400" />,
@@ -31,8 +31,8 @@ export default function GridFeatures() {
     },
     {
       icon: <Calendar className="h-10 w-10 text-[#5B6AFF]" />,
-      title: "Automated Reporting",
-      description: "Schedule and send professional reports to clients automatically, saving hours of manual data compilation each week.",
+      title: "Instant Reporting",
+      description: "Generate reports for clients automatically, saving hours of manual data compilation each week.",
     },
   ];
 

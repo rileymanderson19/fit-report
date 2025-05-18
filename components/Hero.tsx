@@ -46,9 +46,6 @@ const Hero = () => {
             >
               Start Free Trial →
             </button>
-            <button className="btn btn-outline btn-lg w-full xs:w-auto text-white border-white/20 hover:bg-white/10 min-h-[4rem] text-lg xs:text-xl px-12 transform transition-transform hover:scale-105">
-              Watch Demo
-            </button>
           </div>
         </div>
       </div>

@@ -1,6 +1,15 @@
+"use client";
+
 import config from "@/config";
 
 const CTA = () => {
+  const handleScrollToPricing = () => {
+    const pricingSection = document.getElementById('pricing');
+    if (pricingSection) {
+      pricingSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section className="w-full text-white">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
@@ -13,18 +22,15 @@ const CTA = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <button className="btn btn-primary btn-lg text-white">
+            <button 
+              onClick={handleScrollToPricing}
+              className="btn btn-primary btn-lg text-white"
+            >
               Start Your Free Trial
               <span className="text-xl">→</span>
             </button>
-            <button className="btn btn-outline btn-lg text-white border-white/20 hover:bg-white/10">
-              Schedule a Demo
-            </button>
           </div>
           
-          <p className="text-base text-gray-500">
-            No credit card required. Cancel anytime.
-          </p>
         </div>
       </div>
     </section>
