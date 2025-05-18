@@ -9,11 +9,14 @@ import { PaginationControls } from '../../components/PaginationControls';
 
 interface Client {
   id: string;
+  trainer_id: string;
+  trainerize_id: number;
   first_name: string;
   last_name: string;
   email: string;
+  created_at: string;
+  updated_at: string;
   active: boolean;
-  trainerize_id?: string;
 }
 
 interface TrainerizeClient {
@@ -37,6 +40,8 @@ export default function ClientsPage() {
 
   // Import-specific state
   const [trainerizeClients, setTrainerizeClients] = useState<TrainerizeClient[]>([]);
+  const [importSearchQuery, setImportSearchQuery] = useState('');
+  const [selectedImportIds, setSelectedImportIds] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -129,6 +134,8 @@ export default function ClientsPage() {
       }));
 
       setTrainerizeClients(mappedClients);
+      setSelectedImportIds([]);
+      setImportSearchQuery('');
       setIsModalOpen(true);
     } catch (error) {
       console.error('Error fetching clients:', error);
@@ -141,33 +148,68 @@ export default function ClientsPage() {
   const handleImportClients = async () => {
     setIsImporting(true);
     try {
-      // Import each selected client
-      for (const trainerizeClient of trainerizeClients) {
-        if (clients.some(c => c.trainerize_id === trainerizeClient.id)) {
-          continue; // Skip if already imported
-        }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
 
+      const selectedTrainerizeClients = trainerizeClients.filter(client => 
+        selectedImportIds.includes(client.id) && 
+        !clients.some(c => c.trainerize_id === parseInt(client.id))
+      );
+
+      if (selectedTrainerizeClients.length === 0) {
+        throw new Error('No clients selected or all selected clients are already imported');
+      }
+
+      for (const client of selectedTrainerizeClients) {
         const { error } = await supabase
           .from('clients')
           .insert({
-            first_name: trainerizeClient.first_name,
-            last_name: trainerizeClient.last_name,
-            email: trainerizeClient.email,
-            trainerize_id: trainerizeClient.id,
-            active: true
+            trainer_id: user.id,
+            first_name: client.first_name,
+            last_name: client.last_name,
+            email: client.email,
+            trainerize_id: parseInt(client.id),
+            active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error importing client:', error);
+          throw new Error(`Failed to import ${client.first_name} ${client.last_name}: ${error.message}`);
+        }
       }
 
       toast.success('Clients imported successfully');
       fetchClients();
       setIsModalOpen(false);
+      setSelectedImportIds([]);
     } catch (error) {
       console.error('Error importing clients:', error);
-      toast.error('Failed to import clients');
+      toast.error(error instanceof Error ? error.message : 'Failed to import clients');
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  // Handle import client selection
+  const handleImportClientSelect = (clientId: string) => {
+    setSelectedImportIds(prev => 
+      prev.includes(clientId) 
+        ? prev.filter(id => id !== clientId)
+        : [...prev, clientId]
+    );
+  };
+
+  // Handle import select all
+  const handleImportSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const newSelectedIds = new Set([...selectedImportIds]);
+      filteredTrainerizeClients.forEach(client => newSelectedIds.add(client.id));
+      setSelectedImportIds(Array.from(newSelectedIds));
+    } else {
+      const filteredIds = new Set(filteredTrainerizeClients.map(client => client.id));
+      setSelectedImportIds(selectedImportIds.filter(id => !filteredIds.has(id)));
     }
   };
 
@@ -423,6 +465,12 @@ export default function ClientsPage() {
       </div>
     );
   };
+
+  // Add filteredTrainerizeClients computation
+  const filteredTrainerizeClients = trainerizeClients.filter(client =>
+    `${client.first_name} ${client.last_name}`.toLowerCase().includes(importSearchQuery.toLowerCase()) ||
+    client.email.toLowerCase().includes(importSearchQuery.toLowerCase())
+  );
 
   return (
     <div className="p-8">
@@ -688,13 +736,10 @@ export default function ClientsPage() {
           <div className="form-control mb-6">
             <input
               type="text"
-              placeholder="Search clients by name or email..."
+              placeholder="Search Trainerize clients..."
               className="input input-bordered w-full"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
+              value={importSearchQuery}
+              onChange={(e) => setImportSearchQuery(e.target.value)}
             />
           </div>
           
@@ -707,8 +752,13 @@ export default function ClientsPage() {
                       <input
                         type="checkbox"
                         className="checkbox"
-                        checked={selectedClients.length === trainerizeClients.length && trainerizeClients.length > 0}
-                        onChange={handleSelectAll}
+                        checked={
+                          filteredTrainerizeClients.length > 0 &&
+                          filteredTrainerizeClients.every(client => 
+                            selectedImportIds.includes(client.id)
+                          )
+                        }
+                        onChange={handleImportSelectAll}
                       />
                     </label>
                   </th>
@@ -718,22 +768,22 @@ export default function ClientsPage() {
                 </tr>
               </thead>
               <tbody>
-                {trainerizeClients.map((client) => (
+                {filteredTrainerizeClients.map((client) => (
                   <tr key={client.id}>
                     <td>
                       <label>
                         <input
                           type="checkbox"
                           className="checkbox"
-                          checked={selectedClients.includes(client.id)}
-                          onChange={() => handleClientSelect(client.id)}
+                          checked={selectedImportIds.includes(client.id)}
+                          onChange={() => handleImportClientSelect(client.id)}
                         />
                       </label>
                     </td>
                     <td>{client.first_name} {client.last_name}</td>
                     <td>{client.email}</td>
                     <td>
-                      {clients.some(c => c.trainerize_id === client.id) ? (
+                      {clients.some(c => c.trainerize_id === parseInt(client.id)) ? (
                         <span className="text-success">Imported</span>
                       ) : (
                         <span className="text-base-content/60">Not Imported</span>
@@ -741,16 +791,16 @@ export default function ClientsPage() {
                     </td>
                   </tr>
                 ))}
-                {trainerizeClients.length === 0 && !isLoading && (
+                {filteredTrainerizeClients.length === 0 && !isLoading && (
                   <tr>
-                    <td colSpan={3} className="text-center py-4">
+                    <td colSpan={4} className="text-center py-4">
                       No clients found
                     </td>
                   </tr>
                 )}
                 {isLoading && (
                   <tr>
-                    <td colSpan={3} className="text-center py-4">
+                    <td colSpan={4} className="text-center py-4">
                       <span className="loading loading-spinner loading-md"></span>
                     </td>
                   </tr>
@@ -763,15 +813,19 @@ export default function ClientsPage() {
             <button 
               className={`btn btn-primary ${isImporting ? 'loading' : ''}`}
               onClick={handleImportClients}
-              disabled={isImporting || selectedClients.length === 0}
+              disabled={isImporting || selectedImportIds.length === 0}
             >
-              Import Selected ({selectedClients.length})
+              Import Selected ({selectedImportIds.filter(id => 
+                trainerizeClients.some(c => c.id === id) && 
+                !clients.some(c => c.trainerize_id === parseInt(id))
+              ).length})
             </button>
             <button 
               className="btn"
               onClick={() => {
                 setIsModalOpen(false);
-                setSelectedClients([]);
+                setSelectedImportIds([]);
+                setImportSearchQuery('');
               }}
             >
               Close
@@ -779,7 +833,11 @@ export default function ClientsPage() {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setIsModalOpen(false)}>close</button>
+          <button onClick={() => {
+            setIsModalOpen(false);
+            setSelectedImportIds([]);
+            setImportSearchQuery('');
+          }}>close</button>
         </form>
       </dialog>
     </div>
