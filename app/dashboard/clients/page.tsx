@@ -5,8 +5,7 @@ import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { PaginationControls } from '@/components/PaginationControls';
-import { ScheduleReportModal } from '@/components/ScheduleReportModal';
+import { PaginationControls } from '../../components/PaginationControls';
 
 interface Client {
   id: string;

@@ -53,7 +53,7 @@ export async function POST(request: Request) {
           unitBodystats,
           unitWeight,
         }),
-      }).then(res => res.json().catch(() => null))
+      }).then(res => res.json().catch((): null => null))
     );
 
     const results = await Promise.all(promises);
