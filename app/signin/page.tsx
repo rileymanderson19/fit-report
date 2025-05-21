@@ -50,7 +50,7 @@ export default function Login() {
         window.location.href = url;
       }
     } catch (error) {
-      console.error(error);
+      console.error("Stripe checkout error:", error);
       toast.error("Failed to create checkout session");
     }
   };
@@ -63,7 +63,6 @@ export default function Login() {
     }
   ) => {
     e?.preventDefault();
-
     setIsLoading(true);
 
     try {
@@ -94,23 +93,39 @@ export default function Login() {
           return;
         }
         
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: redirectURL,
+            data: {
+              full_name: email.split('@')[0], // Set a default name from email
+            }
           },
         });
 
+        console.log("Signup response:", { data, error }); // Debug log
+
         if (error) {
+          console.error("Signup error:", error);
           toast.error(error.message);
-        } else {
-          toast.success("Verification email sent. Check your inbox!");
-          setIsDisabled(true);
-          
-          // If coming from pricing, redirect to Stripe checkout
-          if (priceId) {
-            await handleStripeCheckout();
+        } else if (data?.user) {
+          if (data.user.identities?.length === 0) {
+            toast.error("This email is already registered. Please sign in instead.");
+            setMode("signin");
+          } else {
+            // Check if email confirmation is required
+            if (data.user.confirmed_at || data.user.email_confirmed_at) {
+              toast.success("Account created successfully!");
+              if (priceId) {
+                await handleStripeCheckout();
+              } else {
+                router.push(config.auth.callbackUrl);
+              }
+            } else {
+              toast.success("Please check your email to confirm your account!");
+              setIsDisabled(true);
+            }
           }
         }
       } else if (type === "email" && mode === "signin") {
@@ -126,19 +141,19 @@ export default function Login() {
         });
 
         if (error) {
+          console.error("Signin error:", error);
           toast.error(error.message);
         } else if (data?.user) {
           if (priceId) {
-            // If coming from pricing, redirect to Stripe checkout
             await handleStripeCheckout();
           } else {
-            // Otherwise redirect to dashboard
             router.push(config.auth.callbackUrl);
           }
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error("Auth error:", error);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
