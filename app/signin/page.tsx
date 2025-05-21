@@ -1,23 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/libs/supabase/client";
 import { Provider } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
 import config from "@/config";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import apiClient from "@/libs/api";
 
 // This a login/singup page for Supabase Auth.
 // Successfull login redirects to /api/auth/callback where the Code Exchange is processed (see app/api/auth/callback/route.js).
 export default function Login() {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isDisabled, setIsDisabled] = useState<boolean>(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+
+  // Get URL parameters
+  const priceId = searchParams.get("priceId");
+  const returnUrl = searchParams.get("returnUrl");
+  const initialMode = searchParams.get("mode");
+
+  useEffect(() => {
+    // Set initial mode if provided in URL
+    if (initialMode === "signup") {
+      setMode("signup");
+    }
+  }, [initialMode]);
+
+  const handleStripeCheckout = async () => {
+    try {
+      const { url }: { url: string } = await apiClient.post(
+        "/stripe/create-checkout",
+        {
+          priceId,
+          successUrl: returnUrl ? returnUrl + "?success=true" : window.location.href + "?success=true",
+          cancelUrl: returnUrl ? returnUrl + "?canceled=true" : window.location.href + "?canceled=true",
+          mode: "subscription",
+        }
+      );
+
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to create checkout session");
+    }
+  };
 
   const handleAuth = async (
     e: any,
@@ -71,6 +107,11 @@ export default function Login() {
         } else {
           toast.success("Verification email sent. Check your inbox!");
           setIsDisabled(true);
+          
+          // If coming from pricing, redirect to Stripe checkout
+          if (priceId) {
+            await handleStripeCheckout();
+          }
         }
       } else if (type === "email" && mode === "signin") {
         if (!password) {
@@ -87,8 +128,13 @@ export default function Login() {
         if (error) {
           toast.error(error.message);
         } else if (data?.user) {
-          // Redirect to dashboard on successful login
-          router.push(config.auth.callbackUrl);
+          if (priceId) {
+            // If coming from pricing, redirect to Stripe checkout
+            await handleStripeCheckout();
+          } else {
+            // Otherwise redirect to dashboard
+            router.push(config.auth.callbackUrl);
+          }
         }
       }
     } catch (error) {

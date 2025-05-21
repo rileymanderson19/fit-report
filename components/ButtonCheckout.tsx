@@ -3,6 +3,8 @@
 import { useState } from "react";
 import apiClient from "@/libs/api";
 import config from "@/config";
+import { createClient } from "@/libs/supabase/client";
+import { useRouter } from "next/navigation";
 
 // This component is used to create Stripe Checkout Sessions
 // It calls the /api/stripe/create-checkout route with the priceId, successUrl and cancelUrl
@@ -18,11 +20,23 @@ const ButtonCheckout = ({
   className?: string;
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const supabase = createClient();
+  const router = useRouter();
 
   const handlePayment = async () => {
     setIsLoading(true);
 
     try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // If not authenticated, redirect to signup with priceId
+        const signupUrl = `/signin?mode=signup&priceId=${priceId}&returnUrl=${encodeURIComponent(window.location.href)}`;
+        router.push(signupUrl);
+        return;
+      }
+
       const { url }: { url: string } = await apiClient.post(
         "/stripe/create-checkout",
         {
