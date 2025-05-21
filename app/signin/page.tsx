@@ -70,12 +70,24 @@ function LoginContent() {
       const redirectURL = window.location.origin + "/api/auth/callback";
 
       if (type === "oauth") {
-        await supabase.auth.signInWithOAuth({
+        console.log("Starting OAuth sign in...");
+        const { data, error } = await supabase.auth.signInWithOAuth({
           provider,
           options: {
             redirectTo: redirectURL,
           },
         });
+
+        console.log("OAuth sign in response:", { data, error });
+
+        if (error) {
+          console.error("OAuth error:", error);
+          toast.error(error.message);
+        } else if (data?.url) {
+          // We can't create the profile here because the user isn't created yet
+          // We'll need to handle this in the callback route
+          window.location.href = data.url;
+        }
       } else if (type === "magic_link" && mode === "signin") {
         await supabase.auth.signInWithOtp({
           email,
@@ -92,6 +104,8 @@ function LoginContent() {
           setIsLoading(false);
           return;
         }
+        
+        console.log("Starting signup process...");
         
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -110,6 +124,28 @@ function LoginContent() {
           console.error("Signup error:", error);
           toast.error(error.message);
         } else if (data?.user) {
+          // Explicitly create profile
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                full_name: data.user.user_metadata.full_name || email.split('@')[0],
+                email: email,
+                updated_at: new Date().toISOString()
+              }
+            ])
+            .select()
+            .single();
+
+          console.log("Profile creation result:", { profileError });
+
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+            // Don't show this error to the user since they're already signed up
+            // Just log it for debugging
+          }
+
           if (data.user.identities?.length === 0) {
             toast.error("This email is already registered. Please sign in instead.");
             setMode("signin");
