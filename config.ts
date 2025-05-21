@@ -22,7 +22,7 @@ const config: ConfigProps = {
         priceId:
           process.env.NODE_ENV === "development"
             ? "price_1RJMNY2ceCzkqxuBUDsHHBns"
-            : "price_1REyI72ceCzkqxuBEJy3ZPfS",
+            : "price_1RRK9HGWUnFGgcKew3t53lo9",
         name: "Monthly",
         description: "Flexible month-to-month billing",
         price: 100,
@@ -38,7 +38,7 @@ const config: ConfigProps = {
         priceId:
           process.env.NODE_ENV === "development"
             ? "price_1RJMUf2ceCzkqxuByTGQ0ts4"
-            : "price_1RJMUf2ceCzkqxuByTGQ0ts4",
+            : "price_1RRK9hGWUnFGgcKegTiJ76N4",
         isFeatured: true,
         name: "Annual",
         description: "Save 21% with annual billing",
