@@ -1,6 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
 import { createClient } from "@/libs/supabase/server";
 
+// Force dynamic to prevent static optimization
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 export async function GET(req: NextRequest) {
   try {
     const supabase = createClient();

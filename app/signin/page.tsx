@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/libs/supabase/client";
 import { Provider } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
@@ -11,7 +11,7 @@ import apiClient from "@/libs/api";
 
 // This a login/singup page for Supabase Auth.
 // Successfull login redirects to /api/auth/callback where the Code Exchange is processed (see app/api/auth/callback/route.js).
-export default function Login() {
+function LoginContent() {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -301,5 +301,13 @@ export default function Login() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
