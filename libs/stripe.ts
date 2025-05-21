@@ -29,12 +29,41 @@ export const createCheckout = async ({
   couponId,
 }: CreateCheckoutParams): Promise<string> => {
   try {
-    console.log("Creating Stripe instance with key:", process.env.STRIPE_SECRET_KEY?.slice(0, 10) + "...");
+    console.log("Starting Stripe checkout creation with params:", {
+      mode,
+      priceId,
+      successUrl,
+      cancelUrl,
+      clientReferenceId,
+      userEmail: user?.email,
+      customerId: user?.customerId
+    });
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error("STRIPE_SECRET_KEY is not set");
+      throw new Error("Stripe secret key is not configured");
+    }
+    
+    console.log("Creating Stripe instance with key type:", process.env.STRIPE_SECRET_KEY.startsWith('sk_test_') ? 'test' : 'live');
     
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2023-08-16",
       typescript: true,
     });
+
+    // Verify the price exists
+    try {
+      const price = await stripe.prices.retrieve(priceId);
+      console.log("Price verified:", {
+        id: price.id,
+        active: price.active,
+        type: price.type,
+        currency: price.currency,
+      });
+    } catch (priceError) {
+      console.error("Error verifying price:", priceError);
+      throw priceError;
+    }
 
     const extraParams: {
       customer?: string;
@@ -46,8 +75,10 @@ export const createCheckout = async ({
     } = {};
 
     if (user?.customerId) {
+      console.log("Using existing customer ID:", user.customerId);
       extraParams.customer = user.customerId;
     } else {
+      console.log("Setting up new customer parameters");
       if (mode === "payment") {
         extraParams.customer_creation = "always";
         // The option below costs 0.4% (up to $2) per invoice. Alternatively, you can use https://zenvoice.io/ to create unlimited invoices automatically.
@@ -69,7 +100,7 @@ export const createCheckout = async ({
       extraParams,
     });
 
-    const stripeSession = await stripe.checkout.sessions.create({
+    const sessionParams = {
       mode,
       allow_promotion_codes: true,
       client_reference_id: clientReferenceId,
@@ -89,12 +120,23 @@ export const createCheckout = async ({
       success_url: successUrl,
       cancel_url: cancelUrl,
       ...extraParams,
-    });
+    };
 
-    console.log("Stripe session created:", {
+    console.log("Final session parameters:", sessionParams);
+
+    const stripeSession = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log("Stripe session created successfully:", {
       sessionId: stripeSession.id,
       url: stripeSession.url,
+      status: stripeSession.status,
+      paymentStatus: stripeSession.payment_status,
     });
+
+    if (!stripeSession.url) {
+      console.error("No URL in created session:", stripeSession);
+      throw new Error("Stripe session created but no URL was returned");
+    }
 
     return stripeSession.url;
   } catch (e) {
@@ -104,9 +146,11 @@ export const createCheckout = async ({
         code: e.code,
         param: e.param,
         message: e.message,
+        type: e.type,
+        raw: e
       });
     }
-    return null;
+    throw e; // Re-throw the error to be handled by the caller
   }
 };
 

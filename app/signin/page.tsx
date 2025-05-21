@@ -36,6 +36,7 @@ function LoginContent() {
 
   const handleStripeCheckout = async () => {
     try {
+      console.log("Starting Stripe checkout with priceId:", priceId);
       const { url }: { url: string } = await apiClient.post(
         "/stripe/create-checkout",
         {
@@ -47,7 +48,10 @@ function LoginContent() {
       );
 
       if (url) {
+        console.log("Redirecting to Stripe checkout:", url);
         window.location.href = url;
+      } else {
+        throw new Error("No URL returned from checkout endpoint");
       }
     } catch (error) {
       console.error("Stripe checkout error:", error);
@@ -70,24 +74,17 @@ function LoginContent() {
       const redirectURL = window.location.origin + "/api/auth/callback";
 
       if (type === "oauth") {
-        console.log("Starting OAuth sign in...");
-        const { data, error } = await supabase.auth.signInWithOAuth({
+        console.log("Starting OAuth signin");
+        await supabase.auth.signInWithOAuth({
           provider,
           options: {
             redirectTo: redirectURL,
+            queryParams: priceId ? {
+              priceId: priceId,
+              returnUrl: returnUrl || window.location.href
+            } : undefined
           },
         });
-
-        console.log("OAuth sign in response:", { data, error });
-
-        if (error) {
-          console.error("OAuth error:", error);
-          toast.error(error.message);
-        } else if (data?.url) {
-          // We can't create the profile here because the user isn't created yet
-          // We'll need to handle this in the callback route
-          window.location.href = data.url;
-        }
       } else if (type === "magic_link" && mode === "signin") {
         await supabase.auth.signInWithOtp({
           email,
@@ -105,55 +102,32 @@ function LoginContent() {
           return;
         }
         
-        console.log("Starting signup process...");
-        
+        console.log("Starting email signup");
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: redirectURL,
             data: {
-              full_name: email.split('@')[0], // Set a default name from email
+              full_name: email.split('@')[0],
             }
           },
         });
 
-        console.log("Signup response:", { data, error }); // Debug log
+        console.log("Signup response:", { data, error });
 
         if (error) {
           console.error("Signup error:", error);
           toast.error(error.message);
         } else if (data?.user) {
-          // Explicitly create profile
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                id: data.user.id,
-                full_name: data.user.user_metadata.full_name || email.split('@')[0],
-                email: email,
-                updated_at: new Date().toISOString()
-              }
-            ])
-            .select()
-            .single();
-
-          console.log("Profile creation result:", { profileError });
-
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-            // Don't show this error to the user since they're already signed up
-            // Just log it for debugging
-          }
-
           if (data.user.identities?.length === 0) {
             toast.error("This email is already registered. Please sign in instead.");
             setMode("signin");
           } else {
-            // Check if email confirmation is required
             if (data.user.confirmed_at || data.user.email_confirmed_at) {
               toast.success("Account created successfully!");
               if (priceId) {
+                console.log("Account created, proceeding to checkout");
                 await handleStripeCheckout();
               } else {
                 router.push(config.auth.callbackUrl);
@@ -171,6 +145,7 @@ function LoginContent() {
           return;
         }
         
+        console.log("Starting email signin");
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -181,6 +156,7 @@ function LoginContent() {
           toast.error(error.message);
         } else if (data?.user) {
           if (priceId) {
+            console.log("Signed in, proceeding to checkout");
             await handleStripeCheckout();
           } else {
             router.push(config.auth.callbackUrl);

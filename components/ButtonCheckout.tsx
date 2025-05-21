@@ -5,6 +5,7 @@ import apiClient from "@/libs/api";
 import config from "@/config";
 import { createClient } from "@/libs/supabase/client";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 // This component is used to create Stripe Checkout Sessions
 // It calls the /api/stripe/create-checkout route with the priceId, successUrl and cancelUrl
@@ -24,45 +25,64 @@ const ButtonCheckout = ({
   const router = useRouter();
 
   const handlePayment = async () => {
-    setIsLoading(true);
-
     try {
+      setIsLoading(true);
+      console.log("Starting payment flow for priceId:", priceId);
+
       // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      console.log("Auth check result:", { session, authError });
+
+      if (authError) {
+        console.error("Auth check error:", authError);
+        toast.error("Authentication error: " + authError.message);
+        throw authError;
+      }
+
       if (!session) {
+        console.log("No session found, redirecting to signup");
         // If not authenticated, redirect to signup with priceId
-        const signupUrl = `/signin?mode=signup&priceId=${priceId}&returnUrl=${encodeURIComponent(window.location.href)}`;
+        const signupUrl = `/signin?mode=signup&priceId=${encodeURIComponent(priceId)}&returnUrl=${encodeURIComponent(window.location.href)}`;
         router.push(signupUrl);
         return;
       }
 
-      const { url }: { url: string } = await apiClient.post(
+      console.log("User is authenticated, creating checkout session");
+      const response = await apiClient.post<{ url: string }>(
         "/stripe/create-checkout",
         {
           priceId,
-          successUrl: window.location.href + "?success=true",
-          cancelUrl: window.location.href + "?canceled=true",
+          successUrl: `${window.location.href.split('?')[0]}?success=true`,
+          cancelUrl: `${window.location.href.split('?')[0]}?canceled=true`,
           mode,
         }
       );
 
-      if (url) {
-        window.location.href = url;
-      } else {
-        console.error("No URL returned from checkout endpoint");
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      console.log("Response received:", response);
 
-    setIsLoading(false);
+      // Validate the URL
+      if (!response || typeof response !== 'object' || !('url' in response) || typeof response.url !== 'string') {
+        console.error("No checkout URL in response");
+        throw new Error("No checkout URL received from server");
+      }
+
+      // Redirect to Stripe
+      console.log("Redirecting to Stripe checkout:", response.url);
+      window.location.href = response.url;
+    } catch (e) {
+      console.error("Payment flow error:", e);
+      toast.error(e?.response?.data?.error || e?.message || "Failed to create checkout session");
+      throw e;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <button
       className={`${className} group`}
-      onClick={() => handlePayment()}
+      onClick={handlePayment}
+      disabled={isLoading}
     >
       {isLoading ? (
         <span className="loading loading-spinner loading-xs"></span>

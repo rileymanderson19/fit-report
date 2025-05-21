@@ -6,76 +6,112 @@ import { NextRequest, NextResponse } from "next/server";
 // It's called by the <ButtonCheckout /> component
 // Users must be authenticated. It will prefill the Checkout data with their email and/or credit card (if any)
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-
-  if (!body.priceId) {
-    return NextResponse.json(
-      { error: "Price ID is required" },
-      { status: 400 }
-    );
-  } else if (!body.successUrl || !body.cancelUrl) {
-    return NextResponse.json(
-      { error: "Success and cancel URLs are required" },
-      { status: 400 }
-    );
-  } else if (!body.mode) {
-    return NextResponse.json(
-      {
-        error:
-          "Mode is required (either 'payment' for one-time payments or 'subscription' for recurring subscription)",
-      },
-      { status: 400 }
-    );
-  }
-
+  console.log("Starting create-checkout request");
+  
   try {
+    const body = await req.json();
+    console.log("Request body:", body);
+
+    if (!body.priceId) {
+      console.error("Missing priceId in request");
+      return NextResponse.json(
+        { error: "Price ID is required" },
+        { status: 400 }
+      );
+    } else if (!body.successUrl || !body.cancelUrl) {
+      console.error("Missing success or cancel URL");
+      return NextResponse.json(
+        { error: "Success and cancel URLs are required" },
+        { status: 400 }
+      );
+    } else if (!body.mode) {
+      console.error("Missing mode in request");
+      return NextResponse.json(
+        {
+          error:
+            "Mode is required (either 'payment' for one-time payments or 'subscription' for recurring subscription)",
+        },
+        { status: 400 }
+      );
+    }
+
+    console.log("Creating Supabase client");
     const supabase = createClient();
 
+    console.log("Getting user from Supabase");
     const {
       data: { user },
+      error: userError
     } = await supabase.auth.getUser();
+
+    if (userError) {
+      console.error("Error getting user:", userError);
+      return NextResponse.json({ error: "Failed to get user: " + userError.message }, { status: 500 });
+    }
 
     if (!user) {
       console.error("No user found - authentication required");
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    const { priceId, mode, successUrl, cancelUrl } = body;
-    console.log("Checkout request:", { priceId, mode, successUrl, cancelUrl });
+    console.log("User found:", { id: user.id, email: user.email });
 
-    const { data } = await supabase
+    const { priceId, mode, successUrl, cancelUrl } = body;
+    console.log("Checkout request params:", { priceId, mode, successUrl, cancelUrl });
+
+    console.log("Getting user profile from Supabase");
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user?.id)
       .single();
 
-    console.log("User profile:", data);
-
-    const stripeSessionURL = await createCheckout({
-      priceId,
-      mode,
-      successUrl,
-      cancelUrl,
-      // If user is logged in, it will pass the user ID to the Stripe Session so it can be retrieved in the webhook later
-      clientReferenceId: user?.id,
-      user: {
-        email: data?.email,
-        // If the user has already purchased, it will automatically prefill it's credit card
-        customerId: data?.customer_id,
-      },
-      // If you send coupons from the frontend, you can pass it here
-      // couponId: body.couponId,
-    });
-
-    console.log("Stripe session URL:", stripeSessionURL);
-
-    if (!stripeSessionURL) {
-      return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
+    if (profileError) {
+      console.error("Error getting profile:", profileError);
+      return NextResponse.json({ error: "Failed to get user profile: " + profileError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ url: stripeSessionURL });
+    console.log("User profile:", profile);
+
+    try {
+      console.log("Creating Stripe checkout session");
+      const stripeSessionURL = await createCheckout({
+        priceId,
+        mode,
+        successUrl,
+        cancelUrl,
+        clientReferenceId: user?.id,
+        user: {
+          email: profile?.email,
+          customerId: profile?.customer_id,
+        },
+      });
+
+      console.log("Stripe session URL result:", stripeSessionURL);
+
+      if (!stripeSessionURL) {
+        console.error("Failed to create Stripe session URL - no URL returned");
+        return NextResponse.json({ 
+          error: "Failed to create checkout session - no URL returned from Stripe" 
+        }, { status: 500 });
+      }
+
+      console.log("Successfully created checkout session");
+      return NextResponse.json({ url: stripeSessionURL });
+    } catch (stripeError) {
+      console.error("Stripe checkout creation error:", stripeError);
+      return NextResponse.json({ 
+        error: "Stripe error: " + (stripeError.message || "Unknown Stripe error"),
+        details: stripeError
+      }, { status: 500 });
+    }
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: e?.message }, { status: 500 });
+    console.error("Stripe checkout error:", e);
+    // Log the full error object for debugging
+    console.error("Full error details:", JSON.stringify(e, null, 2));
+    return NextResponse.json({ 
+      error: e?.message || "Unknown error occurred",
+      details: e
+    }, { status: 500 });
   }
 }

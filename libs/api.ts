@@ -1,6 +1,5 @@
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { redirect } from "next/navigation";
 import config from "@/config";
 
 // use this to interact with our own API (/app/api folder) from the front-end side
@@ -17,10 +16,11 @@ apiClient.interceptors.response.use(
     let message = "";
 
     if (error.response?.status === 401) {
-      // User not auth, ask to re login
-      toast.error("Please login");
-      // Sends the user to the login page
-      redirect(config.auth.loginUrl);
+      // Silently redirect unauthorized users to signup
+      if (typeof window !== "undefined") {
+        window.location.href = `${config.auth.loginUrl}?mode=signup`;
+        return new Promise(() => {}); // Prevent further execution
+      }
     } else if (error.response?.status === 403) {
       // User not authorized, must subscribe/purchase/pick a plan
       message = "Pick a plan to use this feature";
