@@ -9,6 +9,32 @@ import config from "@/config";
 import { useRouter, useSearchParams } from "next/navigation";
 import apiClient from "@/libs/api";
 
+// Helper function to get the correct redirect URL for authentication
+const getAuthRedirectURL = () => {
+  // In production, always use the configured site URL
+  if (process.env.NODE_ENV === 'production') {
+    const url = config.siteUrl + "/api/auth/callback";
+    console.log("Using production redirect URL:", url);
+    return url;
+  }
+  
+  // In development, use window.location.origin if available, otherwise fallback to config
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin;
+    // In development, use the origin
+    if (origin) {
+      const url = origin + "/api/auth/callback";
+      console.log("Using development redirect URL:", url);
+      return url;
+    }
+  }
+  
+  // Final fallback to config
+  const url = config.siteUrl + "/api/auth/callback";
+  console.log("Using fallback redirect URL:", url);
+  return url;
+};
+
 // This a login/singup page for Supabase Auth.
 // Successfull login redirects to /api/auth/callback where the Code Exchange is processed (see app/api/auth/callback/route.js).
 function LoginContent() {
@@ -71,7 +97,7 @@ function LoginContent() {
 
     try {
       const { type, provider } = options;
-      const redirectURL = window.location.origin + "/api/auth/callback";
+      const redirectURL = getAuthRedirectURL();
 
       if (type === "oauth") {
         console.log("Starting OAuth signin");

@@ -8,7 +8,7 @@ const config: ConfigProps = {
   // REQUIRED: a short description of your app for SEO tags (can be overwritten)
   appDescription: "Transform your Trainerize data into powerful insights, helping you deliver better results with less administrative work.",
   // REQUIRED (no https://, not trialing slash at the end, just the naked domain)
-  domainName: "shipfa.st",
+  domainName: "fitreport.co",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
     id: "",
@@ -75,7 +75,7 @@ const config: ConfigProps = {
     // REQUIRED — the path you want to redirect users after successfull login (i.e. /dashboard, /private). This is normally a private page for users to manage their accounts. It's used in apiClient (/libs/api.js) upon 401 errors from our API & in ButtonSignin.js
     callbackUrl: "/dashboard",
   },
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://fitreport.app',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://fitreport.co',
 } as const;
 
 export default config;
