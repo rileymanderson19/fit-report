@@ -40,6 +40,7 @@ export interface ConfigProps {
       price: number;
       priceAnchor?: number;
       billingPeriod?: "monthly" | "yearly";
+      trialDays?: number;
       features: {
         name: string;
       }[];

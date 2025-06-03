@@ -63,7 +63,7 @@ const faqList: FAQItemProps[] = [
     question: "Is there a free trial available?",
     answer: (
       <p>
-        Yes! We offer a 14-day free trial with full access to all features. No credit card required. You can upgrade to a paid plan at any time during or after your trial.
+        Yes! We offer a 7-day free trial with full access to all features. No credit card required. You can upgrade to a paid plan at any time during or after your trial.
       </p>
     ),
   },

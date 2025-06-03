@@ -41,6 +41,58 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (eventType) {
+      case "customer.subscription.created": {
+        // Trial subscription started - grant access immediately
+        const stripeObject: Stripe.Subscription = event.data
+          .object as Stripe.Subscription;
+
+        const customerId = stripeObject.customer;
+        const priceId = stripeObject.items.data[0]?.price?.id;
+        const plan = configFile.stripe.plans.find((p) => p.priceId === priceId);
+
+        if (!plan) break;
+
+        // Try to find user by customer ID first
+        let profile = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("customer_id", customerId)
+          .single();
+
+        // If not found by customer ID, try to find by the Stripe customer email
+        if (!profile.data) {
+          const customer = (await stripe.customers.retrieve(
+            customerId as string
+          )) as Stripe.Customer;
+
+          if (customer.email) {
+            const { data: profileByEmail } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("email", customer.email)
+              .single();
+            
+            profile.data = profileByEmail;
+          }
+        }
+
+        if (profile.data) {
+          // Grant access for trial users
+          await supabase
+            .from("profiles")
+            .update({
+              customer_id: customerId,
+              price_id: priceId,
+              has_access: true,
+            })
+            .eq("id", profile.data.id);
+
+          console.log("Trial access granted for user:", profile.data.id);
+        }
+
+        break;
+      }
+
       case "checkout.session.completed": {
         // First payment is successful and a subscription is created (if mode was set to "subscription" in ButtonCheckout)
         // ✅ Grant access to the product
@@ -161,6 +213,18 @@ export async function POST(req: NextRequest) {
           .update({ has_access: true })
           .eq("customer_id", customerId);
 
+        break;
+      }
+
+      case "customer.subscription.trial_will_end": {
+        // Trial is about to end (3 days before by default)
+        // You can send an email reminder to the user here
+        // This is optional but helps with conversion
+        const stripeObject: Stripe.Subscription = event.data
+          .object as Stripe.Subscription;
+
+        console.log("Trial ending soon for customer:", stripeObject.customer);
+        // TODO: Implement trial ending email notification
         break;
       }
 

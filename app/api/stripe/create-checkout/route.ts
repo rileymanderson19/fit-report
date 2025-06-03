@@ -1,6 +1,7 @@
 import { createCheckout } from "@/libs/stripe";
 import { createClient } from "@/libs/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import config from "@/config";
 
 // This function is used to create a Stripe Checkout Session (one-time payment or subscription)
 // It's called by the <ButtonCheckout /> component
@@ -59,6 +60,11 @@ export async function POST(req: NextRequest) {
     const { priceId, mode, successUrl, cancelUrl } = body;
     console.log("Checkout request params:", { priceId, mode, successUrl, cancelUrl });
 
+    // Find the plan configuration to get trial days
+    const plan = config.stripe.plans.find(p => p.priceId === priceId);
+    const trialDays = plan?.trialDays;
+    console.log("Plan found:", { planName: plan?.name, trialDays });
+
     console.log("Getting user profile from Supabase");
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
@@ -81,6 +87,7 @@ export async function POST(req: NextRequest) {
         successUrl,
         cancelUrl,
         clientReferenceId: user?.id,
+        trialDays,
         user: {
           email: profile?.email,
           customerId: profile?.customer_id,

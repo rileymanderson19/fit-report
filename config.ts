@@ -24,6 +24,7 @@ const config: ConfigProps = {
         description: "Flexible month-to-month billing",
         price: 100,
         billingPeriod: "monthly",
+        trialDays: 7,
         features: [
           { name: "Full access to all features" },
           { name: "Unlimited reports" },
@@ -39,6 +40,7 @@ const config: ConfigProps = {
         price: 79,
         priceAnchor: 100,
         billingPeriod: "yearly",
+        trialDays: 7,
         features: [
           { name: "Everything in Monthly plan" },
           { name: "21% discount" },

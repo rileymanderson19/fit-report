@@ -7,6 +7,7 @@ interface CreateCheckoutParams {
   cancelUrl: string;
   couponId?: string | null;
   clientReferenceId?: string;
+  trialDays?: number;
   user?: {
     customerId?: string;
     email?: string;
@@ -27,6 +28,7 @@ export const createCheckout = async ({
   cancelUrl,
   priceId,
   couponId,
+  trialDays,
 }: CreateCheckoutParams): Promise<string> => {
   try {
     console.log("Starting Stripe checkout creation with params:", {
@@ -36,7 +38,8 @@ export const createCheckout = async ({
       cancelUrl,
       clientReferenceId,
       userEmail: user?.email,
-      customerId: user?.customerId
+      customerId: user?.customerId,
+      trialDays
     });
 
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -119,6 +122,12 @@ export const createCheckout = async ({
         : [],
       success_url: successUrl,
       cancel_url: cancelUrl,
+      // Add trial period for subscriptions
+      ...(mode === "subscription" && trialDays && trialDays > 0 ? {
+        subscription_data: {
+          trial_period_days: trialDays,
+        },
+      } : {}),
       ...extraParams,
     };
 
