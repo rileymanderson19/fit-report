@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { ReportVisualization } from '@/components/ReportVisualization';
+import ClientSearchBar from '@/components/ClientSearchBar';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -400,6 +401,15 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Client Search Bar */}
+      <div className="mb-6">
+        <ClientSearchBar 
+          currentClientId={clientId}
+          placeholder="Search clients to quickly navigate..."
+          className="max-w-lg"
+        />
+      </div>
+      
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Reports List Sidebar */}
         <div className="w-full lg:w-1/4 space-y-4">
