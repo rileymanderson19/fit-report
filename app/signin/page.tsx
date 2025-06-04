@@ -308,10 +308,14 @@ function LoginContent() {
             {isLoading && (
               <span className="loading loading-spinner loading-xs"></span>
             )}
-            {password 
-              ? (mode === "signin" ? "Sign in" : "Sign up") 
-              : "Send Magic Link"}
+            {mode === "signin" ? "Sign in" : "Sign up"}
           </button>
+          
+          {mode === "signin" && (
+            <p className="text-center text-xs text-base-content/60 mt-2">
+              Leave password empty to receive a magic link via email
+            </p>
+          )}
           
           {mode === "signin" && (
             <p className="text-center text-sm text-base-content/70">
