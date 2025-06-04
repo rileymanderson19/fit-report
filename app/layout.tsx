@@ -22,11 +22,27 @@ export const metadata: Metadata = {
 		siteName: config.appName,
 		locale: 'en_US',
 		type: 'website',
+		images: [
+			{
+				url: `${config.siteUrl}/opengraph-image.png`,
+				width: 1200,
+				height: 630,
+				alt: `${config.appName} - Transform your Trainerize data into powerful insights`,
+			},
+		],
 	},
 	twitter: {
 		card: 'summary_large_image',
 		title: config.appName,
 		description: config.appDescription,
+		images: [
+			{
+				url: `${config.siteUrl}/twitter-image.png`,
+				width: 1200,
+				height: 600,
+				alt: `${config.appName} - Transform your Trainerize data into powerful insights`,
+			},
+		],
 	},
 	robots: {
 		index: true,
