@@ -4,6 +4,11 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@/libs/supabase/client";
 import toast from "react-hot-toast";
 
+interface Trainer {
+  firstName: string;
+  id: string;
+}
+
 export default function TrainerizeConfigPage() {
   const supabase = createClient();
   const [formData, setFormData] = useState({
@@ -15,6 +20,11 @@ export default function TrainerizeConfigPage() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<"idle" | "success" | "error">("idle");
   const [hasBeenModified, setHasBeenModified] = useState(false);
+  
+  // New state for trainer list functionality
+  const [isLoadingTrainerList, setIsLoadingTrainerList] = useState(false);
+  const [trainerList, setTrainerList] = useState<Trainer[]>([]);
+  const [showTrainerList, setShowTrainerList] = useState(false);
 
   // Load saved credentials when the page loads
   useEffect(() => {
@@ -63,6 +73,12 @@ export default function TrainerizeConfigPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
     setHasBeenModified(true);
     setVerificationStatus("idle");
+    
+    // Clear trainer list when credentials change
+    if (name === "username" || name === "password") {
+      setTrainerList([]);
+      setShowTrainerList(false);
+    }
   };
 
   const verifyCredentials = async (username: string, password: string, trainerId: string) => {
@@ -89,6 +105,62 @@ export default function TrainerizeConfigPage() {
     } catch (error) {
       console.error("Verification error:", error);
       return false;
+    }
+  };
+
+  // New function to fetch trainer list
+  const fetchTrainerList = async () => {
+    if (!formData.username || !formData.password) {
+      toast.error("Please enter username and password first");
+      return;
+    }
+
+    setIsLoadingTrainerList(true);
+    
+    try {
+      const response = await fetch("/api/trainerize/trainer-list", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch trainer list");
+      }
+
+      setTrainerList(data.trainers || []);
+      setShowTrainerList(true);
+      
+      if (data.trainers?.length === 0) {
+        toast.error("No trainers found");
+      } else {
+        toast.success(`Found ${data.trainers.length} trainer(s)`);
+      }
+    } catch (error) {
+      console.error("Error fetching trainer list:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to fetch trainer list");
+      setTrainerList([]);
+      setShowTrainerList(false);
+    } finally {
+      setIsLoadingTrainerList(false);
+    }
+  };
+
+  // Function to copy trainer ID to clipboard
+  const copyToClipboard = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+      toast.success("Trainer ID copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      toast.error("Failed to copy to clipboard");
     }
   };
 
@@ -138,6 +210,9 @@ export default function TrainerizeConfigPage() {
 
       setVerificationStatus("success");
       setHasBeenModified(false);
+      // Clear trainer list on successful save
+      setTrainerList([]);
+      setShowTrainerList(false);
       toast.success("Credentials verified and saved successfully!");
     } catch (error) {
       console.error("Error:", error);
@@ -214,13 +289,22 @@ export default function TrainerizeConfigPage() {
               />
             </div>
             
-            <div className="pt-2">
+            <div className="pt-2 flex gap-3">
               <button
                 type="submit"
                 className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
-                disabled={isLoading}
+                disabled={isLoading || isLoadingTrainerList}
               >
                 {isLoading ? 'Verifying...' : (hasBeenModified ? 'Save Changes' : 'Saved')}
+              </button>
+              
+              <button
+                type="button"
+                onClick={fetchTrainerList}
+                className={`btn btn-neutral ${isLoadingTrainerList ? 'loading' : ''}`}
+                disabled={isLoadingTrainerList || isLoading || !formData.username || !formData.password}
+              >
+                {isLoadingTrainerList ? 'Loading...' : 'Get Trainer ID'}
               </button>
             </div>
 
@@ -238,6 +322,54 @@ export default function TrainerizeConfigPage() {
               </div>
             )}
           </form>
+
+          {/* Trainer List Display */}
+          {showTrainerList && trainerList.length > 0 && (
+            <div className="mt-6 max-w-md">
+              <div className="card bg-base-200 shadow-md">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="card-title text-lg">Available Trainers</h3>
+                    <button
+                      onClick={() => setShowTrainerList(false)}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {trainerList.map((trainer) => (
+                      <div
+                        key={trainer.id}
+                        className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium">{trainer.firstName}</p>
+                          <p className="text-sm text-base-content/70">ID: {trainer.id}</p>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(trainer.id)}
+                          className="btn btn-ghost btn-sm"
+                          title="Copy ID to clipboard"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-4 text-sm text-base-content/60">
+                    Click the copy icon to copy a Trainer ID to your clipboard, then paste it into the Trainer ID field above.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
