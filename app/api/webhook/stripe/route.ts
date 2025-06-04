@@ -322,9 +322,12 @@ export async function POST(req: NextRequest) {
       }
 
       case "customer.subscription.updated": {
-        // The customer might have changed the plan (higher or lower plan, cancel soon etc...)
-        // You don't need to do anything here, because Stripe will let us know when the subscription is canceled for good (at the end of the billing cycle) in the "customer.subscription.deleted" event
-        // You can update the user data to show a "Cancel soon" badge for instance
+        const subscription = event.data.object as Stripe.Subscription;
+        
+        if (subscription.cancel_at_period_end && subscription.status === 'trialing') {
+          // User canceled during trial - could show "trial ending" status
+          // But keep has_access: true until trial actually ends
+        }
         break;
       }
 
