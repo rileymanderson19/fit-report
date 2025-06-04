@@ -77,10 +77,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to get user profile: " + profileError.message }, { status: 500 });
     }
 
-    console.log("User profile:", profile);
+    console.log("User profile retrieved:", {
+      id: profile?.id,
+      email: profile?.email,
+      hasAccess: profile?.has_access,
+      customerId: profile?.customer_id,
+      priceId: profile?.price_id
+    });
 
     try {
-      console.log("Creating Stripe checkout session");
+      console.log("Creating Stripe checkout session with params:", {
+        priceId,
+        mode,
+        clientReferenceId: user?.id,
+        trialDays,
+        userEmail: profile?.email,
+        existingCustomerId: profile?.customer_id
+      });
+      
       const stripeSessionURL = await createCheckout({
         priceId,
         mode,
@@ -94,7 +108,10 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      console.log("Stripe session URL result:", stripeSessionURL);
+      console.log("Stripe session creation result:", {
+        success: !!stripeSessionURL,
+        url: stripeSessionURL ? "URL_CREATED" : "NO_URL"
+      });
 
       if (!stripeSessionURL) {
         console.error("Failed to create Stripe session URL - no URL returned");
