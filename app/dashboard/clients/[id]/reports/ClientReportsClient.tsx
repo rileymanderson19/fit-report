@@ -502,11 +502,12 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                   </div>
                   
                   <div id="report-container" className={`space-y-8 ${isCapturing ? 'p-8 rounded-lg' : ''}`}>
-                    <ReportVisualization
-                      data={selectedReport.report_data}
+                    <ReportVisualization 
+                      data={selectedReport.report_data} 
                       onDeleteWorkout={handleDeleteWorkout}
                       onDeleteExercise={handleDeleteExercise}
                       isScreenshotMode={isCapturing}
+                      forceTemplate={selectedReport.report_data?.template}
                     />
                   </div>
                 </div>

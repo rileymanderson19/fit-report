@@ -53,6 +53,7 @@ export default function ClientsPage() {
   const [generatingProgress, setGeneratingProgress] = useState<Record<string, boolean>>({});
   const [minReps, setMinReps] = useState<number>(6);
   const [maxReps, setMaxReps] = useState<number>(10);
+  const [reportTemplate, setReportTemplate] = useState<'daily' | 'weekly'>('daily');
   const [activeTab, setActiveTab] = useState<'clients' | 'reports'>('clients');
 
   // Handle URL parameters
@@ -322,7 +323,10 @@ export default function ClientsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           clientId: client.id,
-          reportData: clientReportData,
+          reportData: {
+            ...clientReportData,
+            template: reportTemplate
+          },
           dateRange: {
             from: startDate!.toISOString(),
             to: endDate!.toISOString(),
@@ -599,6 +603,59 @@ export default function ClientsPage() {
         {/* Report Generation Section */}
         {activeTab === 'reports' && (
           <div className="space-y-6">
+            {selectedClients.length > 0 && (
+              <div className="alert alert-info">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>
+                  {selectedClients.length} client{selectedClients.length !== 1 ? 's' : ''} selected: {' '}
+                  {clients.filter(c => selectedClients.includes(c.id)).map(c => `${c.first_name} ${c.last_name}`).join(', ')}
+                </span>
+              </div>
+            )}
+
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="text-xl font-bold mb-4">Report Template</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-control">
+                    <label className="label cursor-pointer">
+                      <span className="label-text">
+                        <div className="font-semibold">Daily Data</div>
+                        <div className="text-sm text-base-content/60">Day-by-day breakdown with detailed workout information</div>
+                      </span>
+                      <input 
+                        type="radio" 
+                        name="reportTemplate" 
+                        value="daily"
+                        className="radio radio-primary" 
+                        checked={reportTemplate === 'daily'}
+                        onChange={() => setReportTemplate('daily')}
+                      />
+                    </label>
+                  </div>
+                  
+                  <div className="form-control">
+                    <label className="label cursor-pointer">
+                      <span className="label-text">
+                        <div className="font-semibold">Weekly Summary</div>
+                        <div className="text-sm text-base-content/60">Weekly averages and progress trends</div>
+                      </span>
+                      <input 
+                        type="radio" 
+                        name="reportTemplate" 
+                        value="weekly"
+                        className="radio radio-primary" 
+                        checked={reportTemplate === 'weekly'}
+                        onChange={() => setReportTemplate('weekly')}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
                 <h2 className="text-xl font-bold mb-4">Progressive Overload Settings</h2>

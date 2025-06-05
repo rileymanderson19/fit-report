@@ -62,10 +62,12 @@ interface ReportVisualizationProps {
     workoutData: {
       workouts: Workout[];
     };
+    template?: 'daily' | 'weekly';
   };
   onDeleteWorkout?: (workoutId: number) => void;
   onDeleteExercise?: (workoutId: number, exerciseName: string) => void;
   isScreenshotMode?: boolean;
+  forceTemplate?: 'daily' | 'weekly';
 }
 
 interface WeeklyAverage {
@@ -83,7 +85,8 @@ export function ReportVisualization({
   data, 
   onDeleteWorkout, 
   onDeleteExercise,
-  isScreenshotMode = false 
+  isScreenshotMode = false,
+  forceTemplate
 }: ReportVisualizationProps) {
   // Process all data into a single daily format
   const processedDailyData = useMemo(() => {
@@ -322,9 +325,16 @@ export function ReportVisualization({
     );
   }
 
+  // Determine which template to use
+  const shouldUseDailyTemplate = forceTemplate 
+    ? forceTemplate === 'daily' 
+    : (data.template === 'daily' || data.template === 'weekly' 
+        ? data.template === 'daily' 
+        : timeSpanInfo.isSingleWeek);
+
   return (
     <div className="space-y-8">
-      {timeSpanInfo.isSingleWeek ? (
+      {shouldUseDailyTemplate ? (
         // Single Week View
         <div className="space-y-6">
           {/* Metrics Table */}
