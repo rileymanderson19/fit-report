@@ -1,6 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import ClientLayout from "@/components/LayoutClient";
 import "./globals.css";
 import { Toaster } from 'sonner';
@@ -65,6 +66,15 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en" className="scroll-smooth">
+			<head>
+				<Script
+					defer
+					data-website-id="68417884330d70aeb1bbb6cf"
+					data-domain="fitreport.co"
+					src="https://datafa.st/js/script.js"
+					strategy="afterInteractive"
+				/>
+			</head>
 			<body className={`${inter.className} antialiased`}>
 				{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
 				<ClientLayout>{children}</ClientLayout>
