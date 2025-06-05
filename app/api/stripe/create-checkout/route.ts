@@ -1,6 +1,7 @@
 import { createCheckout } from "@/libs/stripe";
 import { createClient } from "@/libs/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import config from "@/config";
 
 // This function is used to create a Stripe Checkout Session (one-time payment or subscription)
@@ -57,6 +58,16 @@ export async function POST(req: NextRequest) {
 
     console.log("User found:", { id: user.id, email: user.email });
 
+    // Get DataFast tracking cookies for revenue attribution
+    const cookieStore = cookies();
+    const datafastVisitorId = cookieStore.get('datafast_visitor_id')?.value;
+    const datafastSessionId = cookieStore.get('datafast_session_id')?.value;
+    
+    console.log("DataFast tracking cookies:", {
+      visitorId: datafastVisitorId ? "present" : "missing",
+      sessionId: datafastSessionId ? "present" : "missing"
+    });
+
     const { priceId, mode, successUrl, cancelUrl } = body;
     console.log("Checkout request params:", { priceId, mode, successUrl, cancelUrl });
 
@@ -92,7 +103,11 @@ export async function POST(req: NextRequest) {
         clientReferenceId: user?.id,
         trialDays,
         userEmail: profile?.email,
-        existingCustomerId: profile?.customer_id
+        existingCustomerId: profile?.customer_id,
+        datafastTracking: {
+          visitorId: !!datafastVisitorId,
+          sessionId: !!datafastSessionId
+        }
       });
       
       const stripeSessionURL = await createCheckout({
@@ -105,6 +120,11 @@ export async function POST(req: NextRequest) {
         user: {
           email: profile?.email,
           customerId: profile?.customer_id,
+        },
+        // Pass DataFast tracking data for revenue attribution
+        metadata: {
+          datafast_visitor_id: datafastVisitorId || '',
+          datafast_session_id: datafastSessionId || '',
         },
       });
 
@@ -120,7 +140,7 @@ export async function POST(req: NextRequest) {
         }, { status: 500 });
       }
 
-      console.log("Successfully created checkout session");
+      console.log("Successfully created checkout session with DataFast tracking");
       return NextResponse.json({ url: stripeSessionURL });
     } catch (stripeError) {
       console.error("Stripe checkout creation error:", stripeError);

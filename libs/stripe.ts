@@ -12,6 +12,7 @@ interface CreateCheckoutParams {
     customerId?: string;
     email?: string;
   };
+  metadata?: Record<string, string>;
 }
 
 interface CreateCustomerPortalParams {
@@ -29,6 +30,7 @@ export const createCheckout = async ({
   priceId,
   couponId,
   trialDays,
+  metadata,
 }: CreateCheckoutParams): Promise<string> => {
   try {
     console.log("Starting Stripe checkout creation with params:", {
@@ -39,7 +41,8 @@ export const createCheckout = async ({
       clientReferenceId,
       userEmail: user?.email,
       customerId: user?.customerId,
-      trialDays
+      trialDays,
+      hasMetadata: !!metadata
     });
 
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -128,6 +131,8 @@ export const createCheckout = async ({
           trial_period_days: trialDays,
         },
       } : {}),
+      // Add metadata for DataFast tracking and other purposes
+      ...(metadata ? { metadata } : {}),
       ...extraParams,
     };
 
