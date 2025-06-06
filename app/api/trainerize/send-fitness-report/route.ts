@@ -10,6 +10,7 @@ interface SendReportRequest {
   reportId: string;
   subject?: string;
   customMessage?: string;
+  signature?: string;
   includeWorkouts?: boolean;
   includeNutrition?: boolean;
   includeProgress?: boolean;
@@ -40,13 +41,14 @@ export async function POST(req: NextRequest) {
       reportId, 
       subject, 
       customMessage,
+      signature,
       includeWorkouts = true,
       includeNutrition = true,
       includeProgress = true,
       imageData
     } = body;
 
-    console.log("Request body:", { clientId, reportId, subject, customMessage, includeWorkouts, includeNutrition, includeProgress, hasImageData: !!imageData });
+    console.log("Request body:", { clientId, reportId, subject, customMessage, signature, includeWorkouts, includeNutrition, includeProgress, hasImageData: !!imageData });
 
     if (!clientId || !reportId) {
       return NextResponse.json(
@@ -205,12 +207,14 @@ export async function POST(req: NextRequest) {
     //   'reports.fitreport.com'
     // );
 
-    // 8. Generate professional message
-    const messageContent = generateProfessionalMessage(
-      client,
-      publicUrl,
-      reportData,
-      customMessage
+    // 8. Generate message using provided content from configuration
+    const messageContent = generateMessageFromConfig(
+      client, 
+      publicUrl, 
+      reportData, 
+      subject || `Your Fitness Report - ${formatDate(new Date())}`,
+      customMessage || `Hi ${client.first_name},\n\nYour latest fitness report is ready! Please find it attached.\n\nView your report: ${publicUrl}`,
+      signature
     );
 
     console.log("Generated message content:", {
@@ -486,37 +490,47 @@ function generateReportHtml(reportData: any, client: any, options: any): string 
   `;
 }
 
-// Helper function to generate professional message content
-function generateProfessionalMessage(
+// Helper function to generate message content from configuration
+function generateMessageFromConfig(
   client: any, 
   imageUrl: string, 
   reportData: any, 
-  customMessage?: string
+  subject: string,
+  customMessage: string,
+  signature?: string
 ): { subject: string; body: string } {
-  const defaultMessage = `Hi ${client.first_name},
+  // Prepare all variables that might be used in the message
+  const variables = {
+    clientName: `${client.first_name} ${client.last_name}`,
+    date: formatDate(new Date()),
+    trainerName: 'Your Trainer', // Could be enhanced to get actual trainer name
+    reportUrl: imageUrl
+  };
 
-Your latest fitness report is ready! 🏋️‍♀️
-
-📊 **View your report:** ${imageUrl}
-
-This report covers your recent progress including:
-• Workout performance and consistency
-• Nutrition tracking and goals
-• Body measurements and trends
-• Key insights and recommendations
-
-${customMessage ? `\n**Personal note from your trainer:**\n${customMessage}\n` : ''}
-
-Keep up the excellent work! I'm proud of your dedication and progress. 
-
-If you have any questions about your report or want to discuss your goals, just reply to this message.
-
-Best regards,
-Your Trainer 💪`;
+  // Replace all variable placeholders in the message
+  let finalMessage = customMessage;
+  Object.entries(variables).forEach(([key, value]) => {
+    finalMessage = finalMessage.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+  });
+  
+  // Replace variables in subject as well
+  let finalSubject = subject;
+  Object.entries(variables).forEach(([key, value]) => {
+    finalSubject = finalSubject.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+  });
+  
+  // Add signature if provided (also process variables in signature)
+  if (signature) {
+    let finalSignature = signature;
+    Object.entries(variables).forEach(([key, value]) => {
+      finalSignature = finalSignature.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+    });
+    finalMessage += `\n\n${finalSignature}`;
+  }
 
   return {
-    subject: `Your Fitness Report - ${formatDate(new Date())}`,
-    body: defaultMessage
+    subject: finalSubject,
+    body: finalMessage
   };
 }
 
