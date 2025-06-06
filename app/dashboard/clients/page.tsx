@@ -236,7 +236,7 @@ export default function ClientsPage() {
       });
 
       // Fetch other data in parallel
-      const [workoutData, bodyStatsData, healthData, nutritionData] = await Promise.all([
+      const [workoutData, bodyStatsData, healthData, nutritionData, sleepData] = await Promise.all([
         workoutDataResponse.json(),
         fetch('/api/trainerize/bodystats', {
           method: 'POST',
@@ -260,6 +260,15 @@ export default function ClientsPage() {
           }),
         }).then(res => res.json()),
         fetch('/api/trainerize/nutrition', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userID: client.trainerize_id,
+            startDate: startDate!.toISOString().split('T')[0],
+            endDate: endDate!.toISOString().split('T')[0],
+          }),
+        }).then(res => res.json()),
+        fetch('/api/trainerize/sleep-data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -314,6 +323,7 @@ export default function ClientsPage() {
         bodyStats: bodyStatsData,
         healthData,
         nutritionData,
+        sleepData,
         workoutData,
       };
 

@@ -31,6 +31,7 @@ interface DailyData {
   protein: number;
   carbs: number;
   fats: number;
+  sleepHours: number;
   workouts?: Workout[];
 }
 
@@ -59,6 +60,17 @@ interface ReportVisualizationProps {
         fatGrams: number;
       }>;
     };
+    sleepData?: {
+      isTracked: boolean;
+      sleep?: Array<{
+        id: number;
+        userID: number;
+        source: string;
+        startTime: string;
+        endTime: string;
+        type: string;
+      }>;
+    };
     workoutData: {
       workouts: Workout[];
     };
@@ -79,6 +91,7 @@ interface WeeklyAverage {
   avgProtein: number;
   avgCarbs: number;
   avgFats: number;
+  avgSleepHours: number;
 }
 
 export function ReportVisualization({ 
@@ -104,6 +117,7 @@ export function ReportVisualization({
           protein: 0,
           carbs: 0,
           fats: 0,
+          sleepHours: 0,
           workouts: []
         });
       } else {
@@ -123,6 +137,7 @@ export function ReportVisualization({
           protein: 0,
           carbs: 0,
           fats: 0,
+          sleepHours: 0,
           workouts: []
         });
       } else {
@@ -142,6 +157,7 @@ export function ReportVisualization({
           protein: item.proteinGrams || 0,
           carbs: item.carbsGrams || 0,
           fats: item.fatGrams || 0,
+          sleepHours: 0,
           workouts: []
         });
       } else {
@@ -150,6 +166,36 @@ export function ReportVisualization({
         entry.protein = item.proteinGrams || 0;
         entry.carbs = item.carbsGrams || 0;
         entry.fats = item.fatGrams || 0;
+      }
+    });
+
+    // Process sleep data
+    data.sleepData?.sleep?.forEach(sleepRecord => {
+      const startTime = new Date(sleepRecord.startTime);
+      const endTime = new Date(sleepRecord.endTime);
+      
+      // Calculate sleep duration in hours
+      const durationMs = endTime.getTime() - startTime.getTime();
+      const sleepHours = durationMs / (1000 * 60 * 60); // Convert to hours
+      
+      // Use the end date (when they woke up) as the date for this sleep session
+      const date = endTime.toISOString().split('T')[0];
+      
+      if (!dailyData.has(date)) {
+        dailyData.set(date, {
+          date,
+          weight: 0,
+          steps: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          sleepHours: sleepHours,
+          workouts: []
+        });
+      } else {
+        const entry = dailyData.get(date)!;
+        entry.sleepHours = sleepHours;
       }
     });
 
@@ -165,6 +211,7 @@ export function ReportVisualization({
           protein: 0,
           carbs: 0,
           fats: 0,
+          sleepHours: 0,
           workouts: [workout]
         });
       } else {
@@ -229,6 +276,7 @@ export function ReportVisualization({
             avgProtein: calculateAverage(currentWeekData, 'protein'),
             avgCarbs: calculateAverage(currentWeekData, 'carbs'),
             avgFats: calculateAverage(currentWeekData, 'fats'),
+            avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
           });
         }
         currentWeekData = [dayData];
@@ -249,6 +297,7 @@ export function ReportVisualization({
         avgProtein: calculateAverage(currentWeekData, 'protein'),
         avgCarbs: calculateAverage(currentWeekData, 'carbs'),
         avgFats: calculateAverage(currentWeekData, 'fats'),
+        avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
       });
     }
 
@@ -285,6 +334,10 @@ export function ReportVisualization({
       fats: {
         diff: week.avgFats - weeklyAverages[index].avgFats,
         percent: ((week.avgFats - weeklyAverages[index].avgFats) / weeklyAverages[index].avgFats) * 100
+      },
+      sleepHours: {
+        diff: week.avgSleepHours - weeklyAverages[index].avgSleepHours,
+        percent: ((week.avgSleepHours - weeklyAverages[index].avgSleepHours) / weeklyAverages[index].avgSleepHours) * 100
       }
     }));
   }, [weeklyAverages]);
@@ -350,6 +403,7 @@ export function ReportVisualization({
                   <th>Protein (g)</th>
                   <th>Carbs (g)</th>
                   <th>Fats (g)</th>
+                  <th>Sleep (hrs)</th>
                 </tr>
               </thead>
               <tbody>
@@ -362,6 +416,7 @@ export function ReportVisualization({
                     <td>{formatNumber(day.protein)}</td>
                     <td>{formatNumber(day.carbs)}</td>
                     <td>{formatNumber(day.fats)}</td>
+                    <td>{formatNumber(day.sleepHours)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -489,6 +544,7 @@ export function ReportVisualization({
                       <th className="bg-transparent">Protein (g)</th>
                       <th className="bg-transparent">Carbs (g)</th>
                       <th className="bg-transparent">Fats (g)</th>
+                      <th className="bg-transparent">Sleep (hrs)</th>
                       <th className="bg-transparent">Workouts</th>
                     </tr>
                   </thead>
@@ -513,6 +569,7 @@ export function ReportVisualization({
                           <td>{formatNumber(week.avgProtein)}</td>
                           <td>{formatNumber(week.avgCarbs)}</td>
                           <td>{formatNumber(week.avgFats)}</td>
+                          <td>{formatNumber(week.avgSleepHours)}</td>
                           <td>{workoutsThisWeek} workouts</td>
                         </tr>
                       );
@@ -679,6 +736,32 @@ export function ReportVisualization({
                         'N/A'
                       ) : (
                         <>{weeklyChanges[weeklyChanges.length - 1].fats.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].fats.percent)}%</>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Avg Sleep Hours */}
+                <div className="card bg-base-200/50 shadow-lg">
+                  <div className="card-body">
+                    <div className="text-sm text-base-content/60">Avg Sleep</div>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-3xl font-bold">{formatNumber(weeklyAverages[weeklyAverages.length - 1].avgSleepHours)}</div>
+                      <div className="text-xl">hrs</div>
+                      <div className="text-sm text-base-content/80">
+                        {!isNaN(weeklyChanges[weeklyChanges.length - 1].sleepHours.diff) && (
+                          <>
+                            {weeklyChanges[weeklyChanges.length - 1].sleepHours.diff >= 0 ? '↑' : '↓'} {Math.abs(weeklyChanges[weeklyChanges.length - 1].sleepHours.diff).toFixed(1)}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-sm text-base-content/60">Previous: {formatNumber(weeklyAverages[weeklyAverages.length - 2].avgSleepHours)} hrs</div>
+                    <div className="text-sm text-base-content/80">
+                      {isNaN(weeklyChanges[weeklyChanges.length - 1].sleepHours.percent) || !isFinite(weeklyChanges[weeklyChanges.length - 1].sleepHours.percent) ? (
+                        'N/A'
+                      ) : (
+                        <>{weeklyChanges[weeklyChanges.length - 1].sleepHours.diff >= 0 ? '+' : ''}{formatNumber(weeklyChanges[weeklyChanges.length - 1].sleepHours.percent)}%</>
                       )}
                     </div>
                   </div>
