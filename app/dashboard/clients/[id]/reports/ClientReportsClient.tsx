@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { ReportVisualization } from '@/components/ReportVisualization';
 import ClientSearchBar from '@/components/ClientSearchBar';
+import SendReportModal from '@/components/SendReportModal';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -22,6 +23,7 @@ interface Client {
   first_name: string;
   last_name: string;
   email: string;
+  trainerize_id: number;
   active: boolean;
 }
 
@@ -39,6 +41,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchClientAndReports = async () => {
@@ -488,26 +491,42 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                     <h2 className="text-2xl font-bold">
                       Report for {client?.first_name} {client?.last_name}
                     </h2>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={captureAndSendReport}
-                      disabled={isCapturing}
-                    >
-                      {isCapturing ? (
-                        <span className="loading loading-spinner loading-sm" />
-                      ) : (
-                        'Capture Report'
-                      )}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={captureAndSendReport}
+                        disabled={isCapturing}
+                      >
+                        {isCapturing ? (
+                          <span className="loading loading-spinner loading-sm" />
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                            </svg>
+                            Download Image
+                          </>
+                        )}
+                      </button>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => setIsSendModalOpen(true)}
+                        disabled={isCapturing}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                        Send to Client
+                      </button>
+                    </div>
                   </div>
                   
                   <div id="report-container" className={`space-y-8 ${isCapturing ? 'p-8 rounded-lg' : ''}`}>
-                    <ReportVisualization 
-                      data={selectedReport.report_data} 
+                    <ReportVisualization
+                      data={selectedReport.report_data}
                       onDeleteWorkout={handleDeleteWorkout}
                       onDeleteExercise={handleDeleteExercise}
                       isScreenshotMode={isCapturing}
-                      forceTemplate={selectedReport.report_data?.template}
                     />
                   </div>
                 </div>
@@ -587,6 +606,18 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
           <button>close</button>
         </form>
       </dialog>
+
+      {/* Send Report Modal */}
+      <SendReportModal
+        isOpen={isSendModalOpen}
+        onClose={() => setIsSendModalOpen(false)}
+        report={selectedReport}
+        client={client}
+        onSuccess={(delivery) => {
+          toast.success(`Report sent successfully to ${delivery.clientName}!`);
+          setIsSendModalOpen(false);
+        }}
+      />
     </div>
   );
 } 
