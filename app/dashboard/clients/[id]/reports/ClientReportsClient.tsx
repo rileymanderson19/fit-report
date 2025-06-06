@@ -493,7 +493,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                     </h2>
                     <div className="flex gap-2">
                       <button
-                        className="btn btn-secondary btn-sm"
+                        className="btn btn-primary btn-sm"
                         onClick={captureAndSendReport}
                         disabled={isCapturing}
                       >
