@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { ExerciseNotes } from './ExerciseNotes';
-import { ReportInsights } from './ReportInsights';
+import { EnhancedAnalytics } from './EnhancedAnalytics';
 
 interface WorkoutExercise {
   name: string;
@@ -370,6 +370,193 @@ export function ReportVisualization({
     return `${sign}${formattedDiff} (${sign}${formattedPercent}%)`;
   };
 
+  // Create a snapshot of the original data on first render that never changes
+  const analyticsData = useMemo(() => {
+    // This creates a completely independent snapshot for consistency analysis
+    const dailyData = new Map<string, DailyData>();
+    
+    // Process body stats
+    data.bodyStats?.bodyStats?.forEach(item => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dailyData.has(date)) {
+        dailyData.set(date, {
+          date,
+          weight: item.weight || 0,
+          steps: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          sleepHours: 0,
+          workouts: []
+        });
+      } else {
+        dailyData.get(date)!.weight = item.weight || 0;
+      }
+    });
+
+    // Process health data
+    data.healthData?.healthData?.forEach(item => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dailyData.has(date)) {
+        dailyData.set(date, {
+          date,
+          weight: 0,
+          steps: item.data?.steps || 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          sleepHours: 0,
+          workouts: []
+        });
+      } else {
+        dailyData.get(date)!.steps = item.data?.steps || 0;
+      }
+    });
+
+    // Process nutrition data
+    data.nutritionData?.nutrition?.forEach(item => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dailyData.has(date)) {
+        dailyData.set(date, {
+          date,
+          weight: 0,
+          steps: 0,
+          calories: item.calories || 0,
+          protein: item.proteinGrams || 0,
+          carbs: item.carbsGrams || 0,
+          fats: item.fatGrams || 0,
+          sleepHours: 0,
+          workouts: []
+        });
+      } else {
+        const entry = dailyData.get(date)!;
+        entry.calories = item.calories || 0;
+        entry.protein = item.proteinGrams || 0;
+        entry.carbs = item.carbsGrams || 0;
+        entry.fats = item.fatGrams || 0;
+      }
+    });
+
+    // Process sleep data
+    data.sleepData?.sleep?.forEach(sleepRecord => {
+      const startTime = new Date(sleepRecord.startTime);
+      const endTime = new Date(sleepRecord.endTime);
+      
+      // Calculate sleep duration in hours
+      const durationMs = endTime.getTime() - startTime.getTime();
+      const sleepHours = durationMs / (1000 * 60 * 60); // Convert to hours
+      
+      // Use the end date (when they woke up) as the date for this sleep session
+      const date = endTime.toISOString().split('T')[0];
+      
+      if (!dailyData.has(date)) {
+        dailyData.set(date, {
+          date,
+          weight: 0,
+          steps: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          sleepHours: sleepHours,
+          workouts: []
+        });
+      } else {
+        const entry = dailyData.get(date)!;
+        entry.sleepHours = sleepHours;
+      }
+    });
+
+    // Process workout data - create deep copies so they can never be modified
+    data.workoutData?.workouts?.forEach(workout => {
+      const date = new Date(workout.date).toISOString().split('T')[0];
+      const workoutCopy = {
+        ...workout,
+        exercises: workout.exercises ? workout.exercises.map(exercise => ({
+          ...exercise,
+          stats: exercise.stats ? exercise.stats.map(stat => ({ ...stat })) : []
+        })) : []
+      };
+      
+      if (!dailyData.has(date)) {
+        dailyData.set(date, {
+          date,
+          weight: 0,
+          steps: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          sleepHours: 0,
+          workouts: [workoutCopy]
+        });
+      } else {
+        const entry = dailyData.get(date)!;
+        if (!entry.workouts) {
+          entry.workouts = [];
+        }
+        entry.workouts.push(workoutCopy);
+      }
+    });
+
+    return Array.from(dailyData.values())
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, []); // Empty dependency array - this never updates after first render
+
+  // Create weekly averages specifically for analytics (based on unmodified data)
+  const analyticsWeeklyAverages = useMemo(() => {
+    if (analyticsData.length === 0) return [];
+
+    const weeks: WeeklyAverage[] = [];
+    let currentWeekData: DailyData[] = [];
+    let currentWeekStart = new Date(analyticsData[0].date);
+
+    analyticsData.forEach((dayData) => {
+      const currentDate = new Date(dayData.date);
+      const daysDiff = Math.floor((currentDate.getTime() - currentWeekStart.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysDiff >= 7) {
+        // Calculate averages for the completed week
+        if (currentWeekData.length > 0) {
+          weeks.push({
+            weekStart: currentWeekStart.toISOString().split('T')[0],
+            weekEnd: new Date(currentWeekData[currentWeekData.length - 1].date).toISOString().split('T')[0],
+            avgWeight: calculateAverage(currentWeekData, 'weight'),
+            avgSteps: calculateAverage(currentWeekData, 'steps'),
+            avgCalories: calculateAverage(currentWeekData, 'calories'),
+            avgProtein: calculateAverage(currentWeekData, 'protein'),
+            avgCarbs: calculateAverage(currentWeekData, 'carbs'),
+            avgFats: calculateAverage(currentWeekData, 'fats'),
+            avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
+          });
+        }
+        currentWeekData = [dayData];
+        currentWeekStart = currentDate;
+      } else {
+        currentWeekData.push(dayData);
+      }
+    });
+
+    // Add the last week if it has any data
+    if (currentWeekData.length > 0) {
+      weeks.push({
+        weekStart: currentWeekStart.toISOString().split('T')[0],
+        weekEnd: new Date(currentWeekData[currentWeekData.length - 1].date).toISOString().split('T')[0],
+        avgWeight: calculateAverage(currentWeekData, 'weight'),
+        avgSteps: calculateAverage(currentWeekData, 'steps'),
+        avgCalories: calculateAverage(currentWeekData, 'calories'),
+        avgProtein: calculateAverage(currentWeekData, 'protein'),
+        avgCarbs: calculateAverage(currentWeekData, 'carbs'),
+        avgFats: calculateAverage(currentWeekData, 'fats'),
+        avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
+      });
+    }
+
+    return weeks;
+  }, [analyticsData]);
+
   if (processedDailyData.length === 0) {
     return (
       <div className="alert alert-info">
@@ -384,20 +571,19 @@ export function ReportVisualization({
   // Determine which template to use
   const isEnhancedTemplate = forceTemplate === 'enhanced' || data.template === 'enhanced';
   const shouldUseDailyTemplate = forceTemplate 
-    ? (forceTemplate === 'daily' || (forceTemplate === 'enhanced' && timeSpanInfo.isSingleWeek))
-    : (data.template === 'daily' || (data.template === 'enhanced' && timeSpanInfo.isSingleWeek) 
+    ? (forceTemplate === 'daily')
+    : (data.template === 'daily'
         ? true 
-        : data.template === 'weekly' ? false : timeSpanInfo.isSingleWeek);
+        : data.template === 'weekly' || data.template === 'enhanced' ? false : timeSpanInfo.isSingleWeek);
 
   return (
     <div className="space-y-8">
-      {/* Intelligent Insights Section - Only for Enhanced Template */}
+      {/* Enhanced Analytics Section - Only for Enhanced Template */}
       {isEnhancedTemplate && (
-        <ReportInsights 
-          dailyData={processedDailyData}
-          weeklyAverages={weeklyAverages}
+        <EnhancedAnalytics 
+          dailyData={analyticsData}
+          weeklyAverages={analyticsWeeklyAverages}
           clientName={clientName}
-          isScreenshotMode={isScreenshotMode}
         />
       )}
       
@@ -812,10 +998,10 @@ export function ReportVisualization({
                 }, {} as Record<string, Workout[]>);
 
                 return Object.entries(workoutGroups).map(([title, workouts]) => {
-                  // Sort workouts by date
-                  const sortedWorkouts = [...workouts].sort((a, b) => 
-                    new Date(b.date).getTime() - new Date(a.date).getTime()
-                  );
+                  // Sort workouts by date and limit to 2 most recent
+                  const sortedWorkouts = [...workouts]
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .slice(0, 2);
 
                   return (
                     <div key={title} className="card bg-base-200/50 mb-6">
@@ -823,20 +1009,21 @@ export function ReportVisualization({
                         <div className="flex justify-between items-center mb-4">
                           <h4 className="card-title text-xl">{title}</h4>
                           {!isScreenshotMode && (
-                            <div className="flex gap-2">
-                              {sortedWorkouts.map(workout => (
-                                <button
-                                  key={workout.id}
-                                  onClick={() => onDeleteWorkout?.(workout.id)}
-                                  className="btn btn-sm btn-ghost text-error"
-                                  title={`Delete workout from ${formatDate(workout.date)}`}
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                  </svg>
-                                </button>
-                              ))}
-                            </div>
+                            <button
+                              onClick={() => {
+                                // Delete all workouts with this title
+                                sortedWorkouts.forEach(workout => {
+                                  onDeleteWorkout?.(workout.id);
+                                });
+                              }}
+                              className="btn btn-sm btn-ghost text-error"
+                              title={`Delete all "${title}" workouts`}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                              Delete All
+                            </button>
                           )}
                         </div>
                         {sortedWorkouts[0].exercises && sortedWorkouts[0].exercises.length > 0 && (

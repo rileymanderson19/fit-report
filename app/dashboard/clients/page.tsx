@@ -627,57 +627,102 @@ export default function ClientsPage() {
 
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <h2 className="text-xl font-bold mb-4">Report Template</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="form-control">
-                    <label className="label cursor-pointer">
-                      <span className="label-text">
-                        <div className="font-semibold">Daily Data</div>
-                        <div className="text-sm text-base-content/60">Day-by-day breakdown with detailed workout information</div>
-                      </span>
-                      <input 
-                        type="radio" 
-                        name="reportTemplate" 
-                        value="daily"
-                        className="radio radio-primary" 
-                        checked={reportTemplate === 'daily'}
-                        onChange={() => setReportTemplate('daily')}
-                      />
-                    </label>
-                  </div>
-                  
-                  <div className="form-control">
-                    <label className="label cursor-pointer">
-                      <span className="label-text">
-                        <div className="font-semibold">Weekly Summary</div>
-                        <div className="text-sm text-base-content/60">Weekly averages and progress trends</div>
-                      </span>
-                      <input 
-                        type="radio" 
-                        name="reportTemplate" 
-                        value="weekly"
-                        className="radio radio-primary" 
-                        checked={reportTemplate === 'weekly'}
-                        onChange={() => setReportTemplate('weekly')}
-                      />
-                    </label>
+                <h2 className="text-xl font-bold mb-6">Report Template</h2>
+                <div className="space-y-4">
+                  {/* Daily Data Template */}
+                  <div 
+                    className={`card cursor-pointer transition-all duration-200 border-2 ${
+                      reportTemplate === 'daily' 
+                        ? 'border-primary bg-primary/10 shadow-lg' 
+                        : 'border-base-300 hover:border-primary/50 hover:shadow-md'
+                    }`}
+                    onClick={() => setReportTemplate('daily')}
+                  >
+                    <div className="card-body p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-lg">Daily Data</h3>
+                          <p className="text-sm text-base-content/70">Day-by-day breakdown with detailed workout information</p>
+                        </div>
+                        <input 
+                          type="radio" 
+                          name="reportTemplate" 
+                          value="daily"
+                          className="radio radio-primary" 
+                          checked={reportTemplate === 'daily'}
+                          onChange={() => setReportTemplate('daily')}
+                        />
+                      </div>
+                      {reportTemplate === 'daily' && (
+                        <div className="mt-3 p-3 bg-primary/20 rounded-lg">
+                          <div className="text-sm text-primary font-medium">✓ Perfect for single week analysis and detailed workout review</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="form-control">
-                    <label className="label cursor-pointer">
-                      <span className="label-text">
-                        <div className="font-semibold">🚀 Enhanced Report</div>
-                        <div className="text-sm text-base-content/60">AI insights, goal tracking, and coaching suggestions</div>
-                      </span>
-                      <input 
-                        type="radio" 
-                        name="reportTemplate" 
-                        value="enhanced"
-                        className="radio radio-primary" 
-                        checked={reportTemplate === 'enhanced'}
-                        onChange={() => setReportTemplate('enhanced')}
-                      />
-                    </label>
+                  {/* Weekly Summary Template */}
+                  <div 
+                    className={`card cursor-pointer transition-all duration-200 border-2 ${
+                      reportTemplate === 'weekly' 
+                        ? 'border-primary bg-primary/10 shadow-lg' 
+                        : 'border-base-300 hover:border-primary/50 hover:shadow-md'
+                    }`}
+                    onClick={() => setReportTemplate('weekly')}
+                  >
+                    <div className="card-body p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-lg">Weekly Summary</h3>
+                          <p className="text-sm text-base-content/70">Weekly averages and progress trends</p>
+                        </div>
+                        <input 
+                          type="radio" 
+                          name="reportTemplate" 
+                          value="weekly"
+                          className="radio radio-primary" 
+                          checked={reportTemplate === 'weekly'}
+                          onChange={() => setReportTemplate('weekly')}
+                        />
+                      </div>
+                      {reportTemplate === 'weekly' && (
+                        <div className="mt-3 p-3 bg-primary/20 rounded-lg">
+                          <div className="text-sm text-primary font-medium">✓ Ideal for multi-week analysis and identifying long-term trends</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Enhanced Report Template */}
+                  <div 
+                    className={`card cursor-pointer transition-all duration-200 border-2 ${
+                      reportTemplate === 'enhanced' 
+                        ? 'border-primary bg-primary/10 shadow-lg' 
+                        : 'border-base-300 hover:border-primary/50 hover:shadow-md'
+                    }`}
+                    onClick={() => setReportTemplate('enhanced')}
+                  >
+                    <div className="card-body p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-lg">Enhanced Report</h3>
+                          <p className="text-sm text-base-content/70">AI insights, goal tracking, and coaching suggestions</p>
+                        </div>
+                        <input 
+                          type="radio" 
+                          name="reportTemplate" 
+                          value="enhanced"
+                          className="radio radio-primary" 
+                          checked={reportTemplate === 'enhanced'}
+                          onChange={() => setReportTemplate('enhanced')}
+                        />
+                      </div>
+                      {reportTemplate === 'enhanced' && (
+                        <div className="mt-3 p-3 bg-primary/20 rounded-lg">
+                          <div className="text-sm text-primary font-medium">✓ Complete analysis with automated insights, goal tracking, and trainer coaching suggestions</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
