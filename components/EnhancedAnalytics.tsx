@@ -297,16 +297,8 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
       {/* Consistency Dashboard */}
       <div className="card bg-base-200/50 shadow-lg">
         <div className="card-body">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-info/20 rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold">Consistency Analysis</h3>
-              <p className="text-sm text-base-content/70">How consistent are the key habits?</p>
-            </div>
+          <div className="mb-6">
+            <h3 className="text-xl font-bold">Consistency Analysis</h3>
           </div>
           <div className="grid grid-cols-3 gap-6">
             {[
