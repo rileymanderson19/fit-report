@@ -527,6 +527,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                       onDeleteWorkout={handleDeleteWorkout}
                       onDeleteExercise={handleDeleteExercise}
                       isScreenshotMode={isCapturing}
+                      clientName={`${client?.first_name} ${client?.last_name}`}
                     />
                   </div>
                 </div>

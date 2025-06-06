@@ -53,7 +53,7 @@ export default function ClientsPage() {
   const [generatingProgress, setGeneratingProgress] = useState<Record<string, boolean>>({});
   const [minReps, setMinReps] = useState<number>(6);
   const [maxReps, setMaxReps] = useState<number>(10);
-  const [reportTemplate, setReportTemplate] = useState<'daily' | 'weekly'>('daily');
+  const [reportTemplate, setReportTemplate] = useState<'daily' | 'weekly' | 'enhanced'>('daily');
   const [activeTab, setActiveTab] = useState<'clients' | 'reports'>('clients');
 
   // Handle URL parameters
@@ -628,7 +628,7 @@ export default function ClientsPage() {
             <div className="card bg-base-100 shadow-xl">
               <div className="card-body">
                 <h2 className="text-xl font-bold mb-4">Report Template</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="form-control">
                     <label className="label cursor-pointer">
                       <span className="label-text">
@@ -659,6 +659,23 @@ export default function ClientsPage() {
                         className="radio radio-primary" 
                         checked={reportTemplate === 'weekly'}
                         onChange={() => setReportTemplate('weekly')}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label cursor-pointer">
+                      <span className="label-text">
+                        <div className="font-semibold">🚀 Enhanced Report</div>
+                        <div className="text-sm text-base-content/60">AI insights, goal tracking, and coaching suggestions</div>
+                      </span>
+                      <input 
+                        type="radio" 
+                        name="reportTemplate" 
+                        value="enhanced"
+                        className="radio radio-primary" 
+                        checked={reportTemplate === 'enhanced'}
+                        onChange={() => setReportTemplate('enhanced')}
                       />
                     </label>
                   </div>

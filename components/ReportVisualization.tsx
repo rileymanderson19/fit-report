@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { ExerciseNotes } from './ExerciseNotes';
+import { ReportInsights } from './ReportInsights';
 
 interface WorkoutExercise {
   name: string;
@@ -74,12 +75,13 @@ interface ReportVisualizationProps {
     workoutData: {
       workouts: Workout[];
     };
-    template?: 'daily' | 'weekly';
+    template?: 'daily' | 'weekly' | 'enhanced';
   };
   onDeleteWorkout?: (workoutId: number) => void;
   onDeleteExercise?: (workoutId: number, exerciseName: string) => void;
   isScreenshotMode?: boolean;
-  forceTemplate?: 'daily' | 'weekly';
+  forceTemplate?: 'daily' | 'weekly' | 'enhanced';
+  clientName?: string;
 }
 
 interface WeeklyAverage {
@@ -99,7 +101,8 @@ export function ReportVisualization({
   onDeleteWorkout, 
   onDeleteExercise,
   isScreenshotMode = false,
-  forceTemplate
+  forceTemplate,
+  clientName = "Client"
 }: ReportVisualizationProps) {
   // Process all data into a single daily format
   const processedDailyData = useMemo(() => {
@@ -379,14 +382,25 @@ export function ReportVisualization({
   }
 
   // Determine which template to use
+  const isEnhancedTemplate = forceTemplate === 'enhanced' || data.template === 'enhanced';
   const shouldUseDailyTemplate = forceTemplate 
-    ? forceTemplate === 'daily' 
-    : (data.template === 'daily' || data.template === 'weekly' 
-        ? data.template === 'daily' 
-        : timeSpanInfo.isSingleWeek);
+    ? (forceTemplate === 'daily' || (forceTemplate === 'enhanced' && timeSpanInfo.isSingleWeek))
+    : (data.template === 'daily' || (data.template === 'enhanced' && timeSpanInfo.isSingleWeek) 
+        ? true 
+        : data.template === 'weekly' ? false : timeSpanInfo.isSingleWeek);
 
   return (
     <div className="space-y-8">
+      {/* Intelligent Insights Section - Only for Enhanced Template */}
+      {isEnhancedTemplate && (
+        <ReportInsights 
+          dailyData={processedDailyData}
+          weeklyAverages={weeklyAverages}
+          clientName={clientName}
+          isScreenshotMode={isScreenshotMode}
+        />
+      )}
+      
       {shouldUseDailyTemplate ? (
         // Single Week View
         <div className="space-y-6">
