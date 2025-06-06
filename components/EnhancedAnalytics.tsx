@@ -261,7 +261,6 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
       <div className="space-y-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Enhanced Analytics for {clientName}</h2>
-          <p className="text-base-content/70">Consistency • Trends • Areas for Improvement</p>
         </div>
         
         <div className="card bg-base-200/50 shadow-lg">
@@ -284,13 +283,15 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Enhanced Analytics for {clientName}</h2>
+        <h2 className="text-2xl font-bold mb-2">{clientName}</h2>
         <p className="text-base-content/70">
-          {Object.values(dataAvailability).filter(Boolean).length === Object.keys(dataAvailability).length 
-            ? 'Consistency • Trends • Areas for Improvement'
-            : `Analytics for ${Object.entries(dataAvailability).filter(([_, hasData]) => hasData).map(([metric, _]) => 
-                metric.charAt(0).toUpperCase() + metric.slice(1)).join(' • ')}`
-          }
+          {(() => {
+            if (dailyData.length === 0) return 'No data available';
+            const sortedDates = dailyData.map(d => d.date).sort();
+            const startDate = formatDate(sortedDates[0]);
+            const endDate = formatDate(sortedDates[sortedDates.length - 1]);
+            return sortedDates.length === 1 ? startDate : `${startDate} - ${endDate}`;
+          })()}
         </p>
       </div>
 
@@ -449,25 +450,16 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
                 })
                 .reduce((total, day) => total + (day.workouts?.length || 0), 0);
 
-              const isLatestWeek = idx === weeklyAverages.length - 1;
-
               return (
                 <div 
                   key={week.weekStart} 
-                  className={`card border-2 transition-all ${
-                    isLatestWeek 
-                      ? 'border-primary bg-primary/5 shadow-md' 
-                      : 'border-base-300 bg-base-100'
-                  }`}
+                  className="card border-2 border-base-300 bg-base-100"
                 >
                   <div className="card-body p-4">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-semibold text-lg">
                         {`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}
                       </h4>
-                      {isLatestWeek && (
-                        <div className="badge badge-primary">Latest Week</div>
-                      )}
                     </div>
                     <div className={`grid gap-4 ${
                       [dataAvailability.weight, dataAvailability.steps, dataAvailability.sleep, dataAvailability.protein, dataAvailability.workouts]
