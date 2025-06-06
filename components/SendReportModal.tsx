@@ -348,36 +348,6 @@ export default function SendReportModal({
 
         {!isLoadingConfig && (
           <div className="space-y-4">
-            {/* Configuration Status */}
-            {configLoaded && (
-              <div className="alert alert-info">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <div>
-                  <h4 className="font-semibold">Configuration Loaded</h4>
-                  <p className="text-sm">
-                    Your saved report configuration has been applied. You can still modify these settings for this send.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Report Info */}
-            <div className="alert alert-success">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <div>
-                <h4 className="font-semibold">Report Details</h4>
-                <p className="text-sm">
-                  Created: {report ? new Date(report.created_at).toLocaleDateString() : 'Unknown'}
-                  <br />
-                  This will be sent as an image via Trainerize messaging
-                </p>
-              </div>
-            </div>
-
             {/* Subject */}
             <div className="form-control">
               <label className="label">
@@ -391,45 +361,6 @@ export default function SendReportModal({
                 onChange={(e) => setSubject(e.target.value)}
                 disabled={isSending}
               />
-            </div>
-
-            {/* Report Sections */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Include in Report</span>
-              </label>
-              <div className="flex flex-wrap gap-4">
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={includeProgress}
-                    onChange={(e) => setIncludeProgress(e.target.checked)}
-                    disabled={isSending}
-                  />
-                  <span className="label-text ml-2">Progress Overview</span>
-                </label>
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={includeNutrition}
-                    onChange={(e) => setIncludeNutrition(e.target.checked)}
-                    disabled={isSending}
-                  />
-                  <span className="label-text ml-2">Nutrition Summary</span>
-                </label>
-                <label className="label cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={includeWorkouts}
-                    onChange={(e) => setIncludeWorkouts(e.target.checked)}
-                    disabled={isSending}
-                  />
-                  <span className="label-text ml-2">Workout Details</span>
-                </label>
-              </div>
             </div>
 
             {/* Custom Message */}
@@ -461,20 +392,6 @@ export default function SendReportModal({
                 />
               </div>
             )}
-
-            {/* Preview */}
-            <div className="alert">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <div>
-                <h4 className="font-semibold">Message Preview</h4>
-                <p className="text-sm">
-                  Your client will receive a professional message with a link to view their fitness report image.
-                  The message will be sent directly through Trainerize.
-                </p>
-              </div>
-            </div>
           </div>
         )}
 
