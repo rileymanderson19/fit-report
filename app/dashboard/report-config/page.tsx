@@ -288,62 +288,7 @@ export default function ReportConfigPage() {
             </div>
           </div>
 
-          {/* Default Report Sections */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title mb-4">Default Report Sections</h2>
-              <p className="text-base-content/80 text-sm mb-4">
-                Choose which sections are included by default when sending reports
-              </p>
-              
-              <div className="space-y-3">
-                <div className="form-control">
-                  <label className="label cursor-pointer">
-                    <span className="label-text">Include Workouts</span>
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary"
-                      checked={config.include_workouts_default}
-                      onChange={(e) => setConfig({
-                        ...config,
-                        include_workouts_default: e.target.checked
-                      })}
-                    />
-                  </label>
-                </div>
 
-                <div className="form-control">
-                  <label className="label cursor-pointer">
-                    <span className="label-text">Include Nutrition</span>
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary"
-                      checked={config.include_nutrition_default}
-                      onChange={(e) => setConfig({
-                        ...config,
-                        include_nutrition_default: e.target.checked
-                      })}
-                    />
-                  </label>
-                </div>
-
-                <div className="form-control">
-                  <label className="label cursor-pointer">
-                    <span className="label-text">Include Progress</span>
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary"
-                      checked={config.include_progress_default}
-                      onChange={(e) => setConfig({
-                        ...config,
-                        include_progress_default: e.target.checked
-                      })}
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Preview */}
