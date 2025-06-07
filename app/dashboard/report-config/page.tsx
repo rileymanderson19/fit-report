@@ -13,6 +13,7 @@ interface ReportConfig {
   include_workouts_default: boolean;
   include_nutrition_default: boolean;
   include_progress_default: boolean;
+  excluded_workout_names: string[];
   created_at?: string;
   updated_at?: string;
 }
@@ -24,6 +25,7 @@ const defaultConfig: Partial<ReportConfig> = {
   include_workouts_default: true,
   include_nutrition_default: true,
   include_progress_default: true,
+  excluded_workout_names: [],
 };
 
 export default function ReportConfigPage() {
@@ -33,6 +35,7 @@ export default function ReportConfigPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
+  const [newExcludedWorkout, setNewExcludedWorkout] = useState("");
   
   const supabase = createClient();
 
@@ -62,7 +65,11 @@ export default function ReportConfigPage() {
       }
 
       if (data) {
-        setConfig(data);
+        // Ensure excluded_workout_names exists for backward compatibility
+        setConfig({
+          ...data,
+          excluded_workout_names: data.excluded_workout_names || []
+        });
       } else {
         // No config exists, use defaults
         setConfig({
@@ -93,6 +100,7 @@ export default function ReportConfigPage() {
         include_workouts_default: config.include_workouts_default,
         include_nutrition_default: config.include_nutrition_default,
         include_progress_default: config.include_progress_default,
+        excluded_workout_names: config.excluded_workout_names || [],
         updated_at: new Date().toISOString(),
       };
 
@@ -157,6 +165,81 @@ export default function ReportConfigPage() {
     return preview;
   };
 
+  const addExcludedWorkout = async () => {
+    const workoutName = newExcludedWorkout.trim();
+    if (!workoutName) return;
+
+    // Check for duplicates (case-insensitive)
+    const excludedNames = config?.excluded_workout_names || [];
+    if (excludedNames.some(name => name.toLowerCase() === workoutName.toLowerCase())) {
+      setMessage("❌ This workout is already excluded");
+      setTimeout(() => setMessage(""), 3000);
+      return;
+    }
+
+    const updatedConfig = config ? {
+      ...config,
+      excluded_workout_names: [...excludedNames, workoutName]
+    } : null;
+
+    setConfig(updatedConfig);
+    setNewExcludedWorkout("");
+
+    // Auto-save after adding exclusion
+    if (updatedConfig && user) {
+      setSaving(true);
+      try {
+        const configData = {
+          trainer_id: user.id,
+          default_subject: updatedConfig.default_subject,
+          default_message: updatedConfig.default_message,
+          signature: updatedConfig.signature,
+          include_workouts_default: updatedConfig.include_workouts_default,
+          include_nutrition_default: updatedConfig.include_nutrition_default,
+          include_progress_default: updatedConfig.include_progress_default,
+          excluded_workout_names: updatedConfig.excluded_workout_names || [],
+          updated_at: new Date().toISOString(),
+        };
+
+        if (updatedConfig.id) {
+          // Update existing
+          const { error } = await supabase
+            .from('report_configurations')
+            .update(configData)
+            .eq('id', updatedConfig.id);
+
+          if (error) throw error;
+        } else {
+          // Insert new
+          const { data, error } = await supabase
+            .from('report_configurations')
+            .insert([{ ...configData, created_at: new Date().toISOString() }])
+            .select()
+            .single();
+
+          if (error) throw error;
+          setConfig(data);
+        }
+
+        setMessage("✅ Workout excluded and saved!");
+        setTimeout(() => setMessage(""), 3000);
+      } catch (error) {
+        console.error('Save error:', error);
+        setMessage("❌ Error saving exclusion");
+        setTimeout(() => setMessage(""), 3000);
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
+  const removeExcludedWorkout = (index: number) => {
+    setConfig(prev => prev ? {
+      ...prev,
+      excluded_workout_names: prev.excluded_workout_names.filter((_, i) => i !== index)
+    } : null);
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-8 py-8">
@@ -191,12 +274,6 @@ export default function ReportConfigPage() {
         </div>
         
         <div className="flex gap-3">
-          <button 
-            className="btn btn-outline"
-            onClick={() => setPreviewMode(!previewMode)}
-          >
-            {previewMode ? "Edit" : "Preview"}
-          </button>
           <button 
             className="btn btn-ghost"
             onClick={resetToDefaults}
@@ -288,6 +365,79 @@ export default function ReportConfigPage() {
             </div>
           </div>
 
+          {/* Workout Exclusions */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title mb-4">Workout Exclusions</h2>
+              <p className="text-sm text-base-content/70 mb-4">
+                Add workout names to exclude from all reports. This is useful for removing warm-up activities like Zone 2 Cardio or Walking from your reports.
+              </p>
+              
+              {/* Add new exclusion */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Exclude Workouts</span>
+                </label>
+                <div className="join w-full">
+                  <input
+                    type="text"
+                    className="input input-bordered join-item flex-1"
+                    placeholder="Enter workout name (e.g., Zone 2 Cardio)"
+                    value={newExcludedWorkout}
+                    onChange={(e) => setNewExcludedWorkout(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        addExcludedWorkout();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary join-item"
+                    onClick={addExcludedWorkout}
+                    disabled={!newExcludedWorkout.trim()}
+                  >
+                    Add
+                  </button>
+                </div>
+                <label className="label">
+                  <span className="label-text-alt">
+                    Matching is case-insensitive and must match the exact workout name
+                  </span>
+                </label>
+              </div>
+
+              {/* List of excluded workouts */}
+              {config.excluded_workout_names && config.excluded_workout_names.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-medium mb-2">Currently Excluded:</h3>
+                  <div className="space-y-2">
+                    {config.excluded_workout_names.map((workoutName, index) => (
+                      <div key={index} className="flex items-center justify-between bg-base-200 p-3 rounded-lg">
+                        <span className="text-sm">{workoutName}</span>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-ghost text-error"
+                          onClick={() => removeExcludedWorkout(index)}
+                                                     title={`Remove ${workoutName} from exclusions`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(!config.excluded_workout_names || config.excluded_workout_names.length === 0) && (
+                <div className="text-center py-4 text-base-content/60">
+                  No workouts are currently excluded from reports
+                </div>
+              )}
+            </div>
+          </div>
 
         </div>
 

@@ -155,6 +155,32 @@ export default function ReportsPage() {
         }).then(res => res.json()),
       ]);
 
+      // Fetch trainer's excluded workout names
+      const { data: { user } } = await supabase.auth.getUser();
+      let excludedWorkoutNames: string[] = [];
+      
+      if (user) {
+        const { data: reportConfig } = await supabase
+          .from('report_configurations')
+          .select('excluded_workout_names')
+          .eq('trainer_id', user.id)
+          .single();
+        
+        if (reportConfig?.excluded_workout_names) {
+          excludedWorkoutNames = reportConfig.excluded_workout_names;
+        }
+      }
+
+      // Filter out excluded workouts (case-insensitive matching)
+      if (workoutData.workouts && excludedWorkoutNames.length > 0) {
+        workoutData.workouts = workoutData.workouts.filter((workout: any) => {
+          const workoutTitle = workout.title?.toLowerCase() || '';
+          return !excludedWorkoutNames.some(excluded => 
+            excluded.toLowerCase() === workoutTitle
+          );
+        });
+      }
+
       // Process workout data to add automatic notes
       if (workoutData.workouts) {
         workoutData.workouts = workoutData.workouts.map((workout: any) => {
