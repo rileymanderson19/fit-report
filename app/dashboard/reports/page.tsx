@@ -5,6 +5,7 @@ import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { DateRangePicker } from '@/components/DateRangePicker';
 
 interface Client {
   id: string;
@@ -306,12 +307,14 @@ export default function ReportsPage() {
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
+      // Select all filtered clients (across all pages)
       const newSelectedClients = new Set([...selectedClients]);
-      currentClients.forEach(client => newSelectedClients.add(client.id));
+      filteredClients.forEach(client => newSelectedClients.add(client.id));
       setSelectedClients(Array.from(newSelectedClients));
     } else {
-      const currentClientIds = new Set(currentClients.map(client => client.id));
-      setSelectedClients(selectedClients.filter(id => !currentClientIds.has(id)));
+      // Deselect all filtered clients (across all pages)
+      const filteredClientIds = new Set(filteredClients.map(client => client.id));
+      setSelectedClients(selectedClients.filter(id => !filteredClientIds.has(id)));
     }
   };
 
@@ -380,8 +383,7 @@ export default function ReportsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <span>
-                  {selectedClients.length} client{selectedClients.length !== 1 ? 's' : ''} selected: {' '}
-                  {clients.filter(c => selectedClients.includes(c.id)).map(c => `${c.first_name} ${c.last_name}`).join(', ')}
+                  <strong>{selectedClients.length}</strong> client{selectedClients.length !== 1 ? 's' : ''} selected for report generation
                 </span>
               </div>
             )}
@@ -404,13 +406,25 @@ export default function ReportsPage() {
                 <thead>
                   <tr>
                     <th>
-                      <label>
+                      <label className="cursor-pointer flex items-center gap-2">
                         <input 
                           type="checkbox" 
                           className="checkbox"
-                          checked={currentClients.length > 0 && currentClients.every(client => selectedClients.includes(client.id))}
+                          checked={filteredClients.length > 0 && filteredClients.every(client => selectedClients.includes(client.id))}
+                          ref={(input) => {
+                            if (input) {
+                              const selectedFilteredClients = filteredClients.filter(client => selectedClients.includes(client.id));
+                              const allSelected = selectedFilteredClients.length === filteredClients.length && filteredClients.length > 0;
+                              const someSelected = selectedFilteredClients.length > 0 && selectedFilteredClients.length < filteredClients.length;
+                              input.indeterminate = someSelected;
+                              input.checked = allSelected;
+                            }
+                          }}
                           onChange={handleSelectAll}
                         />
+                        <span className="text-xs text-base-content/70">
+                          {searchQuery ? `All ${filteredClients.length} filtered` : `All ${filteredClients.length}`}
+                        </span>
                       </label>
                     </th>
                     <th>Name</th>
@@ -581,31 +595,15 @@ export default function ReportsPage() {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="text-xl font-bold mb-4">Timeframe Selection</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text font-semibold">Start Date</span>
-                </label>
-                <input 
-                  type="date" 
-                  className="input input-bordered w-full"
-                  value={startDate?.toISOString().split('T')[0] || ''}
-                  onChange={(e) => setStartDate(new Date(e.target.value))}
-                />
-              </div>
-              
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text font-semibold">End Date</span>
-                </label>
-                <input 
-                  type="date" 
-                  className="input input-bordered w-full"
-                  value={endDate?.toISOString().split('T')[0] || ''}
-                  onChange={(e) => setEndDate(new Date(e.target.value))}
-                />
-              </div>
-            </div>
+            <DateRangePicker
+              from={startDate || undefined}
+              to={endDate || undefined}
+              onSelect={(range) => {
+                setStartDate(range.from || null);
+                setEndDate(range.to || null);
+              }}
+              showPresets={true}
+            />
           </div>
         </div>
 
