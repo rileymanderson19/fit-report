@@ -108,17 +108,37 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
 
     // Weight analysis - average weekly weight loss trend
     const weightValues = dailyData.map(d => d.weight).filter(w => w > 0);
-    let weightStats = { avg: 0, max: 0, min: 0, consistency: 0, weeklyTrend: 0 };
+    let weightStats = { avg: 0, latest: 0, min: 0, consistency: 0, weeklyTrend: 0 };
     
-    if (weightValues.length > 0 && weeklyAverages.length >= 2) {
-      const firstWeekWeight = weeklyAverages[0].avgWeight;
-      const lastWeekWeight = weeklyAverages[weeklyAverages.length - 1].avgWeight;
-      const totalWeeksForWeight = weeklyAverages.length - 1;
-      const weeklyTrend = (lastWeekWeight - firstWeekWeight) / totalWeeksForWeight;
+    if (weightValues.length > 0) {
+      // Calculate basic stats excluding max
+      const avg = weightValues.reduce((sum, val) => sum + val, 0) / weightValues.length;
+      const min = Math.min(...weightValues);
+      const consistency = calculateConsistency(weightValues);
+      
+      // Find the latest weight entry by date
+      const sortedWeightEntries = dailyData
+        .filter(d => d.weight > 0)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const latestWeight = sortedWeightEntries.length > 0 
+        ? sortedWeightEntries[sortedWeightEntries.length - 1].weight 
+        : 0;
+      
+      // Calculate weekly trend if we have multiple weeks
+      let weeklyTrend = 0;
+      if (weeklyAverages.length >= 2) {
+        const firstWeekWeight = weeklyAverages[0].avgWeight;
+        const lastWeekWeight = weeklyAverages[weeklyAverages.length - 1].avgWeight;
+        const totalWeeksForWeight = weeklyAverages.length - 1;
+        weeklyTrend = (lastWeekWeight - firstWeekWeight) / totalWeeksForWeight;
+      }
       
       weightStats = {
-        ...calculateStats(weightValues),
-        weeklyTrend: weeklyTrend
+        avg,
+        latest: latestWeight,
+        min,
+        consistency,
+        weeklyTrend
       };
     }
 
@@ -312,7 +332,7 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
                 format: (stats: any) => ({
                   main: `${stats.avg.toFixed(1)} lbs`,
                   avg: `${stats.weeklyTrend >= 0 ? '+' : ''}${stats.weeklyTrend.toFixed(1)} lbs/week`,
-                  max: `${stats.max.toFixed(1)} highest`,
+                  max: `${stats.latest.toFixed(1)} latest`,
                   min: `${stats.min.toFixed(1)} lowest`
                 })
               },
@@ -413,7 +433,7 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
                       <div className="flex justify-between">
                         <span className="text-base-content/70">
                           {item.key === 'workouts' ? 'Scheduled:' : 
-                           item.key === 'weight' ? 'Highest:' : 'High:'}
+                           item.key === 'weight' ? 'Latest:' : 'High:'}
                         </span>
                         <span className="font-medium">{formatted.max}</span>
                       </div>
