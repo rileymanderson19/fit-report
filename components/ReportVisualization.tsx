@@ -184,6 +184,8 @@ export function ReportVisualization({
       // Use the end date (when they woke up) as the date for this sleep session
       const date = endTime.toISOString().split('T')[0];
       
+
+      
       if (!dailyData.has(date)) {
         dailyData.set(date, {
           date,
@@ -198,7 +200,8 @@ export function ReportVisualization({
         });
       } else {
         const entry = dailyData.get(date)!;
-        entry.sleepHours = sleepHours;
+        // Add to existing sleep hours instead of overwriting (multiple sleep segments per night)
+        entry.sleepHours += sleepHours;
       }
     });
 
@@ -429,7 +432,8 @@ export function ReportVisualization({
         });
       } else {
         const entry = dailyData.get(date)!;
-        entry.sleepHours = sleepHours;
+        // Add to existing sleep hours instead of overwriting (multiple sleep segments per night)
+        entry.sleepHours += sleepHours;
       }
     });
 
@@ -693,58 +697,6 @@ export function ReportVisualization({
       ) : (
         // Multi-Week View
         <div className="space-y-8">
-          {/* Weekly Averages */}
-          <div className="overflow-x-auto mb-8">
-            <h3 className="text-xl font-semibold mb-4">Weekly Averages</h3>
-            <div className="card bg-base-200/50">
-              <div className="card-body p-0">
-                <table className="table w-full">
-                  <thead>
-                    <tr className="border-b border-base-300">
-                      <th className="bg-transparent">Week</th>
-                      <th className="bg-transparent">Weight (lbs)</th>
-                      <th className="bg-transparent">Steps</th>
-                      <th className="bg-transparent">Calories</th>
-                      <th className="bg-transparent">Protein (g)</th>
-                      <th className="bg-transparent">Carbs (g)</th>
-                      <th className="bg-transparent">Fats (g)</th>
-                      <th className="bg-transparent">Sleep (hrs)</th>
-                      <th className="bg-transparent">Workouts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {weeklyAverages.map((week, idx) => {
-                      // Calculate number of workouts for this week
-                      const weekStart = new Date(week.weekStart);
-                      const weekEnd = new Date(week.weekEnd);
-                      const workoutsThisWeek = processedDailyData
-                        .filter(day => {
-                          const date = new Date(day.date);
-                          return date >= weekStart && date <= weekEnd && day.workouts && day.workouts.length > 0;
-                        })
-                        .reduce((total, day) => total + (day.workouts?.length || 0), 0);
-
-                      return (
-                        <tr key={week.weekStart} className={idx % 2 === 0 ? 'bg-transparent' : 'bg-base-200/30'}>
-                          <td>{`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}</td>
-                          <td>{formatNumber(week.avgWeight)}</td>
-                          <td>{formatNumber(week.avgSteps, 0)}</td>
-                          <td>{formatNumber(week.avgCalories, 0)}</td>
-                          <td>{formatNumber(week.avgProtein)}</td>
-                          <td>{formatNumber(week.avgCarbs)}</td>
-                          <td>{formatNumber(week.avgFats)}</td>
-                          <td>{formatNumber(week.avgSleepHours)}</td>
-                          <td>{workoutsThisWeek} workouts</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-
 
           {/* Weekly Workout Summary */}
           <div>

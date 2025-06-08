@@ -92,6 +92,9 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
 
     // Sleep analysis - keep as is
     const sleepValues = dailyData.map(d => d.sleepHours).filter(s => s > 0);
+    
+
+    
     const sleepStats = calculateStats(sleepValues);
 
     // Activity analysis  
@@ -221,7 +224,11 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
     }
 
     if (dataAvailability.sleep) {
-      const avgSleep = dailyData.reduce((sum, day) => sum + day.sleepHours, 0) / dailyData.length;
+      // Only average days where sleep was actually recorded
+      const sleepDays = dailyData.filter(day => day.sleepHours > 0);
+      const avgSleep = sleepDays.length > 0 
+        ? sleepDays.reduce((sum, day) => sum + day.sleepHours, 0) / sleepDays.length 
+        : 0;
       if (avgSleep < 7) {
         areas.push({
           area: 'Sleep Duration',
@@ -482,8 +489,8 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
                       </h4>
                     </div>
                     <div className={`grid gap-4 ${
-                      [dataAvailability.weight, dataAvailability.steps, dataAvailability.sleep, dataAvailability.protein, dataAvailability.workouts]
-                        .filter(Boolean).length <= 3 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-5'
+                      [dataAvailability.weight, dataAvailability.steps, dataAvailability.sleep, dataAvailability.protein, dataAvailability.calories, dataAvailability.workouts]
+                        .filter(Boolean).length <= 3 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-6'
                     }`}>
                       {dataAvailability.weight && (
                         <div className="stat p-2">
@@ -492,18 +499,11 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
                           <div className="stat-desc text-xs">lbs</div>
                         </div>
                       )}
-                      {dataAvailability.steps && (
+                      {dataAvailability.calories && (
                         <div className="stat p-2">
-                          <div className="stat-title text-xs">Steps</div>
-                          <div className="stat-value text-sm">{Math.round(week.avgSteps).toLocaleString()}</div>
+                          <div className="stat-title text-xs">Calories</div>
+                          <div className="stat-value text-sm">{Math.round(week.avgCalories).toLocaleString()}</div>
                           <div className="stat-desc text-xs">daily avg</div>
-                        </div>
-                      )}
-                      {dataAvailability.sleep && (
-                        <div className="stat p-2">
-                          <div className="stat-title text-xs">Sleep</div>
-                          <div className="stat-value text-sm">{week.avgSleepHours.toFixed(1)}</div>
-                          <div className="stat-desc text-xs">hours</div>
                         </div>
                       )}
                       {dataAvailability.protein && (
@@ -513,11 +513,25 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
                           <div className="stat-desc text-xs">grams</div>
                         </div>
                       )}
+                      {dataAvailability.steps && (
+                        <div className="stat p-2">
+                          <div className="stat-title text-xs">Steps</div>
+                          <div className="stat-value text-sm">{Math.round(week.avgSteps).toLocaleString()}</div>
+                          <div className="stat-desc text-xs">daily avg</div>
+                        </div>
+                      )}
                       {dataAvailability.workouts && (
                         <div className="stat p-2">
                           <div className="stat-title text-xs">Training</div>
                           <div className="stat-value text-sm">{workoutsThisWeek}</div>
                           <div className="stat-desc text-xs">workouts</div>
+                        </div>
+                      )}
+                      {dataAvailability.sleep && (
+                        <div className="stat p-2">
+                          <div className="stat-title text-xs">Sleep</div>
+                          <div className="stat-value text-sm">{week.avgSleepHours.toFixed(1)}</div>
+                          <div className="stat-desc text-xs">hours</div>
                         </div>
                       )}
                     </div>
