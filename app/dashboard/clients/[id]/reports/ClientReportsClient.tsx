@@ -216,130 +216,16 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
     
     setIsCapturing(true);
     try {
-      // Wait for re-render with screenshot mode
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Get the report element
-      const reportElement = document.getElementById('report-container');
-      if (!reportElement) throw new Error('Report container not found');
-
-      // Apply optimized styles for capture
-      const captureStyles = document.createElement('style');
-      captureStyles.textContent = `
-        #report-container {
-          background: white !important;
-          padding: 40px !important;
-          color: #1a1a1a !important;
-          font-size: 16px !important;
-        }
-        #report-container h3 {
-          color: #1a1a1a !important;
-          font-size: 24px !important;
-          font-weight: 600 !important;
-          margin-bottom: 20px !important;
-        }
-        #report-container .card {
-          background: #f8fafc !important;
-          border: 1px solid #e2e8f0 !important;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-          margin-bottom: 24px !important;
-        }
-        #report-container .card-body {
-          padding: 24px !important;
-        }
-        #report-container table {
-          width: 100% !important;
-          border-collapse: collapse !important;
-          margin-bottom: 16px !important;
-          background: white !important;
-        }
-        #report-container th {
-          background: #f1f5f9 !important;
-          color: #1a1a1a !important;
-          font-weight: 600 !important;
-          text-align: left !important;
-          padding: 12px 16px !important;
-          border-bottom: 2px solid #e2e8f0 !important;
-        }
-        #report-container td {
-          padding: 12px 16px !important;
-          border-bottom: 1px solid #e2e8f0 !important;
-          color: #1a1a1a !important;
-        }
-        #report-container tr:nth-child(even) {
-          background: #f8fafc !important;
-        }
-        #report-container .text-base-content {
-          color: #1a1a1a !important;
-        }
-        #report-container .text-base-content\\/60,
-        #report-container .text-base-content\\/80 {
-          color: #64748b !important;
-        }
-        #report-container .text-primary {
-          color: #2563eb !important;
-        }
-        #report-container .font-medium {
-          font-weight: 500 !important;
-        }
-        #report-container .font-semibold {
-          font-weight: 600 !important;
-        }
-        #report-container .text-xl {
-          font-size: 20px !important;
-        }
-        #report-container .text-lg {
-          font-size: 18px !important;
-        }
-        #report-container .border-base-300 {
-          border-color: #e2e8f0 !important;
-        }
-        #report-container .bg-base-200 {
-          background: #f8fafc !important;
-        }
-        #report-container .bg-base-200\\/50 {
-          background: #f8fafc !important;
-        }
-        #report-container .bg-base-200\\/30 {
-          background: #f8fafc !important;
-        }
-        #report-container .overflow-x-auto::-webkit-scrollbar {
-          display: none !important;
-        }
-        #report-container .overflow-x-auto {
-          -ms-overflow-style: none !important;
-          scrollbar-width: none !important;
-        }
-        @media print {
-          #report-container {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-        }
-      `;
-      document.head.appendChild(captureStyles);
-
-      // Use html-to-image with optimized settings
-      const canvas = await import('html-to-image');
-      const dataUrl = await canvas.toPng(reportElement, {
-        quality: 1,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff',
-        style: {
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-        }
-      });
-
-      // Clean up styles
-      document.head.removeChild(captureStyles);
-
-      // Create a download link
-      const link = document.createElement('a');
-      link.download = `${client.first_name}_${client.last_name}_report_${new Date().toISOString().split('T')[0]}.png`;
-      link.href = dataUrl;
-      link.click();
-
-      toast.success('Report captured successfully');
+      // Import mobile optimization utilities
+      const { captureReportWithMobileOptimization } = await import('@/utils/mobileImageCapture');
+      
+      // Generate filename
+      const filename = `${client.first_name}_${client.last_name}_report_${new Date().toISOString().split('T')[0]}.png`;
+      
+      // Use mobile-optimized capture
+      await captureReportWithMobileOptimization('report-container', filename);
+      
+      toast.success('Report downloaded successfully');
     } catch (error) {
       console.error('Error capturing report:', error);
       toast.error('Failed to capture report');
@@ -491,9 +377,9 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                     <h2 className="text-2xl font-bold">
                       Report for {client?.first_name} {client?.last_name}
                     </h2>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                       <button
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-primary btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
                         onClick={captureAndSendReport}
                         disabled={isCapturing}
                       >
@@ -501,22 +387,22 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                           <span className="loading loading-spinner loading-sm" />
                         ) : (
                           <>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                             </svg>
-                            Download Image
+                            <span className="ml-2">Download Image</span>
                           </>
                         )}
                       </button>
                       <button
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-primary btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
                         onClick={() => setIsSendModalOpen(true)}
                         disabled={isCapturing}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                         </svg>
-                        Send to Client
+                        <span className="ml-2">Send to Client</span>
                       </button>
                     </div>
                   </div>

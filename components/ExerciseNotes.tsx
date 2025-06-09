@@ -50,7 +50,7 @@ export function ExerciseNotes({ exerciseId, initialNotes = '', onSave }: Exercis
   return (
     <div className="flex items-start justify-between gap-3 min-w-[300px] group">
       {notes ? (
-        <p className="text-sm text-base-content/80 whitespace-pre-wrap leading-relaxed py-1">{notes}</p>
+        <p className="text-sm text-base-content whitespace-pre-wrap leading-relaxed py-1">{notes}</p>
       ) : (
         <p className="text-sm text-base-content/50 italic py-1">No notes</p>
       )}
