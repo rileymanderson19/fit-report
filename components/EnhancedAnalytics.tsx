@@ -72,14 +72,15 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
     };
 
     // Workout analysis - focus on workouts per week and missed workouts
-    const totalWeeks = dailyData.length / 7;
+    const totalWeeks = weeklyAverages.length; // Use actual number of complete weeks
     const workoutDays = dailyData.filter(day => day.workouts && day.workouts.length > 0).length;
     const totalWorkouts = dailyData.reduce((sum, day) => sum + (day.workouts?.length || 0), 0);
     const workoutsPerWeek = totalWorkouts / totalWeeks;
     
-    // Assume target of 4 workouts per week for missed calculation
-    const targetWorkoutsPerWeek = 4;
-    const expectedTotalWorkouts = totalWeeks * targetWorkoutsPerWeek;
+    // Calculate actual workout frequency and use that as the baseline
+    // If someone is consistently doing X workouts per week, that's their schedule
+    const actualWorkoutsPerWeek = totalWorkouts / totalWeeks;
+    const expectedTotalWorkouts = Math.round(actualWorkoutsPerWeek * totalWeeks);
     const missedWorkouts = Math.max(0, expectedTotalWorkouts - totalWorkouts);
     
     const workoutStats = {
