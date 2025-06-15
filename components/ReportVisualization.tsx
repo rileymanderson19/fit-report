@@ -82,6 +82,8 @@ interface ReportVisualizationProps {
   isScreenshotMode?: boolean;
   forceTemplate?: 'daily' | 'weekly' | 'enhanced';
   clientName?: string;
+  dateRangeStart?: string;
+  dateRangeEnd?: string;
 }
 
 interface WeeklyAverage {
@@ -102,7 +104,9 @@ export function ReportVisualization({
   onDeleteExercise,
   isScreenshotMode = false,
   forceTemplate,
-  clientName = "Client"
+  clientName = "Client",
+  dateRangeStart,
+  dateRangeEnd
 }: ReportVisualizationProps) {
   // Process all data into a single daily format
   const processedDailyData = useMemo(() => {
@@ -262,60 +266,57 @@ export function ReportVisualization({
   const weeklyAverages = useMemo(() => {
     if (processedDailyData.length === 0) return [];
 
+    // Use dateRangeStart as the starting point for weekly boundaries, fallback to first data point
+    const rangeStart = dateRangeStart 
+      ? new Date(dateRangeStart.split('T')[0])
+      : new Date(processedDailyData[0].date);
+
     const weeks: WeeklyAverage[] = [];
-    let currentWeekData: DailyData[] = [];
-    let currentWeekStart = new Date(processedDailyData[0].date);
+    let currentWeekStart = new Date(rangeStart);
+    let weekNumber = 1;
 
-    processedDailyData.forEach((dayData) => {
-      const currentDate = new Date(dayData.date);
-      const daysDiff = Math.floor((currentDate.getTime() - currentWeekStart.getTime()) / (1000 * 60 * 60 * 24));
+    // Generate weeks based on the date range, not data availability
+    const lastDataDate = new Date(processedDailyData[processedDailyData.length - 1].date);
+    
+    while (currentWeekStart <= lastDataDate && weekNumber <= 10) {
+      const currentWeekEnd = new Date(currentWeekStart);
+      currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
 
-      if (daysDiff >= 7) {
-        // Calculate averages for the completed week
-        if (currentWeekData.length > 0) {
-          weeks.push({
-            weekStart: currentWeekStart.toISOString().split('T')[0],
-            weekEnd: new Date(currentWeekData[currentWeekData.length - 1].date).toISOString().split('T')[0],
-            avgWeight: calculateAverage(currentWeekData, 'weight'),
-            avgSteps: calculateAverage(currentWeekData, 'steps'),
-            avgCalories: calculateAverage(currentWeekData, 'calories'),
-            avgProtein: calculateAverage(currentWeekData, 'protein'),
-            avgCarbs: calculateAverage(currentWeekData, 'carbs'),
-            avgFats: calculateAverage(currentWeekData, 'fats'),
-            avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
-          });
-        }
-        currentWeekData = [dayData];
-        currentWeekStart = currentDate;
-      } else {
-        currentWeekData.push(dayData);
-      }
-    });
-
-    // Add the last week if it has any data
-    if (currentWeekData.length > 0) {
-      weeks.push({
-        weekStart: currentWeekStart.toISOString().split('T')[0],
-        weekEnd: new Date(currentWeekData[currentWeekData.length - 1].date).toISOString().split('T')[0],
-        avgWeight: calculateAverage(currentWeekData, 'weight'),
-        avgSteps: calculateAverage(currentWeekData, 'steps'),
-        avgCalories: calculateAverage(currentWeekData, 'calories'),
-        avgProtein: calculateAverage(currentWeekData, 'protein'),
-        avgCarbs: calculateAverage(currentWeekData, 'carbs'),
-        avgFats: calculateAverage(currentWeekData, 'fats'),
-        avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
+      // Collect data for this week
+      const currentWeekData = processedDailyData.filter(dayData => {
+        const dataDate = new Date(dayData.date);
+        return dataDate >= currentWeekStart && dataDate <= currentWeekEnd;
       });
+
+      // Only add the week if it has any data or if it's within our expected range
+      if (currentWeekData.length > 0) {
+        weeks.push({
+          weekStart: currentWeekStart.toISOString().split('T')[0],
+          weekEnd: currentWeekEnd.toISOString().split('T')[0],
+          avgWeight: calculateAverage(currentWeekData, 'weight'),
+          avgSteps: calculateAverage(currentWeekData, 'steps'),
+          avgCalories: calculateAverage(currentWeekData, 'calories'),
+          avgProtein: calculateAverage(currentWeekData, 'protein'),
+          avgCarbs: calculateAverage(currentWeekData, 'carbs'),
+          avgFats: calculateAverage(currentWeekData, 'fats'),
+          avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
+        });
+      }
+
+      // Move to next week
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      weekNumber++;
     }
 
     return weeks;
-  }, [processedDailyData]);
+  }, [processedDailyData, dateRangeStart]);
 
 
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    // Add one day to account for timezone offset
-    date.setDate(date.getDate() + 1);
+    // Parse the date string in local timezone to match data processing
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric'
@@ -477,53 +478,50 @@ export function ReportVisualization({
   const analyticsWeeklyAverages = useMemo(() => {
     if (analyticsData.length === 0) return [];
 
+    // Use dateRangeStart as the starting point for weekly boundaries, fallback to first data point
+    const rangeStart = dateRangeStart 
+      ? new Date(dateRangeStart.split('T')[0])
+      : new Date(analyticsData[0].date);
+
     const weeks: WeeklyAverage[] = [];
-    let currentWeekData: DailyData[] = [];
-    let currentWeekStart = new Date(analyticsData[0].date);
+    let currentWeekStart = new Date(rangeStart);
+    let weekNumber = 1;
+    
+    // Generate weeks based on the date range, not data availability
+    const lastDataDate = new Date(analyticsData[analyticsData.length - 1].date);
+    
+    while (currentWeekStart <= lastDataDate && weekNumber <= 10) {
+      const currentWeekEnd = new Date(currentWeekStart);
+      currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
 
-    analyticsData.forEach((dayData) => {
-      const currentDate = new Date(dayData.date);
-      const daysDiff = Math.floor((currentDate.getTime() - currentWeekStart.getTime()) / (1000 * 60 * 60 * 24));
-
-      if (daysDiff >= 7) {
-        // Calculate averages for the completed week
-        if (currentWeekData.length > 0) {
-          weeks.push({
-            weekStart: currentWeekStart.toISOString().split('T')[0],
-            weekEnd: new Date(currentWeekData[currentWeekData.length - 1].date).toISOString().split('T')[0],
-            avgWeight: calculateAverage(currentWeekData, 'weight'),
-            avgSteps: calculateAverage(currentWeekData, 'steps'),
-            avgCalories: calculateAverage(currentWeekData, 'calories'),
-            avgProtein: calculateAverage(currentWeekData, 'protein'),
-            avgCarbs: calculateAverage(currentWeekData, 'carbs'),
-            avgFats: calculateAverage(currentWeekData, 'fats'),
-            avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
-          });
-        }
-        currentWeekData = [dayData];
-        currentWeekStart = currentDate;
-      } else {
-        currentWeekData.push(dayData);
-      }
-    });
-
-    // Add the last week if it has any data
-    if (currentWeekData.length > 0) {
-      weeks.push({
-        weekStart: currentWeekStart.toISOString().split('T')[0],
-        weekEnd: new Date(currentWeekData[currentWeekData.length - 1].date).toISOString().split('T')[0],
-        avgWeight: calculateAverage(currentWeekData, 'weight'),
-        avgSteps: calculateAverage(currentWeekData, 'steps'),
-        avgCalories: calculateAverage(currentWeekData, 'calories'),
-        avgProtein: calculateAverage(currentWeekData, 'protein'),
-        avgCarbs: calculateAverage(currentWeekData, 'carbs'),
-        avgFats: calculateAverage(currentWeekData, 'fats'),
-        avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
+      // Collect data for this week
+      const currentWeekData = analyticsData.filter(dayData => {
+        const dataDate = new Date(dayData.date);
+        return dataDate >= currentWeekStart && dataDate <= currentWeekEnd;
       });
+
+      // Only add the week if it has any data
+      if (currentWeekData.length > 0) {
+        weeks.push({
+          weekStart: currentWeekStart.toISOString().split('T')[0],
+          weekEnd: currentWeekEnd.toISOString().split('T')[0],
+          avgWeight: calculateAverage(currentWeekData, 'weight'),
+          avgSteps: calculateAverage(currentWeekData, 'steps'),
+          avgCalories: calculateAverage(currentWeekData, 'calories'),
+          avgProtein: calculateAverage(currentWeekData, 'protein'),
+          avgCarbs: calculateAverage(currentWeekData, 'carbs'),
+          avgFats: calculateAverage(currentWeekData, 'fats'),
+          avgSleepHours: calculateAverage(currentWeekData, 'sleepHours'),
+        });
+      }
+
+      // Move to next week
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      weekNumber++;
     }
 
     return weeks;
-  }, [analyticsData]);
+  }, [analyticsData, dateRangeStart]);
 
   if (processedDailyData.length === 0) {
     return (

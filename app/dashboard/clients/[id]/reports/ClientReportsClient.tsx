@@ -443,6 +443,8 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                       onDeleteExercise={handleDeleteExercise}
                       isScreenshotMode={isCapturing}
                       clientName={`${client?.first_name} ${client?.last_name}`}
+                      dateRangeStart={selectedReport.date_range_start}
+                      dateRangeEnd={selectedReport.date_range_end}
                     />
                   </div>
                 </div>

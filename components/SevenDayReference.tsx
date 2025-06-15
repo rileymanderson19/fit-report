@@ -210,9 +210,8 @@ export function SevenDayReference({
       for (let i = 6; i >= 0; i--) {
         const currentDate = new Date(endDate);
         currentDate.setDate(endDate.getDate() - i);
-        const dateStr = currentDate.getFullYear() + '-' + 
-          String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + 
-          String(currentDate.getDate()).padStart(2, '0');
+        // Use consistent date string formatting to match data processing
+        const dateStr = currentDate.toISOString().split('T')[0];
         
         // Use existing data if available, otherwise create empty daily data
         const existingData = dailyData.get(dateStr);
