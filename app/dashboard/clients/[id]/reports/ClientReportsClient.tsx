@@ -5,6 +5,7 @@ import { createClient } from '@/libs/supabase/client';
 import { ReportVisualization } from '@/components/ReportVisualization';
 import ClientSearchBar from '@/components/ClientSearchBar';
 import SendReportModal from '@/components/SendReportModal';
+
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -42,6 +43,10 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
   const [isCapturing, setIsCapturing] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [linkComment, setLinkComment] = useState('');
 
   useEffect(() => {
     const fetchClientAndReports = async () => {
@@ -267,6 +272,82 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
     (document.getElementById('delete-all-modal') as HTMLDialogElement)?.close();
   };
 
+  const handleGenerateLink = async () => {
+    if (!selectedReport || !client) {
+      toast.error('Please select a report first');
+      return;
+    }
+
+    setIsGeneratingLink(true);
+    setIsLinkModalOpen(true);
+    
+    try {
+      // Capture the report image using the same method as Download Image
+      let imageData: string | undefined;
+      
+      try {
+        // Import mobile optimization utilities
+        const { captureReportImageData } = await import('@/utils/mobileImageCapture');
+        
+        // Use mobile-optimized capture to get image data only
+        imageData = await captureReportImageData('report-container');
+      } catch (captureError) {
+        console.warn('Failed to capture report image, will use server-side fallback:', captureError);
+        // Continue without image data - server will use fallback
+      }
+
+      const response = await fetch('/api/reports/generate-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientId: client.id,
+          reportId: selectedReport.id,
+          imageData: imageData, // Include the captured image data
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate link');
+      }
+
+      setGeneratedLink(data.linkData.url);
+      
+      if (data.linkData.isExisting) {
+        toast.success('Existing link retrieved!');
+      } else {
+        toast.success('New report link generated!');
+      }
+
+    } catch (error) {
+      console.error('Error generating link:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate link');
+      setIsLinkModalOpen(false);
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!generatedLink) return;
+
+    try {
+      let textToCopy = generatedLink;
+      if (linkComment.trim()) {
+        textToCopy = `${linkComment.trim()}\n\n${generatedLink}`;
+      }
+      
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success('Link copied to clipboard!');
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      toast.error('Failed to copy link');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -396,6 +477,22 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                       </button>
                       <button
                         className="btn btn-primary btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
+                        onClick={handleGenerateLink}
+                        disabled={isCapturing || isGeneratingLink}
+                      >
+                        {isGeneratingLink ? (
+                          <span className="loading loading-spinner loading-sm" />
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                            </svg>
+                            <span className="ml-2">Generate Link</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        className="btn btn-primary btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
                         onClick={() => setIsSendModalOpen(true)}
                         disabled={isCapturing}
                       >
@@ -505,6 +602,133 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
           setIsSendModalOpen(false);
         }}
       />
+
+      {/* Generate Link Modal */}
+      <dialog id="link-modal" className={`modal ${isLinkModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box max-w-lg">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-lg">Shareable Report Link</h3>
+            <button
+              className="btn btn-sm btn-circle"
+              onClick={() => {
+                setIsLinkModalOpen(false);
+                setGeneratedLink(null);
+                setLinkComment('');
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {client && (
+            <div className="mb-4">
+              <p className="text-sm text-base-content/70">
+                Report for: <span className="font-medium">{client.first_name} {client.last_name}</span>
+              </p>
+            </div>
+          )}
+
+          {isGeneratingLink && (
+            <div className="flex flex-col items-center py-8">
+              <span className="loading loading-spinner loading-lg mb-4"></span>
+              <p className="text-base-content/70">Generating shareable link...</p>
+            </div>
+          )}
+
+          {generatedLink && !isGeneratingLink && (
+            <div className="space-y-4">
+              <div className="alert alert-success">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Report link generated successfully!</span>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Comment (Optional)</span>
+                </label>
+                <textarea
+                  className="textarea textarea-bordered"
+                  placeholder="Add a comment to include with the link..."
+                  value={linkComment}
+                  onChange={(e) => setLinkComment(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Shareable URL</span>
+                </label>
+                <div className="join">
+                  <input
+                    type="text"
+                    value={generatedLink}
+                    className="input input-bordered join-item flex-1 text-sm"
+                    readOnly
+                  />
+                  <button
+                    className="btn btn-primary join-item"
+                    onClick={handleCopyLink}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-base-200 p-4 rounded-lg">
+                <div className="flex items-center gap-2 text-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-base-content/70">
+                    Link expires in 7 days
+                  </span>
+                </div>
+                <p className="text-xs text-base-content/60 mt-2">
+                  Anyone with this link can view the report.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="modal-action">
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                setIsLinkModalOpen(false);
+                setGeneratedLink(null);
+                setLinkComment('');
+              }}
+            >
+              Close
+            </button>
+            {generatedLink && (
+              <button
+                className="btn btn-primary"
+                onClick={handleCopyLink}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                {linkComment.trim() ? 'Copy Comment & Link' : 'Copy Link'}
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => {
+            setIsLinkModalOpen(false);
+            setGeneratedLink(null);
+            setLinkComment('');
+          }}>close</button>
+        </form>
+      </dialog>
     </div>
   );
 } 
