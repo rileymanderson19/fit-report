@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import DraggableModal from './DraggableModal';
 
 interface Report {
   id: string;
@@ -42,6 +43,7 @@ export default function GenerateLinkModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [linkData, setLinkData] = useState<LinkData | null>(null);
   const [isCopying, setIsCopying] = useState(false);
+  const [comment, setComment] = useState('');
 
   // Reset state when modal closes
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function GenerateLinkModal({
       setLinkData(null);
       setIsGenerating(false);
       setIsCopying(false);
+      setComment('');
     }
   }, [isOpen]);
 
@@ -107,7 +110,12 @@ export default function GenerateLinkModal({
 
     setIsCopying(true);
     try {
-      await navigator.clipboard.writeText(linkData.url);
+      let textToCopy = linkData.url;
+      if (comment.trim()) {
+        textToCopy = `${comment.trim()}\n\n${linkData.url}`;
+      }
+      
+      await navigator.clipboard.writeText(textToCopy);
       toast.success('Link copied to clipboard!');
     } catch (error) {
       console.error('Failed to copy link:', error);
@@ -131,127 +139,128 @@ export default function GenerateLinkModal({
     });
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg">Generate Shareable Link</h3>
-          <button
-            className="btn btn-sm btn-circle"
-            onClick={handleClose}
-            disabled={isGenerating}
-          >
-            ✕
-          </button>
+    <DraggableModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Generate Shareable Link"
+      storageKey="generate-link-modal"
+      initialPosition={{ x: typeof window !== 'undefined' ? Math.max(100, window.innerWidth - 500) : 100, y: 100 }}
+      width="w-[480px]"
+    >
+      {client && (
+        <div className="mb-4">
+          <p className="text-sm text-base-content/70">
+            Report for: <span className="font-medium">{client.first_name} {client.last_name}</span>
+          </p>
         </div>
+      )}
 
-        {client && (
-          <div className="mb-4">
-            <p className="text-sm text-base-content/70">
-              Report for: <span className="font-medium">{client.first_name} {client.last_name}</span>
-            </p>
+      {isGenerating && (
+        <div className="flex flex-col items-center py-8">
+          <span className="loading loading-spinner loading-lg mb-4"></span>
+          <p className="text-base-content/70">Generating shareable link...</p>
+        </div>
+      )}
+
+      {linkData && !isGenerating && (
+        <div className="space-y-4">
+          <div className="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>
+              {linkData.isExisting 
+                ? 'Existing link retrieved successfully!' 
+                : 'New shareable link generated!'
+              }
+            </span>
           </div>
-        )}
 
-        {isGenerating && (
-          <div className="flex flex-col items-center py-8">
-            <span className="loading loading-spinner loading-lg mb-4"></span>
-            <p className="text-base-content/70">Generating shareable link...</p>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text font-medium">Comment (Optional)</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered"
+              placeholder="Add a comment to include with the link..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={3}
+            />
           </div>
-        )}
 
-        {linkData && !isGenerating && (
-          <div className="space-y-4">
-            <div className="alert alert-success">
-              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text font-medium">Shareable URL</span>
+            </label>
+            <div className="join">
+              <input
+                type="text"
+                value={linkData.url}
+                className="input input-bordered join-item flex-1 text-sm"
+                readOnly
+              />
+              <button
+                className={`btn btn-primary join-item ${isCopying ? 'loading' : ''}`}
+                onClick={handleCopyLink}
+                disabled={isCopying}
+              >
+                {isCopying ? '' : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-base-200 p-4 rounded-lg">
+            <div className="flex items-center gap-2 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>
-                {linkData.isExisting 
-                  ? 'Existing link retrieved successfully!' 
-                  : 'New shareable link generated!'
-                }
+              <span className="text-base-content/70">
+                Expires: <span className="font-medium">{formatExpiryDate(linkData.expiresAt)}</span>
               </span>
             </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Shareable URL</span>
-              </label>
-              <div className="join">
-                <input
-                  type="text"
-                  value={linkData.url}
-                  className="input input-bordered join-item flex-1 text-sm"
-                  readOnly
-                />
-                <button
-                  className={`btn btn-primary join-item ${isCopying ? 'loading' : ''}`}
-                  onClick={handleCopyLink}
-                  disabled={isCopying}
-                >
-                  {isCopying ? '' : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Copy
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-base-200 p-4 rounded-lg">
-              <div className="flex items-center gap-2 text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-base-content/70">
-                  Expires: <span className="font-medium">{formatExpiryDate(linkData.expiresAt)}</span>
-                </span>
-              </div>
-              <p className="text-xs text-base-content/60 mt-2">
-                This link will be valid for 7 days from generation. Anyone with this link can view the report.
-              </p>
-            </div>
+            <p className="text-xs text-base-content/60 mt-2">
+              This link will be valid for 7 days from generation. Anyone with this link can view the report.
+            </p>
           </div>
-        )}
-
-        <div className="modal-action">
-          <button
-            className="btn btn-ghost"
-            onClick={handleClose}
-            disabled={isGenerating}
-          >
-            Close
-          </button>
-          {linkData && (
-            <button
-              className="btn btn-primary"
-              onClick={handleCopyLink}
-              disabled={isCopying}
-            >
-              {isCopying ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy Link
-                </>
-              )}
-            </button>
-          )}
         </div>
+      )}
+
+      <div className="flex justify-end gap-2 mt-6">
+        <button
+          className="btn btn-ghost"
+          onClick={handleClose}
+          disabled={isGenerating}
+        >
+          Close
+        </button>
+        {linkData && (
+          <button
+            className="btn btn-primary"
+            onClick={handleCopyLink}
+            disabled={isCopying}
+          >
+            {isCopying ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                {comment.trim() ? 'Copy Comment & Link' : 'Copy Link'}
+              </>
+            )}
+          </button>
+        )}
       </div>
-      
-      <form method="dialog" className="modal-backdrop">
-        <button onClick={handleClose}>close</button>
-      </form>
-    </div>
+    </DraggableModal>
   );
 } 
