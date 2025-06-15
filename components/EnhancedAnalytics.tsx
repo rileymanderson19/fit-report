@@ -311,15 +311,6 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
       {/* Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">{clientName}</h2>
-        <p className="text-base-content/70">
-          {(() => {
-            if (dailyData.length === 0) return 'No data available';
-            const sortedDates = dailyData.map(d => d.date).sort();
-            const startDate = formatDate(sortedDates[0]);
-            const endDate = formatDate(sortedDates[sortedDates.length - 1]);
-            return sortedDates.length === 1 ? startDate : `${startDate} - ${endDate}`;
-          })()}
-        </p>
       </div>
 
       {/* Consistency Dashboard */}

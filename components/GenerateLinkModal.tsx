@@ -70,6 +70,20 @@ export default function GenerateLinkModal({
 
     setIsGenerating(true);
     try {
+      // Capture the report image using the same method as Send Report
+      let imageData: string | undefined;
+      
+      try {
+        // Import mobile optimization utilities
+        const { captureReportImageData } = await import('@/utils/mobileImageCapture');
+        
+        // Use mobile-optimized capture to get image data
+        imageData = await captureReportImageData('report-container');
+      } catch (captureError) {
+        console.warn('Failed to capture report image, will use server-side fallback:', captureError);
+        // Continue without image data - server will use fallback
+      }
+
       const response = await fetch('/api/reports/generate-link', {
         method: 'POST',
         headers: {
@@ -78,6 +92,7 @@ export default function GenerateLinkModal({
         body: JSON.stringify({
           clientId: client.id,
           reportId: report.id,
+          imageData, // Include the captured image data
         }),
       });
 

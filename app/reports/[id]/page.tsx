@@ -134,9 +134,6 @@ export default function PublicReportPage() {
             <p className="text-lg text-base-content/70">
               {client.first_name} {client.last_name}
             </p>
-            <p className="text-sm text-base-content/60">
-              {new Date(report.date_range_start).toLocaleDateString()} - {new Date(report.date_range_end).toLocaleDateString()}
-            </p>
           </div>
 
           {/* Report Content */}

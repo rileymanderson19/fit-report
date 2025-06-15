@@ -352,9 +352,6 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="font-semibold text-base">
-                      {new Date(report.date_range_start).toLocaleDateString()} - {new Date(report.date_range_end).toLocaleDateString()}
-                    </div>
                     <div className="text-sm text-base-content/60 mt-1">
                       Created: {new Date(report.created_at).toLocaleDateString()}
                     </div>
