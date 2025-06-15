@@ -460,9 +460,7 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
           <div className="space-y-4">
             {weeklyAverages.map((week, idx) => {
               const weekStart = new Date(week.weekStart);
-              weekStart.setDate(weekStart.getDate() + 1);
               const weekEnd = new Date(week.weekEnd);
-              weekEnd.setDate(weekEnd.getDate() + 1);
               const workoutsThisWeek = dailyData
                 .filter(day => {
                   const date = new Date(day.date);
@@ -478,7 +476,7 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
                   <div className="card-body p-4">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-semibold text-lg">
-                        {`${formatDate(weekStart.toISOString().split('T')[0])} - ${formatDate(weekEnd.toISOString().split('T')[0])}`}
+                        {`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}
                       </h4>
                     </div>
                     <div className={`grid gap-4 ${
