@@ -208,8 +208,12 @@ export function SevenDayReference({
       
       // Generate 7 consecutive days ending on the reporting period end date
       for (let i = 6; i >= 0; i--) {
-        const currentDate = new Date(endDate);
-        currentDate.setDate(endDate.getDate() - i);
+        // Create each date consistently in local timezone
+        const currentYear = endDate.getFullYear();
+        const currentMonth = endDate.getMonth();
+        const currentDay = endDate.getDate() - i;
+        const currentDate = new Date(currentYear, currentMonth, currentDay);
+        
         // Use consistent date string formatting to match data processing
         const dateStr = currentDate.toISOString().split('T')[0];
         

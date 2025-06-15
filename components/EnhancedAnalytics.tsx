@@ -274,7 +274,9 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
   }, [dailyData, dataAvailability]);
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // Parse the date string in local timezone to match data processing
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
@@ -459,11 +461,16 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
           <h3 className="card-title text-xl mb-6">Weekly Progress Summary</h3>
           <div className="space-y-4">
             {weeklyAverages.map((week, idx) => {
-              const weekStart = new Date(week.weekStart);
-              const weekEnd = new Date(week.weekEnd);
+              // Parse dates consistently in local timezone
+              const [startYear, startMonth, startDay] = week.weekStart.split('-').map(Number);
+              const weekStart = new Date(startYear, startMonth - 1, startDay);
+              const [endYear, endMonth, endDay] = week.weekEnd.split('-').map(Number);
+              const weekEnd = new Date(endYear, endMonth - 1, endDay);
+              
               const workoutsThisWeek = dailyData
                 .filter(day => {
-                  const date = new Date(day.date);
+                  const [dayYear, dayMonth, dayDay] = day.date.split('-').map(Number);
+                  const date = new Date(dayYear, dayMonth - 1, dayDay);
                   return date >= weekStart && date <= weekEnd && day.workouts && day.workouts.length > 0;
                 })
                 .reduce((total, day) => total + (day.workouts?.length || 0), 0);
