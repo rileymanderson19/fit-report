@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { ReportVisualization } from '@/components/ReportVisualization';
+import { SevenDayReference } from '@/components/SevenDayReference';
 import ClientSearchBar from '@/components/ClientSearchBar';
 import SendReportModal from '@/components/SendReportModal';
 
@@ -505,6 +506,14 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                   </div>
                   
                   <div id="report-container" className={`space-y-8 ${isCapturing ? 'p-8 rounded-lg' : ''}`}>
+                    {/* 7-Day Reference - Only shown when not capturing */}
+                    {!isCapturing && (
+                      <SevenDayReference
+                        data={selectedReport.report_data}
+                        clientName={`${client?.first_name} ${client?.last_name}`}
+                      />
+                    )}
+                    
                     <ReportVisualization
                       data={selectedReport.report_data}
                       onDeleteWorkout={handleDeleteWorkout}
