@@ -73,9 +73,16 @@ interface SevenDayReferenceProps {
     };
   };
   clientName?: string;
+  dateRangeStart?: string;
+  dateRangeEnd?: string;
 }
 
-export function SevenDayReference({ data, clientName = "Client" }: SevenDayReferenceProps) {
+export function SevenDayReference({ 
+  data, 
+  clientName = "Client",
+  dateRangeStart,
+  dateRangeEnd
+}: SevenDayReferenceProps) {
   // Process all data into daily format
   const processedDailyData = useMemo(() => {
     const dailyData = new Map<string, DailyData>();
@@ -192,14 +199,53 @@ export function SevenDayReference({ data, clientName = "Client" }: SevenDayRefer
       }
     });
 
-    // Convert to array and sort by date (ascending for calendar view)
-    return Array.from(dailyData.values())
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(-7); // Get last 7 days
-  }, [data]);
+    // Generate the last 7 days of the reporting period
+    if (dateRangeEnd) {
+      // Parse the end date in local timezone to avoid timezone issues
+      const [endYear, endMonth, endDay] = dateRangeEnd.split('T')[0].split('-').map(Number);
+      const endDate = new Date(endYear, endMonth - 1, endDay);
+      const last7Days: DailyData[] = [];
+      
+      // Generate 7 consecutive days ending on the reporting period end date
+      for (let i = 6; i >= 0; i--) {
+        const currentDate = new Date(endDate);
+        currentDate.setDate(endDate.getDate() - i);
+        const dateStr = currentDate.getFullYear() + '-' + 
+          String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + 
+          String(currentDate.getDate()).padStart(2, '0');
+        
+        // Use existing data if available, otherwise create empty daily data
+        const existingData = dailyData.get(dateStr);
+        if (existingData) {
+          last7Days.push(existingData);
+        } else {
+          last7Days.push({
+            date: dateStr,
+            weight: 0,
+            steps: 0,
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fats: 0,
+            sleepHours: 0,
+            workouts: []
+          });
+        }
+      }
+      
+      return last7Days;
+    } else {
+      // Fallback to original behavior if no date range provided
+      return Array.from(dailyData.values())
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(-7); // Get last 7 days
+    }
+  }, [data, dateRangeEnd]);
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // Parse the date string and ensure we're working in local timezone
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const dayName = dayNames[date.getDay()];
     const dayNum = date.getDate();
@@ -238,11 +284,16 @@ export function SevenDayReference({ data, clientName = "Client" }: SevenDayRefer
         {processedDailyData.map((day, index) => {
           const { dayName, dayNum } = formatDate(day.date);
           const stepsTarget = 10000;
+          const hasAnyData = day.weight > 0 || day.steps > 0 || day.calories > 0 || day.sleepHours > 0 || (day.workouts && day.workouts.length > 0);
           
           return (
             <div 
               key={day.date} 
-                             className="bg-base-100 rounded-lg p-2 md:p-4 border border-base-300 hover:shadow-md transition-shadow"
+              className={`bg-base-100 rounded-lg p-2 md:p-4 border transition-shadow ${
+                hasAnyData 
+                  ? 'border-base-300 hover:shadow-md' 
+                  : 'border-base-200 bg-base-50 opacity-75'
+              }`}
             >
               {/* Date Header */}
               <div className="text-center mb-3">
@@ -263,19 +314,27 @@ export function SevenDayReference({ data, clientName = "Client" }: SevenDayRefer
                 <div className="flex items-center justify-between mb-1">
                   <div className="text-xs text-base-content/60">Steps</div>
                   <div className={`text-xs font-medium ${getProgressColor(day.steps, stepsTarget)}`}>
-                    {day.steps.toLocaleString()}
+                    {day.steps > 0 ? day.steps.toLocaleString() : '-'}
                   </div>
                 </div>
                 <div className="w-full bg-base-200 rounded-full h-1.5">
                   <div 
                     className={`h-1.5 rounded-full transition-all ${
                       day.steps >= stepsTarget * 0.9 ? 'bg-success' : 
-                      day.steps >= stepsTarget * 0.7 ? 'bg-warning' : 'bg-error'
+                      day.steps >= stepsTarget * 0.7 ? 'bg-warning' : 
+                      day.steps > 0 ? 'bg-error' : 'bg-base-300'
                     }`}
                     style={{ width: `${Math.min((day.steps / stepsTarget) * 100, 100)}%` }}
                   ></div>
                 </div>
               </div>
+
+              {/* No data indicator for empty days */}
+              {!hasAnyData && (
+                <div className="text-center py-2">
+                  <div className="text-xs text-base-content/40">No data</div>
+                </div>
+              )}
 
               
 
@@ -330,7 +389,7 @@ export function SevenDayReference({ data, clientName = "Client" }: SevenDayRefer
 
       {processedDailyData.length === 0 && (
         <div className="text-center py-8 text-base-content/60">
-          No data available for the last 7 days
+          No data available for the 7-day reference period
         </div>
       )}
     </div>
