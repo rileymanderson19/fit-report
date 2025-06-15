@@ -505,15 +505,15 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                     </div>
                   </div>
                   
+                  {/* 7-Day Reference - Reference tool only, never captured */}
+                  {!isCapturing && (
+                    <SevenDayReference
+                      data={selectedReport.report_data}
+                      clientName={`${client?.first_name} ${client?.last_name}`}
+                    />
+                  )}
+                  
                   <div id="report-container" className={`space-y-8 ${isCapturing ? 'p-8 rounded-lg' : ''}`}>
-                    {/* 7-Day Reference - Only shown when not capturing */}
-                    {!isCapturing && (
-                      <SevenDayReference
-                        data={selectedReport.report_data}
-                        clientName={`${client?.first_name} ${client?.last_name}`}
-                      />
-                    )}
-                    
                     <ReportVisualization
                       data={selectedReport.report_data}
                       onDeleteWorkout={handleDeleteWorkout}
