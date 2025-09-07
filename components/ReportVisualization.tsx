@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ExerciseNotes } from './ExerciseNotes';
 import { EnhancedAnalytics } from './EnhancedAnalytics';
 
@@ -108,6 +108,28 @@ export function ReportVisualization({
   dateRangeStart,
   dateRangeEnd
 }: ReportVisualizationProps) {
+  // Weight unit toggle state
+  const [useMetric, setUseMetric] = useState(false);
+  
+  // Weight conversion utilities
+  const convertWeight = (weightLbs: number): number => {
+    return useMetric ? weightLbs * 0.453592 : weightLbs; // Convert lbs to kg if metric
+  };
+  
+  const formatWeight = (weightLbs: number): string => {
+    const convertedWeight = convertWeight(weightLbs);
+    if (useMetric) {
+      return Math.round(convertedWeight).toString();
+    } else {
+      // For lbs, show whole numbers without decimals, otherwise show 1 decimal
+      return convertedWeight % 1 === 0 ? convertedWeight.toString() : formatNumber(convertedWeight, 1);
+    }
+  };
+  
+  const getWeightUnit = (): string => {
+    return useMetric ? 'kg' : 'lbs';
+  };
+
   // Process all data into a single daily format
   const processedDailyData = useMemo(() => {
     const dailyData = new Map<string, DailyData>();
@@ -553,6 +575,25 @@ export function ReportVisualization({
         />
       )}
       
+      {/* Weight Unit Toggle */}
+      {!isScreenshotMode && (
+        <div className="flex justify-end">
+          <div className="form-control">
+            <label className="label cursor-pointer gap-3">
+              <span className="label-text font-medium">Weight Unit:</span>
+              <span className="label-text">{useMetric ? 'kg' : 'lbs'}</span>
+              <input 
+                type="checkbox" 
+                className="toggle toggle-primary" 
+                checked={useMetric}
+                onChange={(e) => setUseMetric(e.target.checked)}
+              />
+              <span className="label-text">{useMetric ? 'lbs' : 'kg'}</span>
+            </label>
+          </div>
+        </div>
+      )}
+      
       {shouldUseDailyTemplate ? (
         // Single Week View
         <div className="space-y-6">
@@ -563,7 +604,7 @@ export function ReportVisualization({
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Weight (lbs)</th>
+                  <th>Weight ({getWeightUnit()})</th>
                   <th>Steps</th>
                   <th>Calories</th>
                   <th>Protein (g)</th>
@@ -576,7 +617,7 @@ export function ReportVisualization({
                 {processedDailyData.map((day) => (
                   <tr key={day.date}>
                     <td>{formatDate(day.date)}</td>
-                    <td>{formatNumber(day.weight)}</td>
+                    <td>{formatWeight(day.weight)}</td>
                     <td>{formatNumber(day.steps, 0)}</td>
                     <td>{formatNumber(day.calories, 0)}</td>
                     <td>{formatNumber(day.protein)}</td>
@@ -660,8 +701,8 @@ export function ReportVisualization({
                                           <div className="flex flex-col items-end gap-1.5">
                                           {exercise.stats?.map((stat, groupIdx) => (
                                               <div key={groupIdx} className="font-medium whitespace-nowrap">
-                                                {stat.reps} × {stat.weight}
-                                                <span className="text-sm ml-1 text-base-content/80">lbs</span>
+                                                {stat.reps} × {stat.weight ? formatWeight(stat.weight) : stat.weight}
+                                                <span className="text-sm ml-1 text-base-content/80">{getWeightUnit()}</span>
                                               </div>
                                           ))}
                                           </div>
@@ -801,8 +842,8 @@ export function ReportVisualization({
                                             <div className="flex flex-col items-end gap-1.5">
                                               {matchingExercise?.stats?.map((stat, statIdx) => (
                                                 <div key={statIdx} className="font-medium whitespace-nowrap">
-                                                  {stat.reps || ''}{stat.weight ? ` × ${stat.weight}` : ''}
-                                                  {stat.weight ? <span className="text-sm ml-1 text-base-content/80">lbs</span> : ''}
+                                                  {stat.reps || ''}{stat.weight ? ` × ${formatWeight(stat.weight)}` : ''}
+                                                  {stat.weight ? <span className="text-sm ml-1 text-base-content/80">{getWeightUnit()}</span> : ''}
                                                   {stat.time ? <span className="text-sm ml-1 text-base-content/80">{stat.time}s</span> : ''}
                                                   {stat.distance ? <span className="text-sm ml-1 text-base-content/80">{stat.distance}mi</span> : ''}
                                                 </div>
