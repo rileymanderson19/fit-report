@@ -142,8 +142,10 @@ export default function PublicReportPage() {
               data={report.report_data}
               onDeleteWorkout={() => {}} // No delete functionality in public view
               onDeleteExercise={() => {}} // No delete functionality in public view
-              isScreenshotMode={false}
+              isScreenshotMode={true}
               clientName={`${client.first_name} ${client.last_name}`}
+              dateRangeStart={report.date_range_start}
+              dateRangeEnd={report.date_range_end}
             />
           </div>
 
