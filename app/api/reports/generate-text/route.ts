@@ -116,8 +116,8 @@ export async function POST(req: NextRequest) {
           }
         }
         
-        // Fetch all data in parallel
-        const [workoutDataRes, bodyStatsRes, healthDataRes, nutritionRes, sleepRes] = await Promise.all([
+        // Fetch all data in parallel (including goals)
+        const [workoutDataRes, bodyStatsRes, healthDataRes, nutritionRes, sleepRes, goalsRes] = await Promise.all([
           fetch(`${origin}/api/trainerize/workouts`, {
             method: 'POST',
             headers,
@@ -167,14 +167,22 @@ export async function POST(req: NextRequest) {
               endDate,
             }),
           }),
+          fetch(`${origin}/api/trainerize/goals`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              userID: clientData.trainerize_id,
+            }),
+          }),
         ]);
 
-        const [workoutData, bodyStatsData, healthData, nutritionData, sleepData] = await Promise.all([
+        const [workoutData, bodyStatsData, healthData, nutritionData, sleepData, goalsData] = await Promise.all([
           workoutDataRes.json(),
           bodyStatsRes.json(),
           healthDataRes.json(),
           nutritionRes.json(),
           sleepRes.json(),
+          goalsRes.json().catch(() => ({ goals: [] })), // Goals are optional, don't fail if missing
         ]);
 
         // Fetch trainer's excluded workout names
@@ -246,6 +254,7 @@ export async function POST(req: NextRequest) {
           nutritionData,
           sleepData,
           workoutData,
+          goalsData: goalsData,
           template: template
         };
       } catch (fetchError) {

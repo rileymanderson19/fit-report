@@ -82,6 +82,23 @@ interface ReportData {
   workoutData?: {
     workouts?: Workout[];
   };
+  goalsData?: {
+    goals?: Array<{
+      id?: number;
+      name?: string;
+      type?: string;
+      value?: number;
+      unit?: string;
+      targetCalories?: number;
+      targetProtein?: number;
+      targetCarbs?: number;
+      targetFat?: number;
+      calories?: number;
+      protein?: number;
+      carbs?: number;
+      fat?: number;
+    }>;
+  };
   template?: 'daily' | 'weekly' | 'enhanced';
 }
 
@@ -297,6 +314,53 @@ function getWeightUnit(useMetric: boolean): string {
   return useMetric ? 'kg' : 'lbs';
 }
 
+// Extract nutritional goals from goals data
+function extractNutritionalGoals(goalsData?: any): {
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fats?: number;
+} {
+  const goals: { calories?: number; protein?: number; carbs?: number; fats?: number } = {};
+  
+  if (!goalsData?.goals || !Array.isArray(goalsData.goals)) {
+    return goals;
+  }
+  
+  // Look for nutritional goals in the goals array
+  goalsData.goals.forEach((goal: any) => {
+    // Check for direct goal values
+    if (goal.targetCalories || goal.calories) {
+      goals.calories = goal.targetCalories || goal.calories;
+    }
+    if (goal.targetProtein || goal.protein) {
+      goals.protein = goal.targetProtein || goal.protein;
+    }
+    if (goal.targetCarbs || goal.carbs) {
+      goals.carbs = goal.targetCarbs || goal.carbs;
+    }
+    if (goal.targetFat || goal.fat) {
+      goals.fats = goal.targetFat || goal.fat;
+    }
+    
+    // Also check by type/name if available
+    if (goal.type || goal.name) {
+      const type = (goal.type || goal.name || '').toLowerCase();
+      if (type.includes('calorie') && goal.value) {
+        goals.calories = goal.value;
+      } else if (type.includes('protein') && goal.value) {
+        goals.protein = goal.value;
+      } else if ((type.includes('carb') || type.includes('carbohydrate')) && goal.value) {
+        goals.carbs = goal.value;
+      } else if (type.includes('fat') && goal.value) {
+        goals.fats = goal.value;
+      }
+    }
+  });
+  
+  return goals;
+}
+
 // Check if this is a single week or multiple weeks
 function getTimeSpanInfo(dailyData: DailyData[]): { isSingleWeek: boolean; numberOfWeeks: number } {
   if (dailyData.length === 0) return { isSingleWeek: true, numberOfWeeks: 0 };
@@ -317,7 +381,8 @@ function formatDailyReport(
   clientName: string,
   dateRangeStart?: string,
   dateRangeEnd?: string,
-  useMetric: boolean = false
+  useMetric: boolean = false,
+  goalsData?: any
 ): string {
   const lines: string[] = [];
   
@@ -329,19 +394,48 @@ function formatDailyReport(
     lines.push(`**Date Range:** ${start} - ${end}\n`);
   }
   
+  // Extract nutritional goals
+  const nutritionalGoals = extractNutritionalGoals(goalsData);
+  const hasGoals = nutritionalGoals.calories || nutritionalGoals.protein || nutritionalGoals.carbs || nutritionalGoals.fats;
+  
   // Daily Metrics Table
   lines.push('## Daily Metrics\n');
-  lines.push('| Date | Weight (' + getWeightUnit(useMetric) + ') | Steps | Calories | Protein (g) | Carbs (g) | Fats (g) | Sleep (hrs) |');
-  lines.push('|------|------|-------|----------|-------------|-----------|----------|-------------|');
+  
+  // Build table header with goals if available
+  if (hasGoals) {
+    lines.push('| Date | Weight (' + getWeightUnit(useMetric) + ') | Steps | Calories (Goal) | Protein (g) (Goal) | Carbs (g) (Goal) | Fats (g) (Goal) | Sleep (hrs) |');
+    lines.push('|------|------|-------|------------------|-------------------|-----------------|----------------|-------------|');
+  } else {
+    lines.push('| Date | Weight (' + getWeightUnit(useMetric) + ') | Steps | Calories | Protein (g) | Carbs (g) | Fats (g) | Sleep (hrs) |');
+    lines.push('|------|------|-------|----------|-------------|-----------|----------|-------------|');
+  }
   
   dailyData.forEach(day => {
     const date = formatDate(day.date);
     const weight = day.weight > 0 ? formatWeight(day.weight, useMetric) : '-';
     const steps = day.steps > 0 ? formatNumber(day.steps, 0) : '-';
-    const calories = day.calories > 0 ? formatNumber(day.calories, 0) : '-';
-    const protein = day.protein > 0 ? formatNumber(day.protein) : '-';
-    const carbs = day.carbs > 0 ? formatNumber(day.carbs) : '-';
-    const fats = day.fats > 0 ? formatNumber(day.fats) : '-';
+    
+    // Format nutrition with goals
+    let calories = day.calories > 0 ? formatNumber(day.calories, 0) : '-';
+    if (hasGoals && nutritionalGoals.calories && day.calories > 0) {
+      calories = `${calories} (${formatNumber(nutritionalGoals.calories, 0)})`;
+    }
+    
+    let protein = day.protein > 0 ? formatNumber(day.protein) : '-';
+    if (hasGoals && nutritionalGoals.protein && day.protein > 0) {
+      protein = `${protein} (${formatNumber(nutritionalGoals.protein)})`;
+    }
+    
+    let carbs = day.carbs > 0 ? formatNumber(day.carbs) : '-';
+    if (hasGoals && nutritionalGoals.carbs && day.carbs > 0) {
+      carbs = `${carbs} (${formatNumber(nutritionalGoals.carbs)})`;
+    }
+    
+    let fats = day.fats > 0 ? formatNumber(day.fats) : '-';
+    if (hasGoals && nutritionalGoals.fats && day.fats > 0) {
+      fats = `${fats} (${formatNumber(nutritionalGoals.fats)})`;
+    }
+    
     const sleep = day.sleepHours > 0 ? formatNumber(day.sleepHours) : '-';
     
     lines.push(`| ${date} | ${weight} | ${steps} | ${calories} | ${protein} | ${carbs} | ${fats} | ${sleep} |`);
@@ -417,7 +511,8 @@ function formatWeeklyReport(
   clientName: string,
   dateRangeStart?: string,
   dateRangeEnd?: string,
-  useMetric: boolean = false
+  useMetric: boolean = false,
+  goalsData?: any
 ): string {
   const lines: string[] = [];
   
@@ -775,7 +870,8 @@ function formatEnhancedReport(
   clientName: string,
   dateRangeStart?: string,
   dateRangeEnd?: string,
-  useMetric: boolean = false
+  useMetric: boolean = false,
+  goalsData?: any
 ): string {
   const lines: string[] = [];
   
@@ -932,7 +1028,7 @@ function formatEnhancedReport(
   
   // Include daily metrics and workouts (same as daily template)
   lines.push('---\n');
-  lines.push(formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric));
+  lines.push(formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, goalsData));
   
   return lines.join('\n');
 }
@@ -979,13 +1075,13 @@ export function formatReportAsText(
   // Format based on template
   switch (finalTemplate) {
     case 'daily':
-      return formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric);
+      return formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData);
     case 'weekly':
-      return formatWeeklyReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric);
+      return formatWeeklyReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData);
     case 'enhanced':
-      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric);
+      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData);
     default:
-      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric);
+      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData);
   }
 }
 

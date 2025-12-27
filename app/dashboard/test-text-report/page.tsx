@@ -16,15 +16,23 @@ export default function TestTextReportPage() {
   const [result, setResult] = useState<any>(null);
   const [clients, setClients] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  const [filteredClients, setFilteredClients] = useState<any[]>([]);
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [selectedClientName, setSelectedClientName] = useState('');
 
-  // Set default date range (last 7 days)
+  // Set default date range (last 2 weeks ending yesterday)
   useEffect(() => {
-    const today = new Date();
-    const weekAgo = new Date(today);
-    weekAgo.setDate(today.getDate() - 7);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
     
-    setDateFrom(weekAgo.toISOString().split('T')[0]);
-    setDateTo(today.toISOString().split('T')[0]);
+    const twoWeeksAgo = new Date(yesterday);
+    twoWeeksAgo.setDate(yesterday.getDate() - 13); // 14 days total (including yesterday)
+    twoWeeksAgo.setHours(0, 0, 0, 0);
+    
+    setDateFrom(twoWeeksAgo.toISOString().split('T')[0]);
+    setDateTo(yesterday.toISOString().split('T')[0]);
   }, []);
 
   // Load clients on mount
@@ -39,7 +47,7 @@ export default function TestTextReportPage() {
           .select('id, first_name, last_name')
           .eq('trainer_id', user.id)
           .eq('active', true)
-          .order('created_at', { ascending: false });
+          .order('first_name', { ascending: true });
 
         if (error) throw error;
         setClients(data || []);
@@ -50,6 +58,28 @@ export default function TestTextReportPage() {
 
     loadClients();
   }, [supabase]);
+
+  // Filter clients based on search query
+  useEffect(() => {
+    if (!clientSearchQuery.trim()) {
+      setFilteredClients([]);
+      setShowClientDropdown(false);
+      return;
+    }
+
+    const searchTerms = clientSearchQuery.toLowerCase().split(' ').filter(term => term.length > 0);
+    const filtered = clients.filter(client => {
+      const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
+      return searchTerms.every(term => 
+        fullName.includes(term) ||
+        client.first_name.toLowerCase().includes(term) ||
+        client.last_name.toLowerCase().includes(term)
+      );
+    }).slice(0, 8);
+
+    setFilteredClients(filtered);
+    setShowClientDropdown(filtered.length > 0);
+  }, [clientSearchQuery, clients]);
 
   // Load reports on mount
   useEffect(() => {
@@ -128,6 +158,19 @@ export default function TestTextReportPage() {
     navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard!');
   };
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.relative')) {
+        setShowClientDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="container mx-auto p-6 max-w-6xl">
@@ -211,22 +254,82 @@ export default function TestTextReportPage() {
             <label className="label">
               <span className="label-text font-semibold">Option 2: Generate On-the-Fly</span>
             </label>
-            <select
-              className="select select-bordered mb-2"
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-            >
-              <option value="">Select a client...</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.first_name} {client.last_name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg 
+                  className="h-5 w-5 text-base-content/60" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+                  />
+                </svg>
+              </div>
+              <input
+                type="text"
+                className="input input-bordered w-full pl-10"
+                placeholder="Search for a client..."
+                value={clientSearchQuery}
+                onChange={(e) => {
+                  setClientSearchQuery(e.target.value);
+                  if (!e.target.value) {
+                    setClientId('');
+                    setSelectedClientName('');
+                  }
+                }}
+                onFocus={() => {
+                  if (filteredClients.length > 0) {
+                    setShowClientDropdown(true);
+                  }
+                }}
+              />
+              {selectedClientName && (
+                <div className="mt-2 text-sm text-base-content/70">
+                  Selected: <span className="font-medium">{selectedClientName}</span>
+                  <button
+                    className="ml-2 text-error hover:underline"
+                    onClick={() => {
+                      setClientId('');
+                      setSelectedClientName('');
+                      setClientSearchQuery('');
+                    }}
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+              {showClientDropdown && filteredClients.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                  <div className="py-1">
+                    {filteredClients.map((client) => (
+                      <div
+                        key={client.id}
+                        className="px-4 py-3 cursor-pointer transition-colors hover:bg-base-200 text-base-content"
+                        onClick={() => {
+                          setClientId(client.id);
+                          setSelectedClientName(`${client.first_name} ${client.last_name}`);
+                          setClientSearchQuery(`${client.first_name} ${client.last_name}`);
+                          setShowClientDropdown(false);
+                        }}
+                      >
+                        <div className="font-medium">
+                          {client.first_name} {client.last_name}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             {clientId && (
               <input
                 type="text"
-                className="input input-bordered mb-2"
+                className="input input-bordered mt-2"
                 placeholder="Or enter client ID manually"
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
