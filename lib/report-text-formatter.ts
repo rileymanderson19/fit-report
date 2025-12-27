@@ -386,25 +386,51 @@ function formatDailyReport(
 ): string {
   const lines: string[] = [];
   
-  lines.push(`# Fitness Report: ${clientName}`);
-  
+  // LLM-Optimized Header with inline metadata
+  lines.push(`# FITNESS REPORT`);
+  lines.push('');
+  lines.push(`**Client:** ${clientName}`);
   if (dateRangeStart && dateRangeEnd) {
     const start = formatDate(dateRangeStart.split('T')[0]);
     const end = formatDate(dateRangeEnd.split('T')[0]);
-    lines.push(`**Date Range:** ${start} - ${end}\n`);
+    const startDate = new Date(dateRangeStart.split('T')[0]);
+    const endDate = new Date(dateRangeEnd.split('T')[0]);
+    const daysInReport = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    lines.push(`**Period:** ${start} to ${end} (${daysInReport} days)`);
   }
+  lines.push(`**Weight Unit:** ${getWeightUnit(useMetric)}`);
+  lines.push('');
+  lines.push('---');
+  lines.push('');
   
   // Extract nutritional goals
   const nutritionalGoals = extractNutritionalGoals(goalsData);
   const hasGoals = nutritionalGoals.calories || nutritionalGoals.protein || nutritionalGoals.carbs || nutritionalGoals.fats;
+  
+  // Helper function to format goal comparison with status indicator
+  const formatGoalComparison = (actual: number, goal: number | undefined, unit: string = ''): string => {
+    if (!goal || actual <= 0) return actual > 0 ? formatNumber(actual, unit === 'g' ? 0 : 1) : '-';
+    const percent = (actual / goal) * 100;
+    const diff = actual - goal;
+    let status = '';
+    if (percent >= 95 && percent <= 105) {
+      status = '✓'; // Met (within 5%)
+    } else if (percent < 95) {
+      status = '✗'; // Missed
+    } else {
+      status = '+'; // Exceeded
+    }
+    return `${formatNumber(actual, unit === 'g' ? 0 : 1)} ${status} (goal: ${formatNumber(goal, unit === 'g' ? 0 : 1)})`;
+  };
   
   // Daily Metrics Table
   lines.push('## Daily Metrics\n');
   
   // Build table header with goals if available
   if (hasGoals) {
-    lines.push('| Date | Weight (' + getWeightUnit(useMetric) + ') | Steps | Calories (Goal) | Protein (g) (Goal) | Carbs (g) (Goal) | Fats (g) (Goal) | Sleep (hrs) |');
-    lines.push('|------|------|-------|------------------|-------------------|-----------------|----------------|-------------|');
+    lines.push('| Date | Weight (' + getWeightUnit(useMetric) + ') | Steps | Calories | Protein (g) | Carbs (g) | Fats (g) | Sleep (hrs) |');
+    lines.push('|------|------|-------|----------|-------------|-----------|----------|-------------|');
+    lines.push('| | | | *Goal indicators: ✓ = met, ✗ = missed, + = exceeded* | | | | |');
   } else {
     lines.push('| Date | Weight (' + getWeightUnit(useMetric) + ') | Steps | Calories | Protein (g) | Carbs (g) | Fats (g) | Sleep (hrs) |');
     lines.push('|------|------|-------|----------|-------------|-----------|----------|-------------|');
@@ -415,32 +441,30 @@ function formatDailyReport(
     const weight = day.weight > 0 ? formatWeight(day.weight, useMetric) : '-';
     const steps = day.steps > 0 ? formatNumber(day.steps, 0) : '-';
     
-    // Format nutrition with goals
-    let calories = day.calories > 0 ? formatNumber(day.calories, 0) : '-';
-    if (hasGoals && nutritionalGoals.calories && day.calories > 0) {
-      calories = `${calories} (${formatNumber(nutritionalGoals.calories, 0)})`;
-    }
+    // Format nutrition with goals and status indicators
+    const calories = hasGoals && nutritionalGoals.calories 
+      ? formatGoalComparison(day.calories, nutritionalGoals.calories)
+      : (day.calories > 0 ? formatNumber(day.calories, 0) : '-');
     
-    let protein = day.protein > 0 ? formatNumber(day.protein) : '-';
-    if (hasGoals && nutritionalGoals.protein && day.protein > 0) {
-      protein = `${protein} (${formatNumber(nutritionalGoals.protein)})`;
-    }
+    const protein = hasGoals && nutritionalGoals.protein
+      ? formatGoalComparison(day.protein, nutritionalGoals.protein, 'g')
+      : (day.protein > 0 ? formatNumber(day.protein) : '-');
     
-    let carbs = day.carbs > 0 ? formatNumber(day.carbs) : '-';
-    if (hasGoals && nutritionalGoals.carbs && day.carbs > 0) {
-      carbs = `${carbs} (${formatNumber(nutritionalGoals.carbs)})`;
-    }
+    const carbs = hasGoals && nutritionalGoals.carbs
+      ? formatGoalComparison(day.carbs, nutritionalGoals.carbs, 'g')
+      : (day.carbs > 0 ? formatNumber(day.carbs) : '-');
     
-    let fats = day.fats > 0 ? formatNumber(day.fats) : '-';
-    if (hasGoals && nutritionalGoals.fats && day.fats > 0) {
-      fats = `${fats} (${formatNumber(nutritionalGoals.fats)})`;
-    }
+    const fats = hasGoals && nutritionalGoals.fats
+      ? formatGoalComparison(day.fats, nutritionalGoals.fats, 'g')
+      : (day.fats > 0 ? formatNumber(day.fats) : '-');
     
     const sleep = day.sleepHours > 0 ? formatNumber(day.sleepHours) : '-';
     
     lines.push(`| ${date} | ${weight} | ${steps} | ${calories} | ${protein} | ${carbs} | ${fats} | ${sleep} |`);
   });
   
+  lines.push('');
+  lines.push('---');
   lines.push('');
   
   // Daily Workouts
@@ -501,6 +525,10 @@ function formatDailyReport(
     });
   }
   
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+  
   return lines.join('\n');
 }
 
@@ -516,13 +544,22 @@ function formatWeeklyReport(
 ): string {
   const lines: string[] = [];
   
-  lines.push(`# Fitness Report: ${clientName}`);
-  
+  // LLM-Optimized Header with inline metadata
+  lines.push(`# FITNESS REPORT`);
+  lines.push('');
+  lines.push(`**Client:** ${clientName}`);
   if (dateRangeStart && dateRangeEnd) {
     const start = formatDate(dateRangeStart.split('T')[0]);
     const end = formatDate(dateRangeEnd.split('T')[0]);
-    lines.push(`**Date Range:** ${start} - ${end}\n`);
+    const startDate = new Date(dateRangeStart.split('T')[0]);
+    const endDate = new Date(dateRangeEnd.split('T')[0]);
+    const daysInReport = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    lines.push(`**Period:** ${start} to ${end} (${daysInReport} days)`);
   }
+  lines.push(`**Weight Unit:** ${getWeightUnit(useMetric)}`);
+  lines.push('');
+  lines.push('---');
+  lines.push('');
   
   // Weekly Workout Summary
   lines.push('## Weekly Workout Summary\n');
@@ -613,6 +650,10 @@ function formatWeeklyReport(
       }
     });
   }
+  
+  lines.push('');
+  lines.push('---');
+  lines.push('');
   
   return lines.join('\n');
 }
@@ -875,19 +916,33 @@ function formatEnhancedReport(
 ): string {
   const lines: string[] = [];
   
-  lines.push(`# Fitness Report: ${clientName}`);
-  
+  // LLM-Optimized Header with inline metadata
+  lines.push(`# FITNESS REPORT`);
+  lines.push('');
+  lines.push(`**Client:** ${clientName}`);
   if (dateRangeStart && dateRangeEnd) {
     const start = formatDate(dateRangeStart.split('T')[0]);
     const end = formatDate(dateRangeEnd.split('T')[0]);
-    lines.push(`**Date Range:** ${start} - ${end}\n`);
+    const startDate = new Date(dateRangeStart.split('T')[0]);
+    const endDate = new Date(dateRangeEnd.split('T')[0]);
+    const daysInReport = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    lines.push(`**Period:** ${start} to ${end} (${daysInReport} days)`);
   }
+  lines.push(`**Weight Unit:** ${getWeightUnit(useMetric)}`);
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+  
+  // Extract nutritional goals for display
+  const nutritionalGoals = extractNutritionalGoals(goalsData);
+  const hasGoals = nutritionalGoals.calories || nutritionalGoals.protein || nutritionalGoals.carbs || nutritionalGoals.fats;
   
   // Consistency Analysis
   const consistencyAnalysis = calculateConsistencyAnalysis(dailyData, weeklyAverages);
   
   if (consistencyAnalysis) {
     lines.push('## Consistency Analysis\n');
+    lines.push('*Consistency scores indicate how consistent the client was with each metric (0-100%, higher is better)*\n');
     
     const metrics = [];
     if (dailyData.some(d => d.weight > 0)) {
@@ -957,6 +1012,9 @@ function formatEnhancedReport(
     });
   }
   
+  lines.push('---');
+  lines.push('');
+  
   // Weekly Progress Summary
   if (weeklyAverages.length > 0) {
     lines.push('## Weekly Progress Summary\n');
@@ -999,6 +1057,9 @@ function formatEnhancedReport(
     });
   }
   
+  lines.push('---');
+  lines.push('');
+  
   // Trends
   const trends = calculateTrends(weeklyAverages);
   if (trends && Object.keys(trends).length > 0) {
@@ -1012,23 +1073,134 @@ function formatEnhancedReport(
     lines.push('');
   }
   
-  // Improvement Areas
+  // Coaching Highlights Section - LLM Optimized
+  lines.push('## Coaching Highlights\n');
+  lines.push('*Key insights for coaching conversations*\n');
+  
+  // Areas of Concern
   const improvementAreas = calculateImprovementAreas(dailyData);
-  if (improvementAreas.length > 0) {
-    lines.push('## Key Improvement Areas\n');
-    improvementAreas.forEach(area => {
-      const priorityEmoji = area.priority === 'high' ? '🔴' : '🟡';
-      lines.push(`### ${priorityEmoji} ${area.area}`);
-      lines.push(`- **Current:** ${area.current}`);
-      lines.push(`- **Target:** ${area.target}`);
-      lines.push(`- **Recommendation:** ${area.recommendation}`);
+  const highPriorityAreas = improvementAreas.filter(a => a.priority === 'high');
+  const mediumPriorityAreas = improvementAreas.filter(a => a.priority === 'medium');
+  
+  if (highPriorityAreas.length > 0 || mediumPriorityAreas.length > 0) {
+    lines.push('### Areas of Concern\n');
+    if (highPriorityAreas.length > 0) {
+      lines.push('**High Priority:**');
+      highPriorityAreas.forEach(area => {
+        lines.push(`- **${area.area}:** Current: ${area.current}, Target: ${area.target}`);
+        lines.push(`  → Recommendation: ${area.recommendation}`);
+      });
       lines.push('');
-    });
+    }
+    if (mediumPriorityAreas.length > 0) {
+      lines.push('**Medium Priority:**');
+      mediumPriorityAreas.forEach(area => {
+        lines.push(`- **${area.area}:** Current: ${area.current}, Target: ${area.target}`);
+        lines.push(`  → Recommendation: ${area.recommendation}`);
+      });
+      lines.push('');
+    }
   }
   
+  // Areas of Improvement (positive trends)
+  if (trends && Object.keys(trends).length > 0) {
+    const improvingTrends = Object.entries(trends).filter(([_, trend]: [string, any]) => 
+      trend && trend.direction === 'improving'
+    );
+    if (improvingTrends.length > 0) {
+      lines.push('### Areas of Improvement\n');
+      improvingTrends.forEach(([key, trend]: [string, any]) => {
+        const metricName = key.charAt(0).toUpperCase() + key.slice(1);
+        lines.push(`- **${metricName}:** Improving trend (+${trend.change.toFixed(1)}%)`);
+      });
+      lines.push('');
+    }
+  }
+  
+  // Goal Achievement Summary
+  if (hasGoals && nutritionalGoals) {
+    lines.push('### Goal Achievement Summary\n');
+    const goalSummary: string[] = [];
+    
+    if (nutritionalGoals.calories) {
+      const avgCalories = dailyData.filter(d => d.calories > 0).reduce((sum, d) => sum + d.calories, 0) / 
+        dailyData.filter(d => d.calories > 0).length || 0;
+      const caloriesMet = avgCalories >= nutritionalGoals.calories * 0.95 && avgCalories <= nutritionalGoals.calories * 1.05;
+      goalSummary.push(`- **Calories:** ${caloriesMet ? '✓ Meeting goal' : avgCalories < nutritionalGoals.calories ? '✗ Below goal' : '+ Exceeding goal'} (avg: ${Math.round(avgCalories)}, goal: ${Math.round(nutritionalGoals.calories)})`);
+    }
+    
+    if (nutritionalGoals.protein) {
+      const avgProtein = dailyData.filter(d => d.protein > 0).reduce((sum, d) => sum + d.protein, 0) / 
+        dailyData.filter(d => d.protein > 0).length || 0;
+      const proteinMet = avgProtein >= nutritionalGoals.protein * 0.95 && avgProtein <= nutritionalGoals.protein * 1.05;
+      goalSummary.push(`- **Protein:** ${proteinMet ? '✓ Meeting goal' : avgProtein < nutritionalGoals.protein ? '✗ Below goal' : '+ Exceeding goal'} (avg: ${Math.round(avgProtein)}g, goal: ${Math.round(nutritionalGoals.protein)}g)`);
+    }
+    
+    if (nutritionalGoals.carbs) {
+      const avgCarbs = dailyData.filter(d => d.carbs > 0).reduce((sum, d) => sum + d.carbs, 0) / 
+        dailyData.filter(d => d.carbs > 0).length || 0;
+      const carbsMet = avgCarbs >= nutritionalGoals.carbs * 0.95 && avgCarbs <= nutritionalGoals.carbs * 1.05;
+      goalSummary.push(`- **Carbs:** ${carbsMet ? '✓ Meeting goal' : avgCarbs < nutritionalGoals.carbs ? '✗ Below goal' : '+ Exceeding goal'} (avg: ${Math.round(avgCarbs)}g, goal: ${Math.round(nutritionalGoals.carbs)}g)`);
+    }
+    
+    if (nutritionalGoals.fats) {
+      const avgFats = dailyData.filter(d => d.fats > 0).reduce((sum, d) => sum + d.fats, 0) / 
+        dailyData.filter(d => d.fats > 0).length || 0;
+      const fatsMet = avgFats >= nutritionalGoals.fats * 0.95 && avgFats <= nutritionalGoals.fats * 1.05;
+      goalSummary.push(`- **Fats:** ${fatsMet ? '✓ Meeting goal' : avgFats < nutritionalGoals.fats ? '✗ Below goal' : '+ Exceeding goal'} (avg: ${Math.round(avgFats)}g, goal: ${Math.round(nutritionalGoals.fats)}g)`);
+    }
+    
+    if (goalSummary.length > 0) {
+      lines.push(...goalSummary);
+      lines.push('');
+    }
+  }
+  
+  // Consistency Summary
+  if (consistencyAnalysis) {
+    lines.push('### Consistency Summary\n');
+    const consistencyItems: string[] = [];
+    
+    if (dailyData.some(d => d.workouts && d.workouts.length > 0)) {
+      const workoutConsistency = consistencyAnalysis.workouts.consistency;
+      const workoutStatus = workoutConsistency >= 70 ? '✓ Good' : workoutConsistency >= 50 ? '⚠ Moderate' : '✗ Low';
+      consistencyItems.push(`- **Training Consistency:** ${workoutConsistency.toFixed(0)}% (${workoutStatus}) - ${consistencyAnalysis.workouts.totalWorkouts} workouts completed`);
+    }
+    
+    if (dailyData.some(d => d.protein > 0)) {
+      const proteinConsistency = consistencyAnalysis.protein.consistency;
+      const proteinStatus = proteinConsistency >= 70 ? '✓ Good' : proteinConsistency >= 50 ? '⚠ Moderate' : '✗ Low';
+      consistencyItems.push(`- **Protein Consistency:** ${proteinConsistency.toFixed(0)}% (${proteinStatus})`);
+    }
+    
+    if (dailyData.some(d => d.sleepHours > 0)) {
+      const sleepConsistency = consistencyAnalysis.sleep.consistency;
+      const sleepStatus = sleepConsistency >= 70 ? '✓ Good' : sleepConsistency >= 50 ? '⚠ Moderate' : '✗ Low';
+      consistencyItems.push(`- **Sleep Consistency:** ${sleepConsistency.toFixed(0)}% (${sleepStatus})`);
+    }
+    
+    if (consistencyItems.length > 0) {
+      lines.push(...consistencyItems);
+      lines.push('');
+    }
+  }
+  
+  lines.push('---');
+  lines.push('');
+  
+  lines.push('---');
+  lines.push('');
+  
   // Include daily metrics and workouts (same as daily template)
-  lines.push('---\n');
-  lines.push(formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, goalsData));
+  lines.push('## Detailed Daily Metrics\n');
+  const dailyReportLines = formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, goalsData).split('\n');
+  // Skip the header from daily report since we already have one
+  const dailyContentStart = dailyReportLines.findIndex(line => line.startsWith('##'));
+  if (dailyContentStart >= 0) {
+    lines.push(...dailyReportLines.slice(dailyContentStart));
+  } else {
+    lines.push(...dailyReportLines.slice(2)); // Skip header lines
+  }
   
   return lines.join('\n');
 }
