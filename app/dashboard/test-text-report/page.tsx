@@ -12,6 +12,7 @@ export default function TestTextReportPage() {
   const [dateTo, setDateTo] = useState('');
   const [template, setTemplate] = useState<'daily' | 'weekly' | 'enhanced'>('enhanced');
   const [weightUnit, setWeightUnit] = useState<'lbs' | 'kg'>('lbs');
+  const [goal, setGoal] = useState<'fat loss' | 'maintenance' | 'muscle gain'>('fat loss');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [clients, setClients] = useState<any[]>([]);
@@ -117,7 +118,8 @@ export default function TestTextReportPage() {
     try {
       const body: any = {
         template,
-        weightUnit
+        weightUnit,
+        goal
       };
 
       if (reportId) {
@@ -180,7 +182,7 @@ export default function TestTextReportPage() {
         <div className="card-body">
           <h2 className="card-title mb-4">Test Configuration</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Template Selection */}
             <div className="form-control">
               <label className="label">
@@ -209,6 +211,22 @@ export default function TestTextReportPage() {
               >
                 <option value="lbs">Pounds (lbs)</option>
                 <option value="kg">Kilograms (kg)</option>
+              </select>
+            </div>
+
+            {/* Goal Selection */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Goal</span>
+              </label>
+              <select
+                className="select select-bordered"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value as any)}
+              >
+                <option value="fat loss">Fat Loss</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="muscle gain">Muscle Gain</option>
               </select>
             </div>
           </div>

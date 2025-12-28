@@ -304,7 +304,7 @@ function formatNumber(num: number, decimals: number = 1): string {
 function formatWeight(weightLbs: number, useMetric: boolean): string {
   const convertedWeight = useMetric ? weightLbs * 0.453592 : weightLbs;
   if (useMetric) {
-    return Math.round(convertedWeight).toString();
+    return formatNumber(convertedWeight, 2); // Show 2 decimal places for kg
   } else {
     return convertedWeight % 1 === 0 ? convertedWeight.toString() : formatNumber(convertedWeight, 1);
   }
@@ -382,7 +382,8 @@ function formatDailyReport(
   dateRangeStart?: string,
   dateRangeEnd?: string,
   useMetric: boolean = false,
-  goalsData?: any
+  goalsData?: any,
+  goal?: 'fat loss' | 'maintenance' | 'muscle gain'
 ): string {
   const lines: string[] = [];
   
@@ -397,6 +398,9 @@ function formatDailyReport(
     const endDate = new Date(dateRangeEnd.split('T')[0]);
     const daysInReport = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     lines.push(`**Period:** ${start} to ${end} (${daysInReport} days)`);
+  }
+  if (goal) {
+    lines.push(`**Goal:** ${goal.charAt(0).toUpperCase() + goal.slice(1)}`);
   }
   lines.push(`**Weight Unit:** ${getWeightUnit(useMetric)}`);
   lines.push('');
@@ -540,7 +544,8 @@ function formatWeeklyReport(
   dateRangeStart?: string,
   dateRangeEnd?: string,
   useMetric: boolean = false,
-  goalsData?: any
+  goalsData?: any,
+  goal?: 'fat loss' | 'maintenance' | 'muscle gain'
 ): string {
   const lines: string[] = [];
   
@@ -555,6 +560,9 @@ function formatWeeklyReport(
     const endDate = new Date(dateRangeEnd.split('T')[0]);
     const daysInReport = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     lines.push(`**Period:** ${start} to ${end} (${daysInReport} days)`);
+  }
+  if (goal) {
+    lines.push(`**Goal:** ${goal.charAt(0).toUpperCase() + goal.slice(1)}`);
   }
   lines.push(`**Weight Unit:** ${getWeightUnit(useMetric)}`);
   lines.push('');
@@ -620,7 +628,7 @@ function formatWeeklyReport(
                   if (stat.reps) setStr += `${stat.reps}`;
                   if (stat.weight) {
                     setStr += setStr ? ' × ' : '';
-                    setStr += `${formatWeight(stat.weight, useMetric)}${getWeightUnit(useMetric)}`;
+                    setStr += `${formatWeight(stat.weight, useMetric)} ${getWeightUnit(useMetric)}`;
                   }
                   if (stat.time) {
                     setStr += setStr ? ' × ' : '';
@@ -912,7 +920,8 @@ function formatEnhancedReport(
   dateRangeStart?: string,
   dateRangeEnd?: string,
   useMetric: boolean = false,
-  goalsData?: any
+  goalsData?: any,
+  goal?: 'fat loss' | 'maintenance' | 'muscle gain'
 ): string {
   const lines: string[] = [];
   
@@ -927,6 +936,9 @@ function formatEnhancedReport(
     const endDate = new Date(dateRangeEnd.split('T')[0]);
     const daysInReport = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     lines.push(`**Period:** ${start} to ${end} (${daysInReport} days)`);
+  }
+  if (goal) {
+    lines.push(`**Goal:** ${goal.charAt(0).toUpperCase() + goal.slice(1)}`);
   }
   lines.push(`**Weight Unit:** ${getWeightUnit(useMetric)}`);
   lines.push('');
@@ -946,12 +958,14 @@ function formatEnhancedReport(
     
     const metrics = [];
     if (dailyData.some(d => d.weight > 0)) {
+      const trendWeight = useMetric ? consistencyAnalysis.weight.weeklyTrend * 0.453592 : consistencyAnalysis.weight.weeklyTrend;
+      
       metrics.push({
         label: 'Weight',
-        main: `${consistencyAnalysis.weight.avg.toFixed(1)} ${getWeightUnit(useMetric)}`,
-        trend: `${consistencyAnalysis.weight.weeklyTrend >= 0 ? '+' : ''}${consistencyAnalysis.weight.weeklyTrend.toFixed(1)} ${getWeightUnit(useMetric)}/week`,
-        latest: `${consistencyAnalysis.weight.latest.toFixed(1)} latest`,
-        lowest: `${consistencyAnalysis.weight.min.toFixed(1)} lowest`
+        main: `${formatWeight(consistencyAnalysis.weight.avg, useMetric)} ${getWeightUnit(useMetric)}`,
+        trend: `${trendWeight >= 0 ? '+' : ''}${formatWeight(Math.abs(trendWeight), useMetric)} ${getWeightUnit(useMetric)}/week`,
+        latest: `${formatWeight(consistencyAnalysis.weight.latest, useMetric)} latest`,
+        lowest: `${formatWeight(consistencyAnalysis.weight.min, useMetric)} lowest`
       });
     }
     if (dailyData.some(d => d.sleepHours > 0)) {
@@ -1026,7 +1040,7 @@ function formatEnhancedReport(
       
       const weekStats: string[] = [];
       if (dailyData.some(d => d.weight > 0)) {
-        weekStats.push(`Weight: ${week.avgWeight.toFixed(1)} ${getWeightUnit(useMetric)}`);
+        weekStats.push(`Weight: ${formatWeight(week.avgWeight, useMetric)} ${getWeightUnit(useMetric)}`);
       }
       if (dailyData.some(d => d.calories > 0)) {
         weekStats.push(`Calories: ${Math.round(week.avgCalories).toLocaleString()}`);
@@ -1193,7 +1207,7 @@ function formatEnhancedReport(
   
   // Include daily metrics and workouts (same as daily template)
   lines.push('## Detailed Daily Metrics\n');
-  const dailyReportLines = formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, goalsData).split('\n');
+  const dailyReportLines = formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, goalsData, goal).split('\n');
   // Skip the header from daily report since we already have one
   const dailyContentStart = dailyReportLines.findIndex(line => line.startsWith('##'));
   if (dailyContentStart >= 0) {
@@ -1214,12 +1228,14 @@ export function formatReportAsText(
     weightUnit?: 'lbs' | 'kg';
     dateRangeStart?: string;
     dateRangeEnd?: string;
+    goal?: 'fat loss' | 'maintenance' | 'muscle gain';
   } = {}
 ): string {
   const template = options.template || data.template || 'enhanced';
   const useMetric = options.weightUnit === 'kg';
   const dateRangeStart = options.dateRangeStart;
   const dateRangeEnd = options.dateRangeEnd;
+  const goal = options.goal || 'fat loss';
   
   // Process data
   const dailyData = processDailyData(data, dateRangeStart);
@@ -1247,13 +1263,13 @@ export function formatReportAsText(
   // Format based on template
   switch (finalTemplate) {
     case 'daily':
-      return formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData);
+      return formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal);
     case 'weekly':
-      return formatWeeklyReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData);
+      return formatWeeklyReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal);
     case 'enhanced':
-      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData);
+      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal);
     default:
-      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData);
+      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal);
   }
 }
 

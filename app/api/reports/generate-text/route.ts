@@ -11,6 +11,7 @@ interface GenerateTextRequest {
   };
   template?: 'daily' | 'weekly' | 'enhanced';  // Default: 'enhanced'
   weightUnit?: 'lbs' | 'kg';  // Default: 'lbs'
+  goal?: 'fat loss' | 'maintenance' | 'muscle gain';  // Default: 'fat loss'
 }
 
 export async function POST(req: NextRequest) {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     // Get request body
     const body: GenerateTextRequest = await req.json();
-    const { reportId, clientId, dateRange, template = 'enhanced', weightUnit = 'lbs' } = body;
+    const { reportId, clientId, dateRange, template = 'enhanced', weightUnit = 'lbs', goal = 'fat loss' } = body;
 
     let reportData: any = null;
     let client: any = null;
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
         
         // Get auth headers to pass through
         const authHeader = req.headers.get('authorization') || req.headers.get('cookie');
-        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (authHeader) {
           if (authHeader.startsWith('Bearer')) {
             headers['authorization'] = authHeader;
@@ -182,7 +183,7 @@ export async function POST(req: NextRequest) {
           healthDataRes.json(),
           nutritionRes.json(),
           sleepRes.json(),
-          goalsRes.json().catch(() => ({ goals: [] })), // Goals are optional, don't fail if missing
+          goalsRes.json().catch(() => ({ goals: [] as any[] })), // Goals are optional, don't fail if missing
         ]);
 
         // Fetch trainer's excluded workout names
@@ -284,7 +285,8 @@ export async function POST(req: NextRequest) {
       template,
       weightUnit,
       dateRangeStart,
-      dateRangeEnd
+      dateRangeEnd,
+      goal
     });
 
     return NextResponse.json({
