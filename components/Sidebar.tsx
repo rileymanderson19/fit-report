@@ -48,8 +48,8 @@ export default function Sidebar({ currentPath = "" }: { currentPath?: string }) 
         </SidebarItem>
         
         <SidebarItem 
-          href="/dashboard/test-text-report" 
-          isActive={currentPath.startsWith("/dashboard/test-text-report")}
+          href="/dashboard/text-reports" 
+          isActive={currentPath.startsWith("/dashboard/text-reports")}
         >
           Text Reports
         </SidebarItem>
