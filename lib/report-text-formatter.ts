@@ -383,7 +383,8 @@ function formatDailyReport(
   dateRangeEnd?: string,
   useMetric: boolean = false,
   goalsData?: any,
-  goal?: 'fat loss' | 'maintenance' | 'muscle gain'
+  goal?: 'fat loss' | 'maintenance' | 'muscle gain',
+  clientNotes?: string | null
 ): string {
   const lines: string[] = [];
   
@@ -401,6 +402,9 @@ function formatDailyReport(
   }
   if (goal) {
     lines.push(`**Goal:** ${goal.charAt(0).toUpperCase() + goal.slice(1)}`);
+  }
+  if (clientNotes && clientNotes.trim()) {
+    lines.push(`**Client Notes:** ${clientNotes.trim()}`);
   }
   lines.push(`**Weight Unit:** ${getWeightUnit(useMetric)}`);
   lines.push('');
@@ -545,7 +549,8 @@ function formatWeeklyReport(
   dateRangeEnd?: string,
   useMetric: boolean = false,
   goalsData?: any,
-  goal?: 'fat loss' | 'maintenance' | 'muscle gain'
+  goal?: 'fat loss' | 'maintenance' | 'muscle gain',
+  clientNotes?: string | null
 ): string {
   const lines: string[] = [];
   
@@ -563,6 +568,9 @@ function formatWeeklyReport(
   }
   if (goal) {
     lines.push(`**Goal:** ${goal.charAt(0).toUpperCase() + goal.slice(1)}`);
+  }
+  if (clientNotes && clientNotes.trim()) {
+    lines.push(`**Client Notes:** ${clientNotes.trim()}`);
   }
   lines.push(`**Weight Unit:** ${getWeightUnit(useMetric)}`);
   lines.push('');
@@ -921,7 +929,8 @@ function formatEnhancedReport(
   dateRangeEnd?: string,
   useMetric: boolean = false,
   goalsData?: any,
-  goal?: 'fat loss' | 'maintenance' | 'muscle gain'
+  goal?: 'fat loss' | 'maintenance' | 'muscle gain',
+  clientNotes?: string | null
 ): string {
   const lines: string[] = [];
   
@@ -939,6 +948,9 @@ function formatEnhancedReport(
   }
   if (goal) {
     lines.push(`**Goal:** ${goal.charAt(0).toUpperCase() + goal.slice(1)}`);
+  }
+  if (clientNotes && clientNotes.trim()) {
+    lines.push(`**Client Notes:** ${clientNotes.trim()}`);
   }
   lines.push(`**Weight Unit:** ${getWeightUnit(useMetric)}`);
   lines.push('');
@@ -1207,7 +1219,7 @@ function formatEnhancedReport(
   
   // Include daily metrics and workouts (same as daily template)
   lines.push('## Detailed Daily Metrics\n');
-  const dailyReportLines = formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, goalsData, goal).split('\n');
+  const dailyReportLines = formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, goalsData, goal, clientNotes).split('\n');
   // Skip the header from daily report since we already have one
   const dailyContentStart = dailyReportLines.findIndex(line => line.startsWith('##'));
   if (dailyContentStart >= 0) {
@@ -1229,6 +1241,7 @@ export function formatReportAsText(
     dateRangeStart?: string;
     dateRangeEnd?: string;
     goal?: 'fat loss' | 'maintenance' | 'muscle gain';
+    clientNotes?: string | null;
   } = {}
 ): string {
   const template = options.template || data.template || 'enhanced';
@@ -1236,6 +1249,7 @@ export function formatReportAsText(
   const dateRangeStart = options.dateRangeStart;
   const dateRangeEnd = options.dateRangeEnd;
   const goal = options.goal || 'fat loss';
+  const clientNotes = options.clientNotes;
   
   // Process data
   const dailyData = processDailyData(data, dateRangeStart);
@@ -1263,13 +1277,13 @@ export function formatReportAsText(
   // Format based on template
   switch (finalTemplate) {
     case 'daily':
-      return formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal);
+      return formatDailyReport(dailyData, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal, clientNotes);
     case 'weekly':
-      return formatWeeklyReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal);
+      return formatWeeklyReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal, clientNotes);
     case 'enhanced':
-      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal);
+      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal, clientNotes);
     default:
-      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal);
+      return formatEnhancedReport(dailyData, weeklyAverages, clientName, dateRangeStart, dateRangeEnd, useMetric, data.goalsData, goal, clientNotes);
   }
 }
 

@@ -12,6 +12,7 @@ export type Database = {
           created_at: string
           updated_at: string
           active: boolean
+          notes: string | null
         }
         Insert: {
           id?: string
@@ -23,6 +24,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           active?: boolean
+          notes?: string | null
         }
         Update: {
           id?: string
@@ -34,6 +36,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           active?: boolean
+          notes?: string | null
         }
       }
     }

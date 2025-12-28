@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
             id,
             first_name,
             last_name,
-            email
+            email,
+            notes
           )
         `)
         .eq('id', reportId)
@@ -281,12 +282,14 @@ export async function POST(req: NextRequest) {
 
     // Format report as text
     const clientName = `${client.first_name} ${client.last_name}`;
+    const clientNotes = 'notes' in client ? client.notes : null;
     const text = formatReportAsText(reportData, clientName, {
       template,
       weightUnit,
       dateRangeStart,
       dateRangeEnd,
-      goal
+      goal,
+      clientNotes
     });
 
     return NextResponse.json({
