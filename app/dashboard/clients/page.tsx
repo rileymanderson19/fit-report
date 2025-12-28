@@ -16,6 +16,7 @@ interface Client {
   created_at: string;
   updated_at: string;
   active: boolean;
+  notes: string | null;
 }
 
 interface TrainerizeClient {
@@ -43,6 +44,11 @@ export default function ClientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Notes editing state
+  const [editingClientId, setEditingClientId] = useState<string | null>(null);
+  const [editingNotes, setEditingNotes] = useState<string>('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
 
   // Fetch clients from Supabase
   const fetchClients = useCallback(async () => {
@@ -334,6 +340,7 @@ export default function ClientsPage() {
                       </label>
                     </th>
                     <th>Name</th>
+                    <th>Notes</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -352,7 +359,34 @@ export default function ClientsPage() {
                       </td>
                       <td>{`${client.first_name} ${client.last_name}`}</td>
                       <td>
+                        {client.notes ? (
+                          <div className="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span className="text-sm text-base-content/70 truncate max-w-xs" title={client.notes}>
+                              {client.notes.length > 50 ? `${client.notes.substring(0, 50)}...` : client.notes}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-base-content/40">No notes</span>
+                        )}
+                      </td>
+                      <td>
                         <div className="flex gap-2">
+                          <button
+                            className="btn btn-sm btn-ghost"
+                            onClick={() => {
+                              setEditingClientId(client.id);
+                              setEditingNotes(client.notes || '');
+                              (document.getElementById('edit-notes-modal') as HTMLDialogElement)?.showModal();
+                            }}
+                            title="Edit Notes"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
                           <Link
                             href={`/dashboard/clients/${client.id}/reports`}
                             className="btn btn-sm btn-outline"
@@ -371,7 +405,7 @@ export default function ClientsPage() {
                   ))}
                   {filteredClients.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="text-center py-4">
+                      <td colSpan={4} className="text-center py-4">
                         {clients.length === 0 ? 'No clients imported yet' : 'No clients found matching your search'}
                       </td>
                     </tr>
@@ -535,6 +569,89 @@ export default function ClientsPage() {
             setIsModalOpen(false);
             setSelectedImportIds([]);
             setImportSearchQuery('');
+          }}>close</button>
+        </form>
+      </dialog>
+
+      {/* Edit Notes Modal */}
+      <dialog id="edit-notes-modal" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">
+            Edit Client Notes
+          </h3>
+          {editingClientId && (
+            <p className="text-sm text-base-content/70 mb-4">
+              {clients.find(c => c.id === editingClientId)?.first_name} {clients.find(c => c.id === editingClientId)?.last_name}
+            </p>
+          )}
+          <textarea
+            className="textarea textarea-bordered w-full min-h-[200px]"
+            placeholder="Enter client notes/context here..."
+            value={editingNotes}
+            onChange={(e) => setEditingNotes(e.target.value)}
+          />
+          <div className="modal-action">
+            <button
+              className={`btn btn-primary ${isSavingNotes ? 'loading' : ''}`}
+              onClick={async () => {
+                if (!editingClientId) return;
+                setIsSavingNotes(true);
+                try {
+                  const response = await fetch('/api/clients/update-notes', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      clientId: editingClientId,
+                      notes: editingNotes.trim() || null
+                    }),
+                  });
+
+                  const data = await response.json();
+
+                  if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update notes');
+                  }
+
+                  // Update local state
+                  setClients(clients.map(c => 
+                    c.id === editingClientId 
+                      ? { ...c, notes: editingNotes.trim() || null }
+                      : c
+                  ));
+
+                  toast.success('Notes updated successfully');
+                  (document.getElementById('edit-notes-modal') as HTMLDialogElement)?.close();
+                  setEditingClientId(null);
+                  setEditingNotes('');
+                } catch (error) {
+                  console.error('Error updating notes:', error);
+                  toast.error(error instanceof Error ? error.message : 'Failed to update notes');
+                } finally {
+                  setIsSavingNotes(false);
+                }
+              }}
+              disabled={isSavingNotes}
+            >
+              Save
+            </button>
+            <button
+              className="btn"
+              onClick={() => {
+                (document.getElementById('edit-notes-modal') as HTMLDialogElement)?.close();
+                setEditingClientId(null);
+                setEditingNotes('');
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => {
+            setEditingClientId(null);
+            setEditingNotes('');
           }}>close</button>
         </form>
       </dialog>
