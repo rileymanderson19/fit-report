@@ -4,23 +4,43 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
 
+interface Client {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+
+interface CompletedClient {
+  id: string;
+  name: string;
+  completedAt: Date;
+}
+
 export default function TestTextReportPage() {
   const supabase = createClient();
-  const [clientId, setClientId] = useState('');
-  const [reportId, setReportId] = useState('');
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(new Set());
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+  
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [template, setTemplate] = useState<'daily' | 'weekly' | 'enhanced'>('enhanced');
   const [weightUnit, setWeightUnit] = useState<'lbs' | 'kg'>('lbs');
   const [goal, setGoal] = useState<'fat loss' | 'maintenance' | 'muscle gain'>('fat loss');
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [clients, setClients] = useState<any[]>([]);
-  const [reports, setReports] = useState<any[]>([]);
-  const [clientSearchQuery, setClientSearchQuery] = useState('');
-  const [filteredClients, setFilteredClients] = useState<any[]>([]);
-  const [showClientDropdown, setShowClientDropdown] = useState(false);
-  const [selectedClientName, setSelectedClientName] = useState('');
+  
+  // Workflow state
+  const [clientQueue, setClientQueue] = useState<Client[]>([]);
+  const [currentClientIndex, setCurrentClientIndex] = useState(0);
+  const [currentResult, setCurrentResult] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [completedClients, setCompletedClients] = useState<CompletedClient[]>([]);
+  const [isWorkflowActive, setIsWorkflowActive] = useState(false);
+  
+  // Combined document state
+  const [combinedDocument, setCombinedDocument] = useState<string | null>(null);
+  const [isGeneratingCombined, setIsGeneratingCombined] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0 });
 
   // Set default date range (last 2 weeks ending yesterday)
   useEffect(() => {
@@ -52,8 +72,10 @@ export default function TestTextReportPage() {
 
         if (error) throw error;
         setClients(data || []);
+        setFilteredClients(data || []);
       } catch (error) {
         console.error('Error loading clients:', error);
+        toast.error('Failed to load clients');
       }
     };
 
@@ -63,8 +85,7 @@ export default function TestTextReportPage() {
   // Filter clients based on search query
   useEffect(() => {
     if (!clientSearchQuery.trim()) {
-      setFilteredClients([]);
-      setShowClientDropdown(false);
+      setFilteredClients(clients);
       return;
     }
 
@@ -76,68 +97,56 @@ export default function TestTextReportPage() {
         client.first_name.toLowerCase().includes(term) ||
         client.last_name.toLowerCase().includes(term)
       );
-    }).slice(0, 8);
+    });
 
     setFilteredClients(filtered);
-    setShowClientDropdown(filtered.length > 0);
   }, [clientSearchQuery, clients]);
 
-  // Load reports on mount
-  useEffect(() => {
-    const loadReports = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data, error } = await supabase
-          .from('reports')
-          .select('id, date_range_start, date_range_end, clients(first_name, last_name)')
-          .eq('trainer_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (error) throw error;
-        setReports(data || []);
-      } catch (error) {
-        console.error('Error loading reports:', error);
-      }
-    };
-
-    loadReports();
-  }, [supabase]);
-
-  const handleTest = async () => {
-    if (!reportId && (!clientId || !dateFrom || !dateTo)) {
-      toast.error('Please provide either a Report ID or Client ID with date range');
-      return;
+  // Toggle client selection
+  const toggleClientSelection = (clientId: string) => {
+    const newSelected = new Set(selectedClientIds);
+    if (newSelected.has(clientId)) {
+      newSelected.delete(clientId);
+    } else {
+      newSelected.add(clientId);
     }
+    setSelectedClientIds(newSelected);
+  };
 
-    setIsLoading(true);
-    setResult(null);
+  // Select/Deselect all filtered clients
+  const toggleSelectAll = () => {
+    if (selectedClientIds.size === filteredClients.length && 
+        filteredClients.every(c => selectedClientIds.has(c.id))) {
+      // Deselect all filtered clients
+      const newSelected = new Set(selectedClientIds);
+      filteredClients.forEach(c => newSelected.delete(c.id));
+      setSelectedClientIds(newSelected);
+    } else {
+      // Select all filtered clients
+      const newSelected = new Set(selectedClientIds);
+      filteredClients.forEach(c => newSelected.add(c.id));
+      setSelectedClientIds(newSelected);
+    }
+  };
 
+  // Generate report for a specific client
+  const generateReportForClient = async (client: Client) => {
     try {
-      const body: any = {
-        template,
-        weightUnit,
-        goal
-      };
-
-      if (reportId) {
-        body.reportId = reportId;
-      } else {
-        body.clientId = clientId;
-        body.dateRange = {
-          from: new Date(dateFrom).toISOString(),
-          to: new Date(dateTo).toISOString()
-        };
-      }
-
       const response = await fetch('/api/reports/generate-text', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          clientId: client.id,
+          dateRange: {
+            from: new Date(dateFrom).toISOString(),
+            to: new Date(dateTo).toISOString()
+          },
+          template,
+          weightUnit,
+          goal
+        }),
       });
 
       const data = await response.json();
@@ -146,13 +155,149 @@ export default function TestTextReportPage() {
         throw new Error(data.error || 'Failed to generate text report');
       }
 
-      setResult(data);
-      toast.success('Text report generated successfully!');
+      return data;
     } catch (error) {
-      console.error('Error testing text report:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to generate text report');
+      console.error('Error generating report:', error);
+      throw error;
+    }
+  };
+
+  // Start workflow
+  const handleStartWorkflow = async () => {
+    if (selectedClientIds.size === 0) {
+      toast.error('Please select at least one client');
+      return;
+    }
+
+    if (!dateFrom || !dateTo) {
+      toast.error('Please set date range');
+      return;
+    }
+
+    // Build client queue from selected clients
+    const queue = clients.filter(c => selectedClientIds.has(c.id));
+    setClientQueue(queue);
+    setCurrentClientIndex(0);
+    setCompletedClients([]);
+    setIsWorkflowActive(true);
+    setCurrentResult(null);
+
+    // Generate first client's report
+    setIsGenerating(true);
+    try {
+      const result = await generateReportForClient(queue[0]);
+      setCurrentResult(result);
+      toast.success(`Report generated for ${queue[0].first_name} ${queue[0].last_name}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to generate report');
+      setIsWorkflowActive(false);
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
+    }
+  };
+
+  // Handle Done button - move to next client
+  const handleDone = async () => {
+    const currentClient = clientQueue[currentClientIndex];
+    
+    // Mark current client as completed
+    setCompletedClients(prev => [...prev, {
+      id: currentClient.id,
+      name: `${currentClient.first_name} ${currentClient.last_name}`,
+      completedAt: new Date()
+    }]);
+
+    // Check if there are more clients
+    if (currentClientIndex < clientQueue.length - 1) {
+      const nextIndex = currentClientIndex + 1;
+      setCurrentClientIndex(nextIndex);
+      setCurrentResult(null);
+      
+      // Generate next client's report
+      setIsGenerating(true);
+      try {
+        const nextClient = clientQueue[nextIndex];
+        const result = await generateReportForClient(nextClient);
+        setCurrentResult(result);
+        toast.success(`Report generated for ${nextClient.first_name} ${nextClient.last_name}`);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to generate report');
+      } finally {
+        setIsGenerating(false);
+      }
+    } else {
+      // All clients completed
+      setIsWorkflowActive(false);
+      toast.success('All clients completed!');
+    }
+  };
+
+  // Reset workflow
+  const handleReset = () => {
+    setIsWorkflowActive(false);
+    setClientQueue([]);
+    setCurrentClientIndex(0);
+    setCurrentResult(null);
+    setCompletedClients([]);
+  };
+
+  // Generate combined document
+  const handleGenerateCombined = async () => {
+    if (selectedClientIds.size === 0) {
+      toast.error('Please select at least one client');
+      return;
+    }
+
+    if (!dateFrom || !dateTo) {
+      toast.error('Please set date range');
+      return;
+    }
+
+    const selectedClients = clients.filter(c => selectedClientIds.has(c.id));
+    setIsGeneratingCombined(true);
+    setGenerationProgress({ current: 0, total: selectedClients.length });
+    setCombinedDocument(null);
+
+    try {
+      // Generate all reports in parallel
+      const reportPromises = selectedClients.map(async (client) => {
+        const result = await generateReportForClient(client);
+        setGenerationProgress(prev => ({ ...prev, current: prev.current + 1 }));
+        return {
+          client,
+          report: result.text,
+          metadata: result.metadata
+        };
+      });
+
+      const reportResults = await Promise.all(reportPromises);
+
+      // Combine reports with delimiters
+      const combinedLines: string[] = [];
+      
+      reportResults.forEach((result, index) => {
+        const clientName = `${result.client.first_name} ${result.client.last_name}`;
+        
+        // Add delimiter before each report (except first)
+        if (index > 0) {
+          combinedLines.push('');
+          combinedLines.push('');
+        }
+        
+        combinedLines.push(`=== ${clientName.toUpperCase()} ===`);
+        combinedLines.push('');
+        combinedLines.push(result.report);
+      });
+
+      const combinedText = combinedLines.join('\n');
+      setCombinedDocument(combinedText);
+      toast.success(`Combined document generated for ${selectedClients.length} client(s)`);
+    } catch (error) {
+      console.error('Error generating combined document:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate combined document');
+    } finally {
+      setIsGeneratingCombined(false);
+      setGenerationProgress({ current: 0, total: 0 });
     }
   };
 
@@ -161,286 +306,291 @@ export default function TestTextReportPage() {
     toast.success('Copied to clipboard!');
   };
 
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.relative')) {
-        setShowClientDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const currentClient = clientQueue[currentClientIndex];
+  const selectedCount = selectedClientIds.size;
+  const allFilteredSelected = filteredClients.length > 0 && 
+    filteredClients.every(c => selectedClientIds.has(c.id));
 
   return (
     <div className="container mx-auto p-6 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6">Test Text Report API</h1>
+      <h1 className="text-3xl font-bold mb-6">Client Check-In Reports</h1>
 
-      <div className="card bg-base-200 shadow-xl mb-6">
-        <div className="card-body">
-          <h2 className="card-title mb-4">Test Configuration</h2>
+      {!isWorkflowActive ? (
+        // Configuration View
+        <>
+          <div className="card bg-base-200 shadow-xl mb-6">
+            <div className="card-body">
+              <h2 className="card-title mb-4">Configuration</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Template Selection */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Template</span>
-              </label>
-              <select
-                className="select select-bordered"
-                value={template}
-                onChange={(e) => setTemplate(e.target.value as any)}
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="enhanced">Enhanced</option>
-              </select>
-            </div>
-
-            {/* Weight Unit */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Weight Unit</span>
-              </label>
-              <select
-                className="select select-bordered"
-                value={weightUnit}
-                onChange={(e) => setWeightUnit(e.target.value as any)}
-              >
-                <option value="lbs">Pounds (lbs)</option>
-                <option value="kg">Kilograms (kg)</option>
-              </select>
-            </div>
-
-            {/* Goal Selection */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Goal</span>
-              </label>
-              <select
-                className="select select-bordered"
-                value={goal}
-                onChange={(e) => setGoal(e.target.value as any)}
-              >
-                <option value="fat loss">Fat Loss</option>
-                <option value="maintenance">Maintenance</option>
-                <option value="muscle gain">Muscle Gain</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="divider">OR</div>
-
-          {/* Option 1: Use Report ID */}
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text font-semibold">Option 1: Use Existing Report</span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={reportId}
-              onChange={(e) => setReportId(e.target.value)}
-            >
-              <option value="">Select a report...</option>
-              {reports.map((report) => {
-                const client = Array.isArray(report.clients) ? report.clients[0] : report.clients;
-                const clientName = client ? `${client.first_name} ${client.last_name}` : 'Unknown';
-                const startDate = new Date(report.date_range_start).toLocaleDateString();
-                const endDate = new Date(report.date_range_end).toLocaleDateString();
-                return (
-                  <option key={report.id} value={report.id}>
-                    {clientName} - {startDate} to {endDate}
-                  </option>
-                );
-              })}
-            </select>
-            {reportId && (
-              <input
-                type="text"
-                className="input input-bordered mt-2"
-                placeholder="Or enter report ID manually"
-                value={reportId}
-                onChange={(e) => setReportId(e.target.value)}
-              />
-            )}
-          </div>
-
-          {/* Option 2: Use Client ID + Date Range */}
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text font-semibold">Option 2: Generate On-the-Fly</span>
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg 
-                  className="h-5 w-5 text-base-content/60" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
-                  />
-                </svg>
-              </div>
-              <input
-                type="text"
-                className="input input-bordered w-full pl-10"
-                placeholder="Search for a client..."
-                value={clientSearchQuery}
-                onChange={(e) => {
-                  setClientSearchQuery(e.target.value);
-                  if (!e.target.value) {
-                    setClientId('');
-                    setSelectedClientName('');
-                  }
-                }}
-                onFocus={() => {
-                  if (filteredClients.length > 0) {
-                    setShowClientDropdown(true);
-                  }
-                }}
-              />
-              {selectedClientName && (
-                <div className="mt-2 text-sm text-base-content/70">
-                  Selected: <span className="font-medium">{selectedClientName}</span>
-                  <button
-                    className="ml-2 text-error hover:underline"
-                    onClick={() => {
-                      setClientId('');
-                      setSelectedClientName('');
-                      setClientSearchQuery('');
-                    }}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {/* Template Selection */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Template</span>
+                  </label>
+                  <select
+                    className="select select-bordered"
+                    value={template}
+                    onChange={(e) => setTemplate(e.target.value as any)}
                   >
-                    Clear
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="enhanced">Enhanced</option>
+                  </select>
+                </div>
+
+                {/* Weight Unit */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Weight Unit</span>
+                  </label>
+                  <select
+                    className="select select-bordered"
+                    value={weightUnit}
+                    onChange={(e) => setWeightUnit(e.target.value as any)}
+                  >
+                    <option value="lbs">Pounds (lbs)</option>
+                    <option value="kg">Kilograms (kg)</option>
+                  </select>
+                </div>
+
+                {/* Goal Selection */}
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Goal</span>
+                  </label>
+                  <select
+                    className="select select-bordered"
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value as any)}
+                  >
+                    <option value="fat loss">Fat Loss</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="muscle gain">Muscle Gain</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Date Range */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Start Date</span>
+                  </label>
+                  <input
+                    type="date"
+                    className="input input-bordered"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">End Date</span>
+                  </label>
+                  <input
+                    type="date"
+                    className="input input-bordered"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Client Selection */}
+              <div className="form-control mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="label">
+                    <span className="label-text font-semibold">Select Clients</span>
+                    <span className="label-text-alt">({selectedCount} selected)</span>
+                  </label>
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={toggleSelectAll}
+                  >
+                    {allFilteredSelected ? 'Deselect All' : 'Select All'}
                   </button>
                 </div>
-              )}
-              {showClientDropdown && filteredClients.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                  <div className="py-1">
-                    {filteredClients.map((client) => (
-                      <div
-                        key={client.id}
-                        className="px-4 py-3 cursor-pointer transition-colors hover:bg-base-200 text-base-content"
-                        onClick={() => {
-                          setClientId(client.id);
-                          setSelectedClientName(`${client.first_name} ${client.last_name}`);
-                          setClientSearchQuery(`${client.first_name} ${client.last_name}`);
-                          setShowClientDropdown(false);
-                        }}
-                      >
-                        <div className="font-medium">
-                          {client.first_name} {client.last_name}
-                        </div>
+                
+                {/* Search */}
+                <input
+                  type="text"
+                  className="input input-bordered mb-3"
+                  placeholder="Search clients..."
+                  value={clientSearchQuery}
+                  onChange={(e) => setClientSearchQuery(e.target.value)}
+                />
+
+                {/* Client List with Checkboxes */}
+                <div className="border border-base-300 rounded-lg max-h-96 overflow-y-auto">
+                  <div className="p-2">
+                    {filteredClients.length === 0 ? (
+                      <div className="text-center py-4 text-base-content/60">
+                        No clients found
                       </div>
-                    ))}
+                    ) : (
+                      filteredClients.map((client) => {
+                        const clientName = `${client.first_name} ${client.last_name}`;
+                        const isSelected = selectedClientIds.has(client.id);
+                        return (
+                          <label
+                            key={client.id}
+                            className="flex items-center gap-3 p-3 hover:bg-base-200 rounded cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              className="checkbox checkbox-primary"
+                              checked={isSelected}
+                              onChange={() => toggleClientSelection(client.id)}
+                            />
+                            <span className="flex-1">{clientName}</span>
+                          </label>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-            {clientId && (
-              <input
-                type="text"
-                className="input input-bordered mt-2"
-                placeholder="Or enter client ID manually"
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
-              />
-            )}
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <input
-                type="date"
-                className="input input-bordered"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                placeholder="Start Date"
-              />
-              <input
-                type="date"
-                className="input input-bordered"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                placeholder="End Date"
-              />
+              </div>
+
+              <div className="flex gap-4 mt-4">
+                <button
+                  className="btn btn-primary flex-1"
+                  onClick={handleStartWorkflow}
+                  disabled={selectedCount === 0}
+                >
+                  Start Workflow ({selectedCount} client{selectedCount !== 1 ? 's' : ''})
+                </button>
+                <button
+                  className="btn btn-secondary flex-1"
+                  onClick={handleGenerateCombined}
+                  disabled={selectedCount === 0 || isGeneratingCombined}
+                >
+                  {isGeneratingCombined ? (
+                    <>
+                      <span className="loading loading-spinner"></span>
+                      Generating... ({generationProgress.current}/{generationProgress.total})
+                    </>
+                  ) : (
+                    `Generate Combined Document (${selectedCount})`
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
-          <button
-            className="btn btn-primary mt-4"
-            onClick={handleTest}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <span className="loading loading-spinner"></span>
-                Generating...
-              </>
-            ) : (
-              'Generate Text Report'
-            )}
-          </button>
-        </div>
-      </div>
+          {/* Combined Document Display */}
+          {combinedDocument && (
+            <div className="card bg-base-200 shadow-xl mb-6">
+              <div className="card-body">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className="card-title">Combined Document</h2>
+                    <p className="text-sm text-base-content/70">
+                      {selectedCount} client{selectedCount !== 1 ? 's' : ''} • {combinedDocument.length.toLocaleString()} characters
+                    </p>
+                  </div>
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => copyToClipboard(combinedDocument)}
+                  >
+                    Copy Document
+                  </button>
+                </div>
 
-      {/* Results */}
-      {result && (
-        <div className="card bg-base-200 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title mb-4">Results</h2>
-
-            {/* Metadata */}
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">Metadata:</h3>
-              <div className="bg-base-300 p-4 rounded">
-                <pre className="text-sm overflow-x-auto">
-                  {JSON.stringify(result.metadata, null, 2)}
-                </pre>
-              </div>
-            </div>
-
-            {/* Text Output */}
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold">Generated Text ({result.text.length} characters):</h3>
-                <button
-                  className="btn btn-sm btn-outline"
-                  onClick={() => copyToClipboard(result.text)}
-                >
-                  Copy Text
-                </button>
-              </div>
-              <div className="bg-base-300 p-4 rounded max-h-96 overflow-y-auto">
-                <pre className="text-sm whitespace-pre-wrap">{result.text}</pre>
-              </div>
-            </div>
-
-            {/* Preview in Discord-style */}
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">Discord Preview:</h3>
-              <div className="bg-gray-900 text-gray-100 p-4 rounded max-h-96 overflow-y-auto">
-                <div className="prose prose-invert max-w-none">
-                  {result.text.split('\n').map((line: string, idx: number) => {
-                    // Simple markdown rendering for preview
-                    let rendered = line;
-                    rendered = rendered.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                    rendered = rendered.replace(/#{3}\s+(.*)/g, '<h3>$1</h3>');
-                    rendered = rendered.replace(/#{2}\s+(.*)/g, '<h2>$1</h2>');
-                    rendered = rendered.replace(/#{1}\s+(.*)/g, '<h1>$1</h1>');
-                    return <div key={idx} dangerouslySetInnerHTML={{ __html: rendered }} />;
-                  })}
+                <div className="bg-base-300 p-4 rounded max-h-[600px] overflow-y-auto">
+                  <pre className="text-sm whitespace-pre-wrap">{combinedDocument}</pre>
                 </div>
               </div>
             </div>
+          )}
+        </>
+      ) : (
+        // Workflow View
+        <>
+          {/* Progress Bar */}
+          <div className="card bg-base-200 shadow-xl mb-6">
+            <div className="card-body">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="card-title">
+                  Client {currentClientIndex + 1} of {clientQueue.length}
+                </h2>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={handleReset}
+                >
+                  Reset
+                </button>
+              </div>
+              <progress 
+                className="progress progress-primary w-full" 
+                value={currentClientIndex + 1} 
+                max={clientQueue.length}
+              ></progress>
+              <p className="text-sm text-base-content/70">
+                {currentClient?.first_name} {currentClient?.last_name}
+              </p>
+            </div>
           </div>
-        </div>
+
+          {/* Current Report */}
+          {isGenerating ? (
+            <div className="card bg-base-200 shadow-xl">
+              <div className="card-body text-center py-12">
+                <span className="loading loading-spinner loading-lg"></span>
+                <p className="mt-4">Generating report...</p>
+              </div>
+            </div>
+          ) : currentResult ? (
+            <div className="card bg-base-200 shadow-xl mb-6">
+              <div className="card-body">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="card-title">Report</h2>
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => copyToClipboard(currentResult.text)}
+                  >
+                    Copy Text
+                  </button>
+                </div>
+
+                {/* Text Output */}
+                <div className="mb-4">
+                  <div className="bg-base-300 p-4 rounded max-h-96 overflow-y-auto">
+                    <pre className="text-sm whitespace-pre-wrap">{currentResult.text}</pre>
+                  </div>
+                </div>
+
+                {/* Done Button */}
+                <button
+                  className="btn btn-primary w-full mt-4"
+                  onClick={handleDone}
+                >
+                  {currentClientIndex < clientQueue.length - 1 ? 'Done - Next Client' : 'Done - Complete'}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Completed Clients History */}
+          {completedClients.length > 0 && (
+            <div className="card bg-base-200 shadow-xl">
+              <div className="card-body">
+                <h3 className="font-semibold mb-4">Completed ({completedClients.length})</h3>
+                <div className="space-y-2">
+                  {completedClients.map((client) => (
+                    <div key={client.id} className="flex justify-between items-center p-2 bg-base-300 rounded">
+                      <span>{client.name}</span>
+                      <span className="text-sm text-base-content/60">
+                        ✓ Completed
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
-
