@@ -105,8 +105,7 @@ export function ReportVisualization({
   isScreenshotMode = false,
   forceTemplate,
   clientName = "Client",
-  dateRangeStart,
-  dateRangeEnd
+  dateRangeStart
 }: ReportVisualizationProps) {
   // Weight unit toggle state
   const [useMetric, setUseMetric] = useState(false);
@@ -257,7 +256,13 @@ export function ReportVisualization({
 
     return Array.from(dailyData.values())
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [data]);
+  }, [
+    data.bodyStats?.bodyStats,
+    data.healthData?.healthData,
+    data.nutritionData?.nutrition,
+    data.sleepData?.sleep,
+    data.workoutData?.workouts,
+  ]);
 
   // Helper function to calculate averages only for days with data
   const calculateAverage = (data: DailyData[], metric: keyof DailyData): number => {
@@ -349,18 +354,7 @@ export function ReportVisualization({
     return num.toFixed(decimals);
   };
 
-  const formatChange = (change: { diff: number, percent: number }, decimals: number = 1) => {
-    // Check if either value is NaN or if percent would be infinite (previous value was 0)
-    if (isNaN(change.diff) || isNaN(change.percent) || !isFinite(change.percent)) {
-      return 'N/A';
-    }
-    const sign = change.diff >= 0 ? '+' : '';
-    const formattedDiff = formatNumber(change.diff, decimals);
-    const formattedPercent = formatNumber(change.percent, 1);
-    return `${sign}${formattedDiff} (${sign}${formattedPercent}%)`;
-  };
-
-  // Create a snapshot of the original data on first render that never changes
+  // Create a stable analytics dataset used by EnhancedAnalytics
   const analyticsData = useMemo(() => {
     // This creates a completely independent snapshot for consistency analysis
     const dailyData = new Map<string, DailyData>();
@@ -494,7 +488,13 @@ export function ReportVisualization({
 
     return Array.from(dailyData.values())
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, []); // Empty dependency array - this never updates after first render
+  }, [
+    data.bodyStats?.bodyStats,
+    data.healthData?.healthData,
+    data.nutritionData?.nutrition,
+    data.sleepData?.sleep,
+    data.workoutData?.workouts,
+  ]);
 
   // Create weekly averages specifically for analytics (based on unmodified data)
   const analyticsWeeklyAverages = useMemo(() => {

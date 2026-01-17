@@ -104,8 +104,7 @@ interface ReportData {
 
 // Process raw report data into DailyData format
 export function processDailyData(
-  data: ReportData,
-  dateRangeStart?: string
+  data: ReportData
 ): DailyData[] {
   const dailyData = new Map<string, DailyData>();
 
@@ -419,7 +418,6 @@ function formatDailyReport(
   const formatGoalComparison = (actual: number, goal: number | undefined, unit: string = ''): string => {
     if (!goal || actual <= 0) return actual > 0 ? formatNumber(actual, unit === 'g' ? 0 : 1) : '-';
     const percent = (actual / goal) * 100;
-    const diff = actual - goal;
     let status = '';
     if (percent >= 95 && percent <= 105) {
       status = '✓'; // Met (within 5%)
@@ -719,7 +717,6 @@ function calculateConsistencyAnalysis(
   const hasSleep = dailyData.some(day => day.sleepHours > 0);
   const hasProtein = dailyData.some(day => day.protein > 0);
   const hasCalories = dailyData.some(day => day.calories > 0);
-  const hasWeight = dailyData.some(day => day.weight > 0);
   const hasWorkouts = dailyData.some(day => day.workouts && day.workouts.length > 0);
 
   // Workout analysis
@@ -1130,7 +1127,7 @@ function formatEnhancedReport(
   
   // Areas of Improvement (positive trends)
   if (trends && Object.keys(trends).length > 0) {
-    const improvingTrends = Object.entries(trends).filter(([_, trend]: [string, any]) => 
+    const improvingTrends = Object.entries(trends).filter(([, trend]: [string, any]) => 
       trend && trend.direction === 'improving'
     );
     if (improvingTrends.length > 0) {
@@ -1252,7 +1249,7 @@ export function formatReportAsText(
   const clientNotes = options.clientNotes;
   
   // Process data
-  const dailyData = processDailyData(data, dateRangeStart);
+  const dailyData = processDailyData(data);
   
   if (dailyData.length === 0) {
     return `# Fitness Report: ${clientName}\n\nNo data available for this period.`;

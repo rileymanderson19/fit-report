@@ -79,8 +79,6 @@ interface SevenDayReferenceProps {
 
 export function SevenDayReference({ 
   data, 
-  clientName = "Client",
-  dateRangeStart,
   dateRangeEnd
 }: SevenDayReferenceProps) {
   // Process all data into daily format
@@ -262,13 +260,6 @@ export function SevenDayReference({
     return 'text-error';
   };
 
-  const getProgressBg = (current: number, target: number) => {
-    const percentage = current / target;
-    if (percentage >= 0.9) return 'bg-success/20';
-    if (percentage >= 0.7) return 'bg-warning/20';
-    return 'bg-error/20';
-  };
-
   return (
     <div className="bg-base-200/50 border border-base-300 rounded-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-6">
@@ -284,7 +275,7 @@ export function SevenDayReference({
       </div>
 
       <div className="grid grid-cols-7 gap-2 md:gap-3">
-        {processedDailyData.map((day, index) => {
+        {processedDailyData.map((day) => {
           const { dayName, dayNum } = formatDate(day.date);
           const stepsTarget = 10000;
           const hasAnyData = day.weight > 0 || day.steps > 0 || day.calories > 0 || day.sleepHours > 0 || (day.workouts && day.workouts.length > 0);

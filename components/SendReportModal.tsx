@@ -19,19 +19,6 @@ interface Report {
   created_at: string;
 }
 
-interface ReportConfig {
-  id?: string;
-  trainer_id: string;
-  default_subject: string;
-  default_message: string;
-  signature: string;
-  include_workouts_default: boolean;
-  include_nutrition_default: boolean;
-  include_progress_default: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
 interface SendReportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -67,27 +54,6 @@ export default function SendReportModal({
   const [configLoaded, setConfigLoaded] = useState(false);
 
   const supabase = createClient();
-
-  // Load trainer's configuration when modal opens
-  useEffect(() => {
-    if (isOpen && client && !configLoaded) {
-      loadTrainerConfiguration();
-    }
-  }, [isOpen, client, configLoaded]);
-
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setConfigLoaded(false);
-      setCustomMessage('');
-      setSubject('');
-      setSignature('');
-      // Reset to defaults
-      setIncludeWorkouts(true);
-      setIncludeNutrition(true);
-      setIncludeProgress(true);
-    }
-  }, [isOpen]);
 
   const loadTrainerConfiguration = async () => {
     setIsLoadingConfig(true);
@@ -143,6 +109,27 @@ export default function SendReportModal({
       setIsLoadingConfig(false);
     }
   };
+
+  // Load trainer's configuration when modal opens
+  useEffect(() => {
+    if (isOpen && client && !configLoaded) {
+      loadTrainerConfiguration();
+    }
+  }, [isOpen, client, configLoaded, loadTrainerConfiguration]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setConfigLoaded(false);
+      setCustomMessage('');
+      setSubject('');
+      setSignature('');
+      // Reset to defaults
+      setIncludeWorkouts(true);
+      setIncludeNutrition(true);
+      setIncludeProgress(true);
+    }
+  }, [isOpen]);
 
   const handleSendReport = async () => {
     if (!report || !client) {
