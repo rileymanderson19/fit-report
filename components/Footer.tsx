@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import config from "@/config";
@@ -8,27 +11,36 @@ import logo from "@/app/icon.png";
 
 const Footer = () => {
   return (
-    <footer className="w-full border-t border-white/10 text-white">
+    <footer className="w-full border-t border-white/10 text-white bg-gradient-to-b from-black to-bg-secondary">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-24">
         {/* Main Footer Content */}
         <div className="flex flex-col md:flex-row gap-12 md:gap-16">
           {/* Logo and Info Section */}
-          <div className="w-full md:w-72 flex flex-col items-center md:items-start">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="w-full md:w-72 flex flex-col items-center md:items-start"
+          >
             {/* Logo and Name */}
             <Link
               href="/#"
               aria-current="page"
               className="flex items-center gap-2.5 group"
             >
-              <Image
-                src={logo}
-                alt={`${config.appName} logo`}
-                priority={true}
-                className="w-8 h-8 md:w-6 md:h-6"
-                width={32}
-                height={32}
-              />
-              <span className="font-extrabold tracking-tight text-lg">
+              <div className="relative">
+                <Image
+                  src={logo}
+                  alt={`${config.appName} logo`}
+                  priority={true}
+                  className="w-8 h-8 md:w-6 md:h-6 transition-transform group-hover:scale-110"
+                  width={32}
+                  height={32}
+                />
+                <div className="absolute inset-0 glow-purple opacity-0 group-hover:opacity-100 transition-opacity -z-10" />
+              </div>
+              <span className="font-display font-extrabold tracking-tight text-lg">
                 {config.appName}
               </span>
             </Link>
@@ -37,7 +49,7 @@ const Footer = () => {
             <p className="mt-4 text-base text-gray-400 text-center md:text-left">
               {config.appDescription}
             </p>
-            
+
             {/* Copyright */}
             <p className="mt-3 text-sm text-gray-500 text-center md:text-left">
               Copyright © {new Date().getFullYear()} - All rights reserved
@@ -48,7 +60,7 @@ const Footer = () => {
               href="https://shipfa.st/?ref=shipfast_badge"
               title="Go to ShipFast"
               target="_blank"
-              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#111111] px-3 py-2 text-sm ring-1 ring-white/10 hover:ring-white/20 transition-all"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg glass border border-white/10 hover:border-accent-purple/50 px-3 py-2 text-sm transition-all"
             >
               <span className="text-gray-400">Built with</span>
               <div className="flex items-center gap-1 text-white">
@@ -68,12 +80,18 @@ const Footer = () => {
                 <span className="font-semibold">ShipFast</span>
               </div>
             </a>
-          </div>
+          </motion.div>
 
           {/* Links Sections */}
           <div className="flex flex-1 flex-col sm:flex-row gap-12 sm:gap-16 md:gap-24 lg:gap-32">
             {/* Links Column */}
-            <div className="flex flex-col items-center sm:items-start">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex flex-col items-center sm:items-start"
+            >
               <h3 className="font-semibold text-sm tracking-wider text-gray-400 mb-4">
                 LINKS
               </h3>
@@ -82,52 +100,64 @@ const Footer = () => {
                   <a
                     href={`mailto:${config.resend.supportEmail}`}
                     target="_blank"
-                    className="text-base text-gray-400 hover:text-white transition-colors"
+                    className="relative text-base text-gray-400 hover:text-accent-purple transition-colors group"
                   >
                     Support
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent-purple transition-all group-hover:w-full" />
                   </a>
                 )}
-                <Link 
-                  href="/#pricing" 
-                  className="text-base text-gray-400 hover:text-white transition-colors"
+                <Link
+                  href="/#pricing"
+                  className="relative text-base text-gray-400 hover:text-accent-purple transition-colors group"
                 >
                   Pricing
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent-purple transition-all group-hover:w-full" />
                 </Link>
-                <Link 
-                  href="/blog" 
-                  className="text-base text-gray-400 hover:text-white transition-colors"
+                <Link
+                  href="/blog"
+                  className="relative text-base text-gray-400 hover:text-accent-purple transition-colors group"
                 >
                   Blog
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent-purple transition-all group-hover:w-full" />
                 </Link>
-                <Link 
-                  href="/#" 
-                  className="text-base text-gray-400 hover:text-white transition-colors"
+                <Link
+                  href="/#"
+                  className="relative text-base text-gray-400 hover:text-accent-purple transition-colors group"
                 >
                   Affiliates
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent-purple transition-all group-hover:w-full" />
                 </Link>
               </div>
-            </div>
+            </motion.div>
 
             {/* Legal Column */}
-            <div className="flex flex-col items-center sm:items-start">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex flex-col items-center sm:items-start"
+            >
               <h3 className="font-semibold text-sm tracking-wider text-gray-400 mb-4">
                 LEGAL
               </h3>
               <div className="flex flex-col items-center sm:items-start gap-3">
-                <Link 
-                  href="/tos" 
-                  className="text-base text-gray-400 hover:text-white transition-colors"
+                <Link
+                  href="/tos"
+                  className="relative text-base text-gray-400 hover:text-accent-purple transition-colors group"
                 >
                   Terms of services
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent-purple transition-all group-hover:w-full" />
                 </Link>
-                <Link 
-                  href="/privacy-policy" 
-                  className="text-base text-gray-400 hover:text-white transition-colors"
+                <Link
+                  href="/privacy-policy"
+                  className="relative text-base text-gray-400 hover:text-accent-purple transition-colors group"
                 >
                   Privacy policy
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent-purple transition-all group-hover:w-full" />
                 </Link>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

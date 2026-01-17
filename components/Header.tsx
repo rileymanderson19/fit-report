@@ -5,6 +5,7 @@ import type { JSX } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import ButtonSignin from "./ButtonSignin";
 import logo from "@/app/icon.png";
 import config from "@/config";
@@ -29,47 +30,68 @@ const links: {
 
 const cta: JSX.Element = <ButtonSignin extraStyle="btn-primary" />;
 
-// A header with a logo on the left, links in the center (like Pricing, etc...), and a CTA (like Get Started or Login) on the right.
-// The header is responsive, and on mobile, the links are hidden behind a burger button.
 const Header = () => {
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [scrolled, setScrolled] = useState<boolean>(false);
 
-  // setIsOpen(false) when the route changes (i.e: when the user clicks on a link on mobile)
   useEffect(() => {
     setIsOpen(false);
   }, [searchParams]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 bg-gradient-to-b from-[#1a1625] to-[#1f1b2e] backdrop-blur-sm bg-opacity-80">
+    <motion.header
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5 }}
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        scrolled
+          ? 'glass shadow-lg shadow-accent-purple/10'
+          : 'bg-transparent'
+      }`}
+    >
       <nav
-        className="container flex items-center justify-between px-8 py-4 mx-auto"
+        className="container flex items-center justify-between px-4 sm:px-8 py-4 mx-auto"
         aria-label="Global"
       >
-        {/* Your logo/name on large screens */}
+        {/* Logo */}
         <div className="flex lg:flex-1">
           <Link
-            className="flex items-center gap-2 shrink-0 "
+            className="flex items-center gap-2 shrink-0 group"
             href="/"
             title={`${config.appName} homepage`}
           >
-            <Image
-              src={logo}
-              alt={`${config.appName} logo`}
-              className="w-8"
-              placeholder="blur"
-              priority={true}
-              width={32}
-              height={32}
-            />
-            <span className="font-extrabold text-lg">{config.appName}</span>
+            <div className="relative">
+              <Image
+                src={logo}
+                alt={`${config.appName} logo`}
+                className="w-8 transition-all duration-300 group-hover:scale-110"
+                placeholder="blur"
+                priority={true}
+                width={32}
+                height={32}
+              />
+              <div className="absolute inset-0 glow-purple opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+            </div>
+            <span className="font-display font-extrabold text-lg text-white">
+              {config.appName}
+            </span>
           </Link>
         </div>
-        {/* Burger button to open menu on mobile */}
+
+        {/* Burger button on mobile */}
         <div className="flex lg:hidden">
           <button
             type="button"
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5"
+            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white hover:text-accent-purple transition-colors"
             onClick={() => setIsOpen(true)}
           >
             <span className="sr-only">Open main menu</span>
@@ -79,7 +101,7 @@ const Header = () => {
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
-              className="w-6 h-6 text-base-content"
+              className="w-6 h-6"
             >
               <path
                 strokeLinecap="round"
@@ -90,16 +112,17 @@ const Header = () => {
           </button>
         </div>
 
-        {/* Your links on large screens */}
-        <div className="hidden lg:flex lg:justify-center lg:gap-12 lg:items-center">
+        {/* Links on large screens */}
+        <div className="hidden lg:flex lg:justify-center lg:gap-8 lg:items-center">
           {links.map((link) => (
             <Link
               href={link.href}
               key={link.href}
-              className="link link-hover"
+              className="relative text-white font-medium transition-colors hover:text-accent-purple group"
               title={link.label}
             >
               {link.label}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary-start to-accent-purple transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
         </div>
@@ -108,75 +131,106 @@ const Header = () => {
         <div className="hidden lg:flex lg:justify-end lg:flex-1">{cta}</div>
       </nav>
 
-      {/* Mobile menu, show/hide based on menu state. */}
-      <div className={`relative z-50 ${isOpen ? "" : "hidden"}`}>
-        <div
-          className={`fixed inset-y-0 right-0 z-10 w-full px-8 py-4 overflow-y-auto bg-base-200 sm:max-w-sm sm:ring-1 sm:ring-neutral/10 transform origin-right transition ease-in-out duration-300`}
-        >
-          {/* Your logo/name on small screens */}
-          <div className="flex items-center justify-between">
-            <Link
-              className="flex items-center gap-2 shrink-0 "
-              title={`${config.appName} homepage`}
-              href="/"
-            >
-              <Image
-                src={logo}
-                alt={`${config.appName} logo`}
-                className="w-8"
-                placeholder="blur"
-                priority={true}
-                width={32}
-                height={32}
-              />
-              <span className="font-extrabold text-lg">{config.appName}</span>
-            </Link>
-            <button
-              type="button"
-              className="-m-2.5 rounded-md p-2.5"
-              onClick={() => setIsOpen(false)}
-            >
-              <span className="sr-only">Close menu</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+      {/* Mobile menu */}
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            onClick={() => setIsOpen(false)}
+          />
 
-          {/* Your links on small screens */}
-          <div className="flow-root mt-6">
-            <div className="py-4">
-              <div className="flex flex-col gap-y-4 items-start">
-                {links.map((link) => (
-                  <Link
-                    href={link.href}
-                    key={link.href}
-                    className="link link-hover"
-                    title={link.label}
+          {/* Menu panel */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm"
+          >
+            <div className="glass h-full px-6 py-6 overflow-y-auto border-l border-white/10">
+              {/* Mobile header */}
+              <div className="flex items-center justify-between mb-8">
+                <Link
+                  className="flex items-center gap-2 shrink-0"
+                  title={`${config.appName} homepage`}
+                  href="/"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Image
+                    src={logo}
+                    alt={`${config.appName} logo`}
+                    className="w-8"
+                    placeholder="blur"
+                    priority={true}
+                    width={32}
+                    height={32}
+                  />
+                  <span className="font-display font-extrabold text-lg text-white">
+                    {config.appName}
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  className="-m-2.5 rounded-md p-2.5 text-white hover:text-accent-purple transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <span className="sr-only">Close menu</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
                   >
-                    {link.label}
-                  </Link>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Mobile links */}
+              <div className="flex flex-col gap-4 mb-8">
+                {links.map((link, index) => (
+                  <motion.div
+                    key={link.href}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Link
+                      href={link.href}
+                      className="block text-lg font-medium text-white hover:text-accent-purple transition-colors py-2"
+                      title={link.label}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.div>
                 ))}
               </div>
+
+              {/* Mobile CTA */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="pt-6 border-t border-white/10"
+              >
+                {cta}
+              </motion.div>
             </div>
-            <div className="divider"></div>
-            {/* Your CTA on small screens */}
-            <div className="flex flex-col">{cta}</div>
-          </div>
-        </div>
-      </div>
-    </header>
+          </motion.div>
+        </>
+      )}
+    </motion.header>
   );
 };
 

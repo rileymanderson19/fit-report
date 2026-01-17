@@ -1,13 +1,29 @@
 import React from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Space_Grotesk, Manrope, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import ClientLayout from "@/components/LayoutClient";
 import "./globals.css";
 import { Toaster } from 'sonner';
 import config from '@/config'
 
-const inter = Inter({ subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: '--font-space-grotesk',
+  display: 'swap',
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: '--font-manrope',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
 	title: {
@@ -75,7 +91,7 @@ export default function RootLayout({
 					strategy="afterInteractive"
 				/>
 			</head>
-			<body className={`${inter.className} antialiased`}>
+			<body className={`${manrope.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
 				{/* ClientLayout contains all the client wrappers (Crisp chat support, toast messages, tooltips, etc.) */}
 				<ClientLayout>{children}</ClientLayout>
 				<Toaster />

@@ -11,7 +11,7 @@ import config from "@/config";
 // It automatically redirects user to callbackUrl (config.auth.callbackUrl) after login, which is normally a private page for users to manage their accounts.
 // If the user is already logged in, it will show their profile picture & redirect them to callbackUrl immediately.
 const ButtonSignin = ({
-  text = "Login",
+  text = "Sign In",
   extraStyle,
 }: {
   text?: string;
@@ -36,7 +36,11 @@ const ButtonSignin = ({
     return (
       <Link
         href={config.auth.callbackUrl}
-        className={`btn btn-circle ${extraStyle ? extraStyle : ""}`}
+        className={`group relative inline-flex items-center justify-center px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+          extraStyle?.includes('btn-primary')
+            ? 'btn-gradient hover:scale-105'
+            : 'glass border border-white/10 hover:border-accent-purple/50'
+        }`}
       >
         {user?.user_metadata?.avatar_url ? (
           <img
@@ -48,7 +52,7 @@ const ButtonSignin = ({
             height={24}
           />
         ) : (
-          <span className="w-6 h-6 flex justify-center items-center rounded-full">
+          <span className="w-6 h-6 flex justify-center items-center rounded-full bg-accent-purple/20 text-accent-purple text-sm font-semibold">
             {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0)}
           </span>
         )}
@@ -58,7 +62,11 @@ const ButtonSignin = ({
 
   return (
     <Link
-      className={`btn ${extraStyle ? extraStyle : ""}`}
+      className={`group relative inline-flex items-center justify-center px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+        extraStyle?.includes('btn-primary')
+          ? 'btn-gradient hover:scale-105'
+          : 'glass border border-white/10 hover:border-accent-purple/50 text-white'
+      }`}
       href={config.auth.loginUrl}
     >
       {text}
