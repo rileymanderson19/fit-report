@@ -6,6 +6,11 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
+  // Block access in production
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const supabase = createClient();
 

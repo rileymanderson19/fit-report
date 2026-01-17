@@ -1,5 +1,7 @@
 import { createClient } from '@/libs/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { ClientNotesSchema, validateRequest } from '@/libs/validations';
+import { handleApiError, requireAuth } from '@/libs/errorHandler';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,15 +13,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get request body
-    const { clientId, notes } = await req.json();
+    // Get request body and validate
+    const body = await req.json();
+    const validation = validateRequest(ClientNotesSchema, body);
 
-    if (!clientId) {
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Client ID is required' },
+        { error: 'Validation failed', details: validation.error },
         { status: 400 }
       );
     }
+
+    const { clientId, notes } = validation.data;
 
     // Verify the client belongs to the user
     const { data: client, error: clientError } = await supabase
@@ -56,11 +61,7 @@ export async function POST(req: NextRequest) {
       message: 'Notes updated successfully'
     });
   } catch (error) {
-    console.error('Error in update-notes route:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'update client notes');
   }
 }
 

@@ -1,5 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { createClient } from "@/libs/supabase/server";
+import { rateLimitMiddleware, getClientIdentifier, RateLimitPresets } from "@/libs/rateLimit";
+import { handleApiError } from "@/libs/errorHandler";
 
 // Force dynamic to prevent static optimization
 export const dynamic = 'force-dynamic';
@@ -9,6 +11,19 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Apply rate limiting (10 requests per minute per IP)
+    const rateLimitResponse = await rateLimitMiddleware(
+      getClientIdentifier(req),
+      {
+        ...RateLimitPresets.standard,
+        message: 'Too many requests. Please try again later.'
+      }
+    );
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const supabase = createClient();
     const reportId = params.id;
 
@@ -93,10 +108,6 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error("Error fetching public report:", error);
-    return NextResponse.json(
-      { error: "Internal server error", details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'fetch public report');
   }
 } 

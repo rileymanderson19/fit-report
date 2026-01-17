@@ -1,8 +1,16 @@
 import { NextResponse, NextRequest } from "next/server";
 import { createClient } from "@/libs/supabase/server";
+import { rateLimitMiddleware, getClientIdentifier, RateLimitPresets } from "@/libs/rateLimit";
+import { ImageUploadSchema, validateRequest } from "@/libs/validations";
 
 // Force dynamic to prevent static optimization
 export const dynamic = 'force-dynamic';
+
+// Maximum file size: 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+// Allowed image formats
+const ALLOWED_FORMATS = ['png', 'jpg', 'jpeg', 'webp'];
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json(
         { error: "You must be logged in to upload images" },
@@ -18,25 +26,79 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const { imageData, filename } = body;
+    // Apply rate limiting (30 uploads per minute per user)
+    const rateLimitResponse = await rateLimitMiddleware(
+      getClientIdentifier(req, user.id),
+      {
+        ...RateLimitPresets.moderate,
+        message: 'Too many upload requests. Please try again later.'
+      }
+    );
 
-    if (!imageData) {
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
+    const body = await req.json();
+
+    // Validate input
+    const validation = validateRequest(ImageUploadSchema, body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Image data is required" },
+        { error: 'Validation failed', details: validation.error },
         { status: 400 }
       );
     }
 
-    // Extract base64 data and convert to buffer
-    const base64Data = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+    const { image: imageData, filename } = validation.data;
+
+    // Extract base64 data and file extension
+    const base64Match = imageData.match(/^data:image\/([a-z]+);base64,(.+)$/);
+    if (!base64Match) {
+      return NextResponse.json(
+        { error: "Invalid image data format" },
+        { status: 400 }
+      );
+    }
+
+    const fileExtension = base64Match[1];
+    const base64Data = base64Match[2];
+
+    // Validate file extension
+    if (!ALLOWED_FORMATS.includes(fileExtension)) {
+      return NextResponse.json(
+        { error: `Invalid file format. Allowed formats: ${ALLOWED_FORMATS.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Convert to buffer
     const buffer = Buffer.from(base64Data, 'base64');
-    
-    // Generate unique filename
+
+    // Validate file size
+    if (buffer.length > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB` },
+        { status: 413 }
+      );
+    }
+
+    // Validate it's actually an image by checking magic bytes
+    const isValidImage = validateImageBuffer(buffer, fileExtension);
+    if (!isValidImage) {
+      return NextResponse.json(
+        { error: "Invalid image file. File content does not match the declared format." },
+        { status: 400 }
+      );
+    }
+
+    // Generate unique filename with sanitization
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2);
-    const fileExtension = imageData.match(/^data:image\/([a-z]+);base64,/)?.[1] || 'png';
-    const uniqueFilename = filename || `report-${timestamp}-${randomId}.${fileExtension}`;
+    const sanitizedFilename = filename
+      ? filename.replace(/[^a-zA-Z0-9.-]/g, '_').substring(0, 200)
+      : `report-${timestamp}-${randomId}`;
+    const uniqueFilename = `${sanitizedFilename}.${fileExtension}`;
     
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -216,5 +278,50 @@ export async function DELETE(req: NextRequest) {
       { error: "Internal server error", details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Validates image buffer by checking magic bytes (file signature)
+ * @param buffer - Image buffer to validate
+ * @param declaredFormat - The format declared in the MIME type
+ * @returns true if buffer matches declared format
+ */
+function validateImageBuffer(buffer: Buffer, declaredFormat: string): boolean {
+  if (buffer.length < 12) {
+    return false;
+  }
+
+  // Check magic bytes based on format
+  switch (declaredFormat) {
+    case 'png':
+      // PNG signature: 89 50 4E 47 0D 0A 1A 0A
+      return (
+        buffer[0] === 0x89 &&
+        buffer[1] === 0x50 &&
+        buffer[2] === 0x4e &&
+        buffer[3] === 0x47
+      );
+
+    case 'jpg':
+    case 'jpeg':
+      // JPEG signature: FF D8 FF
+      return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+
+    case 'webp':
+      // WebP signature: RIFF....WEBP
+      return (
+        buffer[0] === 0x52 && // R
+        buffer[1] === 0x49 && // I
+        buffer[2] === 0x46 && // F
+        buffer[3] === 0x46 && // F
+        buffer[8] === 0x57 && // W
+        buffer[9] === 0x45 && // E
+        buffer[10] === 0x42 && // B
+        buffer[11] === 0x50 // P
+      );
+
+    default:
+      return false;
   }
 } 
