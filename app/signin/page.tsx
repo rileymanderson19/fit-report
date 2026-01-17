@@ -184,109 +184,134 @@ function LoginContent() {
   };
 
   return (
-    <main className="p-8 md:p-24" data-theme={config.colors.theme}>
-      <div className="text-center mb-4">
-        <Link href="/" className="btn btn-ghost btn-sm">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              fillRule="evenodd"
-              d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Home
-        </Link>
+    <main className="min-h-screen w-full bg-gradient-to-b from-bg-primary via-bg-secondary to-black text-white relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent-purple/20 rounded-full blur-[120px] animate-pulse-glow" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-violet/20 rounded-full blur-[120px] animate-pulse-glow delay-1000" />
       </div>
-      
-      <div className="tabs tabs-boxed justify-center mx-auto max-w-[200px] mb-4 p-1 bg-base-200 rounded-lg">
-        <a 
-          className={`tab text-sm ${mode === "signin" ? "tab-active" : ""}`}
-          onClick={() => setMode("signin")}
-        >
-          Sign in
-        </a>
-        <a 
-          className={`tab text-sm ${mode === "signup" ? "tab-active" : ""}`}
-          onClick={() => setMode("signup")}
-        >
-          Sign up
-        </a>
-      </div>
-      
-      <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-center mb-12">
-        {mode === "signin" ? "Sign in to" : "Sign up for"} {config.appName}
-      </h1>
 
-      <div className="space-y-8 max-w-xl mx-auto">
-        <form
-          className="form-control w-full space-y-4"
-          onSubmit={(e) => handleAuth(e, { type: mode === "signin" && !password ? "magic_link" : "email" })}
-        >
-          <input
-            required
-            type="email"
-            value={email}
-            autoComplete="email"
-            placeholder="tom@cruise.com"
-            className="input input-bordered w-full placeholder:opacity-60"
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          
-          <input
-            type="password"
-            value={password}
-            autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            placeholder="Password"
-            className="input input-bordered w-full placeholder:opacity-60"
-            onChange={(e) => setPassword(e.target.value)}
-          />
+      <div className="relative z-10 p-8 md:p-24">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 glass border border-white/10 hover:border-accent-purple/50 px-4 py-2 rounded-lg text-white transition-all duration-200 hover:scale-105">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                fillRule="evenodd"
+                d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Home
+          </Link>
+        </div>
 
+        <div className="glass border border-white/10 justify-center mx-auto max-w-[200px] mb-8 p-1 rounded-lg flex">
           <button
-            className="btn btn-primary btn-block"
-            disabled={isLoading || isDisabled}
-            type="submit"
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded transition-all duration-200 ${mode === "signin" ? "bg-gradient-to-r from-primary-start to-accent-purple text-white" : "text-gray-400 hover:text-white"}`}
+            onClick={() => setMode("signin")}
           >
-            {isLoading && (
-              <span className="loading loading-spinner loading-xs"></span>
-            )}
-            {mode === "signin" ? "Sign in" : "Sign up"}
+            Sign in
           </button>
-          
-          {mode === "signin" && (
-            <p className="text-center text-xs text-base-content/60 mt-2">
-              Leave password empty to receive a magic link via email
-            </p>
-          )}
-          
-          {mode === "signin" && (
-            <p className="text-center text-sm text-base-content/70">
-              Don&apos;t have an account?{" "}
-              <a 
-                className="link link-primary" 
-                onClick={() => setMode("signup")}
+          <button
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded transition-all duration-200 ${mode === "signup" ? "bg-gradient-to-r from-primary-start to-accent-purple text-white" : "text-gray-400 hover:text-white"}`}
+            onClick={() => setMode("signup")}
+          >
+            Sign up
+          </button>
+        </div>
+
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold tracking-tight text-center mb-12">
+          {mode === "signin" ? "Sign in to" : "Sign up for"} <span className="gradient-text">{config.appName}</span>
+        </h1>
+
+        <div className="max-w-xl mx-auto">
+          <div className="card-elevated p-8 md:p-10 rounded-2xl">
+            <form
+              className="space-y-6"
+              onSubmit={(e) => handleAuth(e, { type: mode === "signin" && !password ? "magic_link" : "email" })}
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email
+                </label>
+                <input
+                  required
+                  type="email"
+                  value={email}
+                  autoComplete="email"
+                  placeholder="tom@cruise.com"
+                  className="w-full px-4 py-3 rounded-lg bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple transition-colors"
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Password {mode === "signin" && <span className="text-xs text-gray-500">(optional for magic link)</span>}
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  placeholder="Enter your password"
+                  className="w-full px-4 py-3 rounded-lg bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple transition-colors"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              <button
+                className="w-full btn-gradient py-3 px-6 rounded-lg font-semibold text-white transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                disabled={isLoading || isDisabled}
+                type="submit"
               >
-                Sign up
-              </a>
-            </p>
-          )}
-          
-          {mode === "signup" && (
-            <p className="text-center text-sm text-base-content/70">
-              Already have an account?{" "}
-              <a 
-                className="link link-primary" 
-                onClick={() => setMode("signin")}
-              >
-                Sign in
-              </a>
-            </p>
-          )}
-        </form>
+                {isLoading && (
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                {mode === "signin" ? "Sign in" : "Sign up"}
+              </button>
+
+              {mode === "signin" && !password && (
+                <p className="text-center text-xs text-gray-400">
+                  Leave password empty to receive a magic link via email
+                </p>
+              )}
+
+              {mode === "signin" && (
+                <p className="text-center text-sm text-gray-300">
+                  Don&apos;t have an account?{" "}
+                  <button
+                    type="button"
+                    className="text-accent-purple hover:text-primary-start transition-colors font-medium"
+                    onClick={() => setMode("signup")}
+                  >
+                    Sign up
+                  </button>
+                </p>
+              )}
+
+              {mode === "signup" && (
+                <p className="text-center text-sm text-gray-300">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    className="text-accent-purple hover:text-primary-start transition-colors font-medium"
+                    onClick={() => setMode("signin")}
+                  >
+                    Sign in
+                  </button>
+                </p>
+              )}
+            </form>
+          </div>
+        </div>
       </div>
     </main>
   );

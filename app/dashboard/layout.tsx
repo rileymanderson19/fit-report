@@ -30,11 +30,17 @@ export default async function LayoutPrivate({
   const pathname = headersList.get("x-pathname") || "";
 
   return (
-    <div className="flex min-h-screen bg-base-100">
-      <div className="fixed inset-y-0 left-0">
+    <div className="flex min-h-screen bg-gradient-to-b from-bg-primary via-bg-secondary to-black relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent-purple/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-accent-violet/5 rounded-full blur-[150px]" />
+      </div>
+
+      <div className="fixed inset-y-0 left-0 z-50">
         <Sidebar currentPath={pathname} />
       </div>
-      <div className="flex-1 ml-64 p-8">
+      <div className="relative z-10 flex-1 ml-64 p-8 text-white">
         {children}
       </div>
     </div>

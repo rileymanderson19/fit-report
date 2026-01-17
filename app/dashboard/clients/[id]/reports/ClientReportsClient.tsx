@@ -283,7 +283,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
     return (
       <div className="p-8">
         <div className="flex justify-center items-center h-64">
-          <span className="loading loading-spinner loading-lg"></span>
+          <span className="loading loading-spinner loading-lg text-accent-purple"></span>
         </div>
       </div>
     );
@@ -292,9 +292,9 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
   if (!client) {
     return (
       <div className="p-8">
-        <div className="alert alert-error">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span>Client not found</span>
+        <div className="glass border border-red-500/30 bg-red-500/10 p-4 rounded-lg flex items-start gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span className="text-gray-300">Client not found</span>
         </div>
       </div>
     );
@@ -315,22 +315,22 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
         {/* Reports List Sidebar */}
         <div className="w-full lg:w-1/4 space-y-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Reports</h2>
+            <h2 className="text-xl font-semibold text-white">Reports</h2>
             <div className="flex gap-2">
               <Link
                 href={`/dashboard/clients/${clientId}/reports/new`}
-                className="btn btn-primary btn-sm"
+                className="btn-gradient text-sm"
               >
                 New Report
               </Link>
               {reports.length > 0 && (
                 <button
                   onClick={handleDeleteAllReports}
-                  className="btn btn-error btn-sm"
+                  className="glass border border-red-500/50 hover:border-red-500 text-red-400 px-3 py-1.5 rounded-lg text-sm transition-all"
                   disabled={isDeletingAll}
                 >
                   {isDeletingAll ? (
-                    <span className="loading loading-spinner loading-xs" />
+                    <span className="loading loading-spinner loading-xs text-white" />
                   ) : (
                     'Delete All'
                   )}
@@ -343,21 +343,21 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
             {reports.map((report) => (
               <div
                 key={report.id}
-                className={`group relative flex flex-col p-4 rounded-xl transition-all duration-200 ${
-                  selectedReport?.id === report.id 
-                    ? 'bg-primary/10 border-2 border-primary shadow-lg' 
-                    : 'bg-base-200 hover:bg-base-300 border border-base-300'
+                className={`group relative flex flex-col p-4 rounded-xl transition-all duration-200 cursor-pointer ${
+                  selectedReport?.id === report.id
+                    ? 'bg-accent-purple/10 border-2 border-accent-purple shadow-lg'
+                    : 'bg-bg-secondary hover:bg-white/5 border border-white/10'
                 }`}
                 onClick={() => setSelectedReport(report)}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="text-sm text-base-content/60 mt-1">
+                    <div className="text-sm text-gray-400 mt-1">
                       Created: {new Date(report.created_at).toLocaleDateString()}
                     </div>
                   </div>
                   <button
-                    className={`btn btn-ghost btn-xs text-error opacity-0 group-hover:opacity-100 transition-opacity duration-200`}
+                    className={`glass border border-red-500/50 hover:border-red-500 text-red-400 px-2 py-1 rounded text-xs transition-all opacity-0 group-hover:opacity-100`}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteReport(report);
@@ -365,7 +365,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                     disabled={isDeleting === report.id}
                   >
                     {isDeleting === report.id ? (
-                      <span className="loading loading-spinner loading-xs" />
+                      <span className="loading loading-spinner loading-xs text-white" />
                     ) : (
                       'Delete'
                     )}
@@ -378,22 +378,22 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
 
         {/* Report Visualization */}
         <div className="w-full lg:w-3/4">
-          <div className="card bg-base-100 shadow-xl">
+          <div className="card-elevated">
             <div className="card-body p-6">
               {selectedReport ? (
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h2 className="text-2xl font-bold">
+                    <h2 className="text-2xl font-bold text-white">
                       Report for {client?.first_name} {client?.last_name}
                     </h2>
                     <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                       <button
-                        className="btn btn-primary btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
+                        className="btn-gradient btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
                         onClick={captureAndSendReport}
                         disabled={isCapturing}
                       >
                         {isCapturing ? (
-                          <span className="loading loading-spinner loading-sm" />
+                          <span className="loading loading-spinner loading-sm text-white" />
                         ) : (
                           <>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -404,7 +404,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                         )}
                       </button>
                       <button
-                        className="btn btn-primary btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
+                        className="btn-gradient btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
                         onClick={handleGenerateLink}
                         disabled={isCapturing}
                       >
@@ -414,7 +414,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                         <span className="ml-2">Generate Link</span>
                       </button>
                       <button
-                        className="btn btn-primary btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
+                        className="btn-gradient btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
                         onClick={() => setIsSendModalOpen(true)}
                         disabled={isCapturing}
                       >
@@ -450,7 +450,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-lg text-base-content/70">
+                  <p className="text-lg text-gray-400">
                     {reports.length > 0
                       ? 'Select a report to view details'
                       : 'No reports available'}
@@ -464,27 +464,27 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
 
       {/* Delete All Confirmation Modal */}
       <dialog id="delete-all-modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Delete All Reports</h3>
-          <p className="py-4">
-            Are you sure you want to delete all reports for {client?.first_name} {client?.last_name}? 
+        <div className="card-elevated max-w-md">
+          <h3 className="font-bold text-lg text-white">Delete All Reports</h3>
+          <p className="py-4 text-gray-300">
+            Are you sure you want to delete all reports for {client?.first_name} {client?.last_name}?
             This will delete {reports.length} report{reports.length !== 1 ? 's' : ''} and cannot be undone.
           </p>
           <div className="modal-action">
-            <button 
-              className="btn btn-ghost" 
-              onClick={cancelDeleteAll} 
+            <button
+              className="glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg transition-all"
+              onClick={cancelDeleteAll}
               disabled={isDeletingAll}
             >
               Cancel
             </button>
             <button
-              className="btn btn-error"
+              className="glass border border-red-500/50 hover:border-red-500 text-red-400 px-4 py-2 rounded-lg transition-all font-medium"
               onClick={confirmDeleteAll}
               disabled={isDeletingAll}
             >
               {isDeletingAll ? (
-                <span className="loading loading-spinner loading-sm" />
+                <span className="loading loading-spinner loading-sm text-white" />
               ) : (
                 'Delete All Reports'
               )}
@@ -498,22 +498,26 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
 
       {/* Delete Confirmation Modal */}
       <dialog id="delete-modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Confirm Delete</h3>
-          <p className="py-4">
+        <div className="card-elevated max-w-md">
+          <h3 className="font-bold text-lg text-white">Confirm Delete</h3>
+          <p className="py-4 text-gray-300">
             Are you sure you want to delete this report? This action cannot be undone.
           </p>
           <div className="modal-action">
-            <button className="btn btn-ghost" onClick={cancelDelete} disabled={isDeleting !== null}>
+            <button
+              className="glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg transition-all"
+              onClick={cancelDelete}
+              disabled={isDeleting !== null}
+            >
               Cancel
             </button>
             <button
-              className="btn btn-error"
+              className="glass border border-red-500/50 hover:border-red-500 text-red-400 px-4 py-2 rounded-lg transition-all font-medium"
               onClick={confirmDelete}
               disabled={isDeleting !== null}
             >
               {isDeleting ? (
-                <span className="loading loading-spinner loading-sm" />
+                <span className="loading loading-spinner loading-sm text-white" />
               ) : (
                 'Delete'
               )}

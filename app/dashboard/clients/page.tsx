@@ -243,17 +243,17 @@ export default function ClientsPage() {
     return (
       <div className="flex justify-center items-center gap-2 mt-4">
         <button
-          className="btn btn-sm"
+          className="glass border border-white/10 hover:border-accent-purple/50 px-4 py-2 rounded-lg text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
           Previous
         </button>
-        <span className="text-sm">
+        <span className="text-sm text-gray-300">
           Page {currentPage} of {totalPages}
         </span>
         <button
-          className="btn btn-sm"
+          className="glass border border-white/10 hover:border-accent-purple/50 px-4 py-2 rounded-lg text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
@@ -273,14 +273,14 @@ export default function ClientsPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Clients</h1>
-          <p className="text-base-content/80 mt-2">
+          <h1 className="text-3xl font-display font-bold gradient-text">Clients</h1>
+          <p className="text-gray-400 mt-2">
             Manage your client list and import from Trainerize
           </p>
         </div>
-        <Link 
-          href="/dashboard/reports" 
-          className="btn btn-primary"
+        <Link
+          href="/dashboard/reports"
+          className="btn-gradient"
         >
           Generate Reports
         </Link>
@@ -288,14 +288,14 @@ export default function ClientsPage() {
 
       <div className="space-y-6">
         {/* Client Management Section */}
-        <div className="card bg-base-100 shadow-xl">
+        <div className="card-elevated">
           <div className="card-body">
             <div className="flex items-center justify-between gap-4 mb-6">
               <div className="flex-1">
                 <input
                   type="text"
                   placeholder="Search clients..."
-                  className="input input-bordered w-full"
+                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -305,15 +305,15 @@ export default function ClientsPage() {
               </div>
               <div className="flex gap-2">
                 {selectedClients.length > 0 && (
-                  <button 
-                    className="btn btn-error btn-outline"
+                  <button
+                    className="glass border border-red-500/50 hover:border-red-500 text-red-400 hover:text-red-300 px-4 py-2 rounded-lg transition-all"
                     onClick={handleDeleteSelected}
                   >
                     Delete Selected ({selectedClients.length})
                   </button>
                 )}
-                <button 
-                  className={`btn btn-outline ${isLoading ? 'loading' : ''}`}
+                <button
+                  className={`glass border border-white/10 hover:border-accent-purple/50 px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   onClick={fetchTrainerizeClients}
                   disabled={isLoading}
                 >
@@ -329,53 +329,53 @@ export default function ClientsPage() {
               <table className="table w-full">
                 <thead>
                   <tr>
-                    <th>
+                    <th className="text-gray-400">
                       <label>
-                        <input 
-                          type="checkbox" 
-                          className="checkbox"
+                        <input
+                          type="checkbox"
+                          className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                           checked={currentClients.length > 0 && currentClients.every(client => selectedClients.includes(client.id))}
                           onChange={handleSelectAll}
                         />
                       </label>
                     </th>
-                    <th>Name</th>
-                    <th>Notes</th>
-                    <th>Actions</th>
+                    <th className="text-gray-400">Name</th>
+                    <th className="text-gray-400">Notes</th>
+                    <th className="text-gray-400">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentClients.map((client) => (
-                    <tr key={client.id} className={selectedClients.includes(client.id) ? 'bg-base-200' : ''}>
+                    <tr key={client.id} className={selectedClients.includes(client.id) ? 'bg-white/5' : 'hover:bg-white/5'}>
                       <td>
                         <label>
-                          <input 
-                            type="checkbox" 
-                            className="checkbox"
+                          <input
+                            type="checkbox"
+                            className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                             checked={selectedClients.includes(client.id)}
                             onChange={() => handleClientSelect(client.id)}
                           />
                         </label>
                       </td>
-                      <td>{`${client.first_name} ${client.last_name}`}</td>
+                      <td className="text-white">{`${client.first_name} ${client.last_name}`}</td>
                       <td>
                         {client.notes ? (
                           <div className="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            <span className="text-sm text-base-content/70 truncate max-w-xs" title={client.notes}>
+                            <span className="text-sm text-gray-300 truncate max-w-xs" title={client.notes}>
                               {client.notes.length > 50 ? `${client.notes.substring(0, 50)}...` : client.notes}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-base-content/40">No notes</span>
+                          <span className="text-sm text-gray-500">No notes</span>
                         )}
                       </td>
                       <td>
                         <div className="flex gap-2">
                           <button
-                            className="btn btn-sm btn-ghost"
+                            className="glass border border-white/10 hover:border-accent-purple/50 p-2 rounded-lg transition-all"
                             onClick={() => {
                               setEditingClientId(client.id);
                               setEditingNotes(client.notes || '');
@@ -389,13 +389,13 @@ export default function ClientsPage() {
                           </button>
                           <Link
                             href={`/dashboard/clients/${client.id}/reports`}
-                            className="btn btn-sm btn-outline"
+                            className="glass border border-white/10 hover:border-accent-purple/50 px-3 py-1.5 rounded-lg text-sm transition-all"
                           >
                             View Reports
                           </Link>
                           <Link
                             href={`/dashboard/reports?selectedClient=${client.id}`}
-                            className="btn btn-sm btn-primary"
+                            className="btn-gradient text-sm px-3 py-1.5"
                           >
                             Generate Report
                           </Link>
@@ -405,7 +405,7 @@ export default function ClientsPage() {
                   ))}
                   {filteredClients.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="text-center py-4">
+                      <td colSpan={4} className="text-center py-4 text-gray-400">
                         {clients.length === 0 ? 'No clients imported yet' : 'No clients found matching your search'}
                       </td>
                     </tr>
@@ -427,23 +427,23 @@ export default function ClientsPage() {
 
       {/* Delete Client Modal */}
       <dialog id="delete-client-modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Confirm Delete</h3>
-          <p className="py-4">
+        <div className="card-elevated max-w-md">
+          <h3 className="font-bold text-lg text-white mb-2">Confirm Delete</h3>
+          <p className="py-4 text-gray-300">
             Are you sure you want to delete {selectedClients.length} client(s)? This will also delete all their reports. This action cannot be undone.
           </p>
-          <div className="modal-action">
-            <button 
-              className="btn btn-ghost" 
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              className="glass border border-white/10 hover:border-white/20 px-4 py-2 rounded-lg transition-all"
               onClick={() => {
                 (document.getElementById('delete-client-modal') as HTMLDialogElement)?.close();
-              }} 
+              }}
               disabled={isDeleting}
             >
               Cancel
             </button>
             <button
-              className="btn btn-error"
+              className="glass border border-red-500/50 hover:border-red-500 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 px-4 py-2 rounded-lg transition-all flex items-center gap-2"
               onClick={confirmDelete}
               disabled={isDeleting}
             >
@@ -462,31 +462,31 @@ export default function ClientsPage() {
 
       {/* Import Clients Modal */}
       <dialog id="trainerize_modal" className={`modal ${isModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box w-11/12 max-w-5xl">
-          <h3 className="font-bold text-lg mb-4">Import Clients from Trainerize</h3>
-          
-          <div className="form-control mb-6">
+        <div className="card-elevated w-11/12 max-w-5xl">
+          <h3 className="font-bold text-lg mb-4 text-white">Import Clients from Trainerize</h3>
+
+          <div className="mb-6">
             <input
               type="text"
               placeholder="Search Trainerize clients..."
-              className="input input-bordered w-full"
+              className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
               value={importSearchQuery}
               onChange={(e) => setImportSearchQuery(e.target.value)}
             />
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="table w-full">
               <thead>
                 <tr>
-                  <th>
+                  <th className="text-gray-400">
                     <label>
                       <input
                         type="checkbox"
-                        className="checkbox"
+                        className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                         checked={
                           filteredTrainerizeClients.length > 0 &&
-                          filteredTrainerizeClients.every(client => 
+                          filteredTrainerizeClients.every(client =>
                             selectedImportIds.includes(client.id)
                           )
                         }
@@ -494,38 +494,38 @@ export default function ClientsPage() {
                       />
                     </label>
                   </th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Status</th>
+                  <th className="text-gray-400">Name</th>
+                  <th className="text-gray-400">Email</th>
+                  <th className="text-gray-400">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredTrainerizeClients.map((client) => (
-                  <tr key={client.id}>
+                  <tr key={client.id} className="hover:bg-white/5">
                     <td>
                       <label>
                         <input
                           type="checkbox"
-                          className="checkbox"
+                          className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                           checked={selectedImportIds.includes(client.id)}
                           onChange={() => handleImportClientSelect(client.id)}
                         />
                       </label>
                     </td>
-                    <td>{client.first_name} {client.last_name}</td>
-                    <td>{client.email}</td>
+                    <td className="text-white">{client.first_name} {client.last_name}</td>
+                    <td className="text-gray-300">{client.email}</td>
                     <td>
                       {clients.some(c => c.trainerize_id === parseInt(client.id)) ? (
-                        <span className="text-success">Imported</span>
+                        <span className="text-green-400">Imported</span>
                       ) : (
-                        <span className="text-base-content/60">Not Imported</span>
+                        <span className="text-gray-500">Not Imported</span>
                       )}
                     </td>
                   </tr>
                 ))}
                 {filteredTrainerizeClients.length === 0 && !isLoading && (
                   <tr>
-                    <td colSpan={4} className="text-center py-4">
+                    <td colSpan={4} className="text-center py-4 text-gray-400">
                       No clients found
                     </td>
                   </tr>
@@ -541,19 +541,20 @@ export default function ClientsPage() {
             </table>
           </div>
 
-          <div className="modal-action">
-            <button 
-              className={`btn btn-primary ${isImporting ? 'loading' : ''}`}
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              className={`btn-gradient ${isImporting ? 'opacity-50 cursor-not-allowed' : ''} flex items-center gap-2`}
               onClick={handleImportClients}
               disabled={isImporting || selectedImportIds.length === 0}
             >
-              Import Selected ({selectedImportIds.filter(id => 
-                trainerizeClients.some(c => c.id === id) && 
+              {isImporting && <span className="loading loading-spinner loading-sm" />}
+              Import Selected ({selectedImportIds.filter(id =>
+                trainerizeClients.some(c => c.id === id) &&
                 !clients.some(c => c.trainerize_id === parseInt(id))
               ).length})
             </button>
-            <button 
-              className="btn"
+            <button
+              className="glass border border-white/10 hover:border-white/20 px-4 py-2 rounded-lg transition-all"
               onClick={() => {
                 setIsModalOpen(false);
                 setSelectedImportIds([]);
@@ -575,24 +576,24 @@ export default function ClientsPage() {
 
       {/* Edit Notes Modal */}
       <dialog id="edit-notes-modal" className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">
+        <div className="card-elevated max-w-2xl">
+          <h3 className="font-bold text-lg mb-4 text-white">
             Edit Client Notes
           </h3>
           {editingClientId && (
-            <p className="text-sm text-base-content/70 mb-4">
+            <p className="text-sm text-gray-300 mb-4">
               {clients.find(c => c.id === editingClientId)?.first_name} {clients.find(c => c.id === editingClientId)?.last_name}
             </p>
           )}
           <textarea
-            className="textarea textarea-bordered w-full min-h-[200px]"
+            className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full min-h-[200px]"
             placeholder="Enter client notes/context here..."
             value={editingNotes}
             onChange={(e) => setEditingNotes(e.target.value)}
           />
-          <div className="modal-action">
+          <div className="flex justify-end gap-2 mt-4">
             <button
-              className={`btn btn-primary ${isSavingNotes ? 'loading' : ''}`}
+              className={`btn-gradient ${isSavingNotes ? 'opacity-50 cursor-not-allowed' : ''} flex items-center gap-2`}
               onClick={async () => {
                 if (!editingClientId) return;
                 setIsSavingNotes(true);
@@ -615,8 +616,8 @@ export default function ClientsPage() {
                   }
 
                   // Update local state
-                  setClients(clients.map(c => 
-                    c.id === editingClientId 
+                  setClients(clients.map(c =>
+                    c.id === editingClientId
                       ? { ...c, notes: editingNotes.trim() || null }
                       : c
                   ));
@@ -634,10 +635,11 @@ export default function ClientsPage() {
               }}
               disabled={isSavingNotes}
             >
+              {isSavingNotes && <span className="loading loading-spinner loading-sm" />}
               Save
             </button>
             <button
-              className="btn"
+              className="glass border border-white/10 hover:border-white/20 px-4 py-2 rounded-lg transition-all"
               onClick={() => {
                 (document.getElementById('edit-notes-modal') as HTMLDialogElement)?.close();
                 setEditingClientId(null);

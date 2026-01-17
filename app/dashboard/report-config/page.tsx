@@ -244,7 +244,7 @@ export default function ReportConfigPage() {
     return (
       <div className="container mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
-          <span className="loading loading-spinner loading-lg"></span>
+          <span className="loading loading-spinner loading-lg text-accent-purple"></span>
         </div>
       </div>
     );
@@ -253,10 +253,10 @@ export default function ReportConfigPage() {
   if (!config) {
     return (
       <div className="container mx-auto px-8 py-8">
-        <div className="card bg-base-100 shadow-xl">
+        <div className="card-elevated">
           <div className="card-body">
-            <h2 className="card-title text-error">Error Loading Configuration</h2>
-            <p>Unable to load your report configuration. Please try refreshing the page.</p>
+            <h2 className="card-title text-red-500 text-white">Error Loading Configuration</h2>
+            <p className="text-gray-300">Unable to load your report configuration. Please try refreshing the page.</p>
           </div>
         </div>
       </div>
@@ -267,21 +267,21 @@ export default function ReportConfigPage() {
     <div className="container mx-auto px-8 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Report Configuration</h1>
-          <p className="text-base-content/80 mt-2">
+          <h1 className="text-3xl font-bold gradient-text font-display">Report Configuration</h1>
+          <p className="text-gray-300 mt-2">
             Customize your default messaging when sending fitness reports to clients
           </p>
         </div>
         
         <div className="flex gap-3">
-          <button 
-            className="btn btn-ghost"
+          <button
+            className="glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg transition-all"
             onClick={resetToDefaults}
           >
             Reset to Defaults
           </button>
-          <button 
-            className={`btn btn-primary ${saving ? "loading" : ""}`}
+          <button
+            className={`btn-gradient ${saving ? "loading" : ""}`}
             onClick={saveConfig}
             disabled={saving}
           >
@@ -291,26 +291,26 @@ export default function ReportConfigPage() {
       </div>
 
       {message && (
-        <div className={`alert ${message.includes("✅") ? "alert-success" : "alert-error"} mb-6`}>
-          <span>{message}</span>
+        <div className={`${message.includes("✅") ? "glass border border-green-500/30 bg-green-500/10" : "glass border border-red-500/30 bg-red-500/10"} p-4 rounded-lg mb-6`}>
+          <span className="text-gray-300">{message}</span>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Configuration Form */}
         <div className="space-y-6">
-          <div className="card bg-base-100 shadow-xl">
+          <div className="card-elevated">
             <div className="card-body">
-              <h2 className="card-title mb-4">Message Settings</h2>
-              
+              <h2 className="card-title mb-4 text-white">Message Settings</h2>
+
               {/* Subject Line */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Default Subject Line</span>
+                  <span className="text-gray-300 font-medium">Default Subject Line</span>
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full"
+                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
                   value={config.default_subject}
                   onChange={(e) => setConfig({
                     ...config,
@@ -319,17 +319,17 @@ export default function ReportConfigPage() {
                   placeholder="Your Fitness Report - {date}"
                 />
                 <label className="label">
-                  <span className="label-text-alt">Use {`{date}`} for current date</span>
+                  <span className="text-gray-400 text-xs">Use {`{date}`} for current date</span>
                 </label>
               </div>
 
               {/* Message Body */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Default Message</span>
+                  <span className="text-gray-300 font-medium">Default Message</span>
                 </label>
                 <textarea
-                  className="textarea textarea-bordered h-40"
+                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 h-40"
                   value={config.default_message}
                   onChange={(e) => setConfig({
                     ...config,
@@ -338,7 +338,7 @@ export default function ReportConfigPage() {
                   placeholder="Enter your default message..."
                 />
                 <label className="label">
-                  <span className="label-text-alt">
+                  <span className="text-gray-400 text-xs">
                     Available variables: {`{clientName}, {date}, {reportUrl}, {trainerName}`}
                   </span>
                 </label>
@@ -347,10 +347,10 @@ export default function ReportConfigPage() {
               {/* Signature */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Signature</span>
+                  <span className="text-gray-300 font-medium">Signature</span>
                 </label>
                 <textarea
-                  className="textarea textarea-bordered h-20"
+                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 h-20"
                   value={config.signature}
                   onChange={(e) => setConfig({
                     ...config,
@@ -359,29 +359,29 @@ export default function ReportConfigPage() {
                   placeholder="Best regards,\n{trainerName}"
                 />
                 <label className="label">
-                  <span className="label-text-alt">Use {`{trainerName}`} for your name</span>
+                  <span className="text-gray-400 text-xs">Use {`{trainerName}`} for your name</span>
                 </label>
               </div>
             </div>
           </div>
 
           {/* Workout Exclusions */}
-          <div className="card bg-base-100 shadow-xl">
+          <div className="card-elevated">
             <div className="card-body">
-              <h2 className="card-title mb-4">Workout Exclusions</h2>
-              <p className="text-sm text-base-content/70 mb-4">
+              <h2 className="card-title mb-4 text-white">Workout Exclusions</h2>
+              <p className="text-sm text-gray-400 mb-4">
                 Add workout names to exclude from all reports. This is useful for removing warm-up activities like Zone 2 Cardio or Walking from your reports.
               </p>
-              
+
               {/* Add new exclusion */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Exclude Workouts</span>
+                  <span className="text-gray-300 font-medium">Exclude Workouts</span>
                 </label>
                 <div className="join w-full">
                   <input
                     type="text"
-                    className="input input-bordered join-item flex-1"
+                    className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 join-item flex-1"
                     placeholder="Enter workout name (e.g., Zone 2 Cardio)"
                     value={newExcludedWorkout}
                     onChange={(e) => setNewExcludedWorkout(e.target.value)}
@@ -393,7 +393,7 @@ export default function ReportConfigPage() {
                   />
                   <button
                     type="button"
-                    className="btn btn-primary join-item"
+                    className="btn-gradient join-item"
                     onClick={addExcludedWorkout}
                     disabled={!newExcludedWorkout.trim()}
                   >
@@ -401,7 +401,7 @@ export default function ReportConfigPage() {
                   </button>
                 </div>
                 <label className="label">
-                  <span className="label-text-alt">
+                  <span className="text-gray-400 text-xs">
                     Matching is case-insensitive and must match the exact workout name
                   </span>
                 </label>
@@ -410,14 +410,14 @@ export default function ReportConfigPage() {
               {/* List of excluded workouts */}
               {config.excluded_workout_names && config.excluded_workout_names.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="font-medium mb-2">Currently Excluded:</h3>
+                  <h3 className="font-medium mb-2 text-white">Currently Excluded:</h3>
                   <div className="space-y-2">
                     {config.excluded_workout_names.map((workoutName, index) => (
-                      <div key={index} className="flex items-center justify-between bg-base-200 p-3 rounded-lg">
-                        <span className="text-sm">{workoutName}</span>
+                      <div key={index} className="flex items-center justify-between bg-bg-secondary p-3 rounded-lg">
+                        <span className="text-sm text-white">{workoutName}</span>
                         <button
                           type="button"
-                          className="btn btn-sm btn-ghost text-error"
+                          className="glass border border-red-500/50 hover:border-red-500 text-red-400 px-2 py-1 rounded transition-all"
                           onClick={() => removeExcludedWorkout(index)}
                                                      title={`Remove ${workoutName} from exclusions`}
                         >
@@ -432,7 +432,7 @@ export default function ReportConfigPage() {
               )}
 
               {(!config.excluded_workout_names || config.excluded_workout_names.length === 0) && (
-                <div className="text-center py-4 text-base-content/60">
+                <div className="text-center py-4 text-gray-400">
                   No workouts are currently excluded from reports
                 </div>
               )}
@@ -442,22 +442,22 @@ export default function ReportConfigPage() {
         </div>
 
         {/* Preview */}
-        <div className="card bg-base-100 shadow-xl h-fit">
+        <div className="card-elevated h-fit">
           <div className="card-body">
-            <h2 className="card-title mb-4">Message Preview</h2>
-            
-            <div className="mockup-email bg-base-200 p-4 rounded-lg">
-              <div className="border-b border-base-300 pb-2 mb-4">
-                <div className="font-medium">Subject: {config.default_subject.replace('{date}', new Date().toLocaleDateString())}</div>
-                <div className="text-sm text-base-content/60">To: John Smith</div>
+            <h2 className="card-title mb-4 text-white">Message Preview</h2>
+
+            <div className="bg-bg-secondary border border-white/10 rounded-lg p-4">
+              <div className="border-b border-white/10 pb-2 mb-4">
+                <div className="font-medium text-white">Subject: {config.default_subject.replace('{date}', new Date().toLocaleDateString())}</div>
+                <div className="text-sm text-gray-400">To: John Smith</div>
               </div>
-              
-              <div className="whitespace-pre-line text-sm">
+
+              <div className="whitespace-pre-line text-sm text-gray-300">
                 {generatePreview()}
               </div>
             </div>
 
-            <div className="mt-4 text-xs text-base-content/60">
+            <div className="mt-4 text-xs text-gray-400">
               * This preview uses sample data to show how your message will appear to clients
             </div>
           </div>

@@ -13,9 +13,15 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <>
-      <div className="h-screen w-full flex flex-col justify-center items-center text-center gap-6 p-6">
-        <div className="p-6 bg-white rounded-xl">
+    <div className="h-screen w-full bg-gradient-to-b from-bg-primary via-bg-secondary to-black text-white relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent-purple/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-violet/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 h-screen w-full flex flex-col justify-center items-center text-center gap-6 p-6">
+        <div className="card-elevated p-8 rounded-2xl">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             data-name="Layer 1"
@@ -130,14 +136,17 @@ export default function Error({
           </svg>
         </div>
 
-        <p className="font-medium md:text-xl md:font-semibold">
-          Something went wrong 🥲
+        <p className="font-display font-bold text-2xl md:text-3xl gradient-text">
+          Something went wrong
         </p>
 
-        <p className="text-red-500">{error?.message}</p>
+        <p className="text-red-400 max-w-md">{error?.message}</p>
 
         <div className="flex flex-wrap gap-4 justify-center">
-          <button className="btn btn-sm" onClick={reset}>
+          <button
+            className="glass border border-white/10 hover:border-accent-purple/50 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 inline-flex items-center gap-2"
+            onClick={reset}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
@@ -153,7 +162,10 @@ export default function Error({
             Refresh
           </button>
           <ButtonSupport />
-          <Link href="/" className="btn btn-sm">
+          <Link
+            href="/"
+            className="btn-gradient px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 inline-flex items-center gap-2"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
@@ -170,6 +182,6 @@ export default function Error({
           </Link>
         </div>
       </div>
-    </>
+    </div>
   );
 }

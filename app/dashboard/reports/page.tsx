@@ -334,17 +334,17 @@ export default function ReportsPage() {
     return (
       <div className="flex justify-center items-center gap-2 mt-4">
         <button
-          className="btn btn-sm"
+          className="glass border border-white/10 hover:border-accent-purple/50 text-white px-3 py-1.5 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
           Previous
         </button>
-        <span className="text-sm">
+        <span className="text-sm text-gray-300">
           Page {currentPage} of {totalPages}
         </span>
         <button
-          className="btn btn-sm"
+          className="glass border border-white/10 hover:border-accent-purple/50 text-white px-3 py-1.5 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
@@ -358,14 +358,14 @@ export default function ReportsPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Generate Reports</h1>
-          <p className="text-base-content/80 mt-2">
+          <h1 className="text-3xl font-bold gradient-text font-display">Generate Reports</h1>
+          <p className="text-gray-300 mt-2">
             Create fitness reports for your clients
           </p>
         </div>
-        <Link 
-          href="/dashboard/clients" 
-          className="btn btn-outline"
+        <Link
+          href="/dashboard/clients"
+          className="glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg"
         >
           Manage Clients
         </Link>
@@ -373,18 +373,20 @@ export default function ReportsPage() {
 
       <div className="space-y-6">
         {/* Client Selection */}
-        <div className="card bg-base-100 shadow-xl">
+        <div className="card-elevated">
           <div className="card-body">
-            <h2 className="text-xl font-bold mb-4">Select Clients</h2>
-            
+            <h2 className="text-xl font-bold text-white mb-4">Select Clients</h2>
+
             {selectedClients.length > 0 && (
-              <div className="alert alert-info mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span>
-                  <strong>{selectedClients.length}</strong> client{selectedClients.length !== 1 ? 's' : ''} selected for report generation
-                </span>
+              <div className="glass border border-purple-500/30 bg-purple-500/10 p-4 rounded-lg mb-4">
+                <div className="flex items-center gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6 text-purple-400">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span className="text-gray-300">
+                    <strong className="text-white">{selectedClients.length}</strong> client{selectedClients.length !== 1 ? 's' : ''} selected for report generation
+                  </span>
+                </div>
               </div>
             )}
 
@@ -392,7 +394,7 @@ export default function ReportsPage() {
               <input
                 type="text"
                 placeholder="Search clients..."
-                className="input input-bordered w-full"
+                className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple w-full px-4 py-2 rounded-lg"
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -407,9 +409,9 @@ export default function ReportsPage() {
                   <tr>
                     <th>
                       <label className="cursor-pointer flex items-center gap-2">
-                        <input 
-                          type="checkbox" 
-                          className="checkbox"
+                        <input
+                          type="checkbox"
+                          className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                           checked={filteredClients.length > 0 && filteredClients.every(client => selectedClients.includes(client.id))}
                           ref={(input) => {
                             if (input) {
@@ -422,33 +424,33 @@ export default function ReportsPage() {
                           }}
                           onChange={handleSelectAll}
                         />
-                        <span className="text-xs text-base-content/70">
+                        <span className="text-xs text-gray-400">
                           {searchQuery ? `All ${filteredClients.length} filtered` : `All ${filteredClients.length}`}
                         </span>
                       </label>
                     </th>
-                    <th>Name</th>
-                    <th>Actions</th>
+                    <th className="text-gray-400">Name</th>
+                    <th className="text-gray-400">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentClients.map((client) => (
-                    <tr key={client.id} className={selectedClients.includes(client.id) ? 'bg-base-200' : ''}>
+                    <tr key={client.id} className={`hover:bg-white/5 ${selectedClients.includes(client.id) ? 'bg-white/5' : ''}`}>
                       <td>
                         <label>
-                          <input 
-                            type="checkbox" 
-                            className="checkbox"
+                          <input
+                            type="checkbox"
+                            className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                             checked={selectedClients.includes(client.id)}
                             onChange={() => handleClientSelect(client.id)}
                           />
                         </label>
                       </td>
-                      <td>{`${client.first_name} ${client.last_name}`}</td>
+                      <td className="text-white">{`${client.first_name} ${client.last_name}`}</td>
                       <td>
                         <Link
                           href={`/dashboard/clients/${client.id}/reports`}
-                          className="btn btn-sm btn-outline"
+                          className="glass border border-white/10 hover:border-accent-purple/50 text-white px-3 py-1.5 rounded-lg text-sm"
                         >
                           View Reports
                         </Link>
@@ -459,14 +461,14 @@ export default function ReportsPage() {
                     <tr>
                       <td colSpan={3} className="text-center py-4">
                         {clients.length === 0 ? (
-                          <div>
-                            No clients found. {' '}
-                            <Link href="/dashboard/clients" className="link link-primary">
+                          <div className="text-gray-300">
+                            No clients found.{' '}
+                            <Link href="/dashboard/clients" className="text-accent-purple hover:text-accent-purple/80">
                               Import clients first
                             </Link>
                           </div>
                         ) : (
-                          'No clients found matching your search'
+                          <span className="text-gray-300">No clients found matching your search</span>
                         )}
                       </td>
                     </tr>
@@ -486,69 +488,69 @@ export default function ReportsPage() {
         </div>
 
         {/* Report Template */}
-        <div className="card bg-base-100 shadow-xl">
+        <div className="card-elevated">
           <div className="card-body">
-            <h2 className="text-xl font-bold mb-6">Report Template</h2>
+            <h2 className="text-xl font-bold text-white mb-6">Report Template</h2>
             <div className="space-y-4">
               {/* Progress Report Template */}
-              <div 
+              <div
                 className={`card cursor-pointer transition-all duration-200 border-2 ${
-                  reportTemplate === 'enhanced' 
-                    ? 'border-primary bg-primary/10 shadow-lg' 
-                    : 'border-base-300 hover:border-primary/50 hover:shadow-md'
+                  reportTemplate === 'enhanced'
+                    ? 'border-accent-purple bg-accent-purple/10 shadow-lg'
+                    : 'border-white/10 hover:border-accent-purple/50 hover:shadow-md'
                 }`}
                 onClick={() => setReportTemplate('enhanced')}
               >
                 <div className="card-body p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-lg">Progress Report</h3>
-                      <p className="text-sm text-base-content/70">AI insights, goal tracking, and coaching suggestions</p>
+                      <h3 className="font-semibold text-lg text-white">Progress Report</h3>
+                      <p className="text-sm text-gray-400">AI insights, goal tracking, and coaching suggestions</p>
                     </div>
-                    <input 
-                      type="radio" 
-                      name="reportTemplate" 
+                    <input
+                      type="radio"
+                      name="reportTemplate"
                       value="enhanced"
-                      className="radio radio-primary" 
+                      className="radio border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                       checked={reportTemplate === 'enhanced'}
                       onChange={() => setReportTemplate('enhanced')}
                     />
                   </div>
                   {reportTemplate === 'enhanced' && (
-                    <div className="mt-3 p-3 bg-primary/20 rounded-lg">
-                      <div className="text-sm text-primary font-medium">✓ Complete analysis with automated insights, goal tracking, and trainer coaching suggestions</div>
+                    <div className="mt-3 p-3 bg-accent-purple/20 rounded-lg">
+                      <div className="text-sm text-purple-300 font-medium">✓ Complete analysis with automated insights, goal tracking, and trainer coaching suggestions</div>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Daily Data Template */}
-              <div 
+              <div
                 className={`card cursor-pointer transition-all duration-200 border-2 ${
-                  reportTemplate === 'daily' 
-                    ? 'border-primary bg-primary/10 shadow-lg' 
-                    : 'border-base-300 hover:border-primary/50 hover:shadow-md'
+                  reportTemplate === 'daily'
+                    ? 'border-accent-purple bg-accent-purple/10 shadow-lg'
+                    : 'border-white/10 hover:border-accent-purple/50 hover:shadow-md'
                 }`}
                 onClick={() => setReportTemplate('daily')}
               >
                 <div className="card-body p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-lg">Daily Data</h3>
-                      <p className="text-sm text-base-content/70">Day-by-day breakdown with detailed workout information</p>
+                      <h3 className="font-semibold text-lg text-white">Daily Data</h3>
+                      <p className="text-sm text-gray-400">Day-by-day breakdown with detailed workout information</p>
                     </div>
-                    <input 
-                      type="radio" 
-                      name="reportTemplate" 
+                    <input
+                      type="radio"
+                      name="reportTemplate"
                       value="daily"
-                      className="radio radio-primary" 
+                      className="radio border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                       checked={reportTemplate === 'daily'}
                       onChange={() => setReportTemplate('daily')}
                     />
                   </div>
                   {reportTemplate === 'daily' && (
-                    <div className="mt-3 p-3 bg-primary/20 rounded-lg">
-                      <div className="text-sm text-primary font-medium">✓ Perfect for single week analysis and detailed workout review</div>
+                    <div className="mt-3 p-3 bg-accent-purple/20 rounded-lg">
+                      <div className="text-sm text-purple-300 font-medium">✓ Perfect for single week analysis and detailed workout review</div>
                     </div>
                   )}
                 </div>
@@ -558,30 +560,30 @@ export default function ReportsPage() {
         </div>
 
         {/* Progressive Overload Settings */}
-        <div className="card bg-base-100 shadow-xl">
+        <div className="card-elevated">
           <div className="card-body">
-            <h2 className="text-xl font-bold mb-4">Progressive Overload Settings</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Progressive Overload Settings</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="form-control w-full">
                 <label className="label">
-                  <span className="label-text font-semibold">Minimum Reps</span>
+                  <span className="label-text font-semibold text-gray-300">Minimum Reps</span>
                 </label>
-                <input 
-                  type="number" 
-                  className="input input-bordered w-full"
+                <input
+                  type="number"
+                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple w-full px-4 py-2 rounded-lg"
                   value={minReps}
                   onChange={(e) => setMinReps(Math.max(1, parseInt(e.target.value) || 1))}
                   min="1"
                 />
               </div>
-              
+
               <div className="form-control w-full">
                 <label className="label">
-                  <span className="label-text font-semibold">Maximum Reps</span>
+                  <span className="label-text font-semibold text-gray-300">Maximum Reps</span>
                 </label>
-                <input 
-                  type="number" 
-                  className="input input-bordered w-full"
+                <input
+                  type="number"
+                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple w-full px-4 py-2 rounded-lg"
                   value={maxReps}
                   onChange={(e) => setMaxReps(Math.max(minReps + 1, parseInt(e.target.value) || minReps + 1))}
                   min={minReps + 1}
@@ -592,9 +594,9 @@ export default function ReportsPage() {
         </div>
 
         {/* Timeframe Selection */}
-        <div className="card bg-base-100 shadow-xl">
+        <div className="card-elevated">
           <div className="card-body">
-            <h2 className="text-xl font-bold mb-4">Timeframe Selection</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Timeframe Selection</h2>
             <DateRangePicker
               from={startDate || undefined}
               to={endDate || undefined}
@@ -609,8 +611,8 @@ export default function ReportsPage() {
 
         {/* Generate Button */}
         <div className="flex justify-end">
-          <button 
-            className={`btn btn-primary btn-lg ${isLoading ? 'loading' : ''}`}
+          <button
+            className={`btn-gradient btn-lg ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
             onClick={generateReport}
             disabled={selectedClients.length === 0 || !startDate || !endDate || isLoading}
           >
@@ -624,11 +626,11 @@ export default function ReportsPage() {
             {Object.entries(reportData).map(([clientId, data]) => {
               const client = clients.find(c => c.id === clientId);
               return (
-                <div key={clientId} className="bg-base-100 p-6 rounded-lg shadow-xl border border-base-300">
-                  <h2 className="text-xl font-semibold mb-4">
+                <div key={clientId} className="card-elevated p-6 rounded-lg border border-white/10">
+                  <h2 className="text-xl font-semibold text-white mb-4">
                     Report for {client?.first_name} {client?.last_name}
                   </h2>
-                  <pre className="whitespace-pre-wrap">{JSON.stringify(data, null, 2)}</pre>
+                  <pre className="whitespace-pre-wrap text-gray-300 text-sm">{JSON.stringify(data, null, 2)}</pre>
                 </div>
               );
             })}

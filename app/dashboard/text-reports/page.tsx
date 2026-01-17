@@ -313,23 +313,23 @@ export default function TestTextReportPage() {
 
   return (
     <div className="container mx-auto p-6 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6">Client Check-In Reports</h1>
+      <h1 className="text-3xl font-bold mb-6 gradient-text font-display">Client Check-In Reports</h1>
 
       {!isWorkflowActive ? (
         // Configuration View
         <>
-          <div className="card bg-base-200 shadow-xl mb-6">
+          <div className="card-elevated mb-6">
             <div className="card-body">
-              <h2 className="card-title mb-4">Configuration</h2>
+              <h2 className="card-title mb-4 text-white">Configuration</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {/* Template Selection */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Template</span>
+                    <span className="text-gray-300">Template</span>
                   </label>
                   <select
-                    className="select select-bordered"
+                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
                     value={template}
                     onChange={(e) => setTemplate(e.target.value as any)}
                   >
@@ -342,10 +342,10 @@ export default function TestTextReportPage() {
                 {/* Weight Unit */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Weight Unit</span>
+                    <span className="text-gray-300">Weight Unit</span>
                   </label>
                   <select
-                    className="select select-bordered"
+                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
                     value={weightUnit}
                     onChange={(e) => setWeightUnit(e.target.value as any)}
                   >
@@ -357,10 +357,10 @@ export default function TestTextReportPage() {
                 {/* Goal Selection */}
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Goal</span>
+                    <span className="text-gray-300">Goal</span>
                   </label>
                   <select
-                    className="select select-bordered"
+                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
                     value={goal}
                     onChange={(e) => setGoal(e.target.value as any)}
                   >
@@ -375,22 +375,22 @@ export default function TestTextReportPage() {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Start Date</span>
+                    <span className="text-gray-300">Start Date</span>
                   </label>
                   <input
                     type="date"
-                    className="input input-bordered"
+                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
                     value={dateFrom}
                     onChange={(e) => setDateFrom(e.target.value)}
                   />
                 </div>
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text">End Date</span>
+                    <span className="text-gray-300">End Date</span>
                   </label>
                   <input
                     type="date"
-                    className="input input-bordered"
+                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
                     value={dateTo}
                     onChange={(e) => setDateTo(e.target.value)}
                   />
@@ -401,11 +401,11 @@ export default function TestTextReportPage() {
               <div className="form-control mb-4">
                 <div className="flex justify-between items-center mb-2">
                   <label className="label">
-                    <span className="label-text font-semibold">Select Clients</span>
-                    <span className="label-text-alt">({selectedCount} selected)</span>
+                    <span className="text-gray-300 font-semibold">Select Clients</span>
+                    <span className="text-gray-400 text-xs">({selectedCount} selected)</span>
                   </label>
                   <button
-                    className="btn btn-sm btn-outline"
+                    className="glass border border-white/10 hover:border-accent-purple/50 text-white px-3 py-1.5 rounded-lg text-sm transition-all"
                     onClick={toggleSelectAll}
                   >
                     {allFilteredSelected ? 'Deselect All' : 'Select All'}
@@ -415,17 +415,17 @@ export default function TestTextReportPage() {
                 {/* Search */}
                 <input
                   type="text"
-                  className="input input-bordered mb-3"
+                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 mb-3"
                   placeholder="Search clients..."
                   value={clientSearchQuery}
                   onChange={(e) => setClientSearchQuery(e.target.value)}
                 />
 
                 {/* Client List with Checkboxes */}
-                <div className="border border-base-300 rounded-lg max-h-96 overflow-y-auto">
+                <div className="border border-white/10 rounded-lg max-h-96 overflow-y-auto">
                   <div className="p-2">
                     {filteredClients.length === 0 ? (
-                      <div className="text-center py-4 text-base-content/60">
+                      <div className="text-center py-4 text-gray-400">
                         No clients found
                       </div>
                     ) : (
@@ -435,15 +435,15 @@ export default function TestTextReportPage() {
                         return (
                           <label
                             key={client.id}
-                            className="flex items-center gap-3 p-3 hover:bg-base-200 rounded cursor-pointer"
+                            className="flex items-center gap-3 p-3 hover:bg-white/5 rounded cursor-pointer"
                           >
                             <input
                               type="checkbox"
-                              className="checkbox checkbox-primary"
+                              className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                               checked={isSelected}
                               onChange={() => toggleClientSelection(client.id)}
                             />
-                            <span className="flex-1">{clientName}</span>
+                            <span className="flex-1 text-white">{clientName}</span>
                           </label>
                         );
                       })
@@ -454,20 +454,20 @@ export default function TestTextReportPage() {
 
               <div className="flex gap-4 mt-4">
                 <button
-                  className="btn btn-primary flex-1"
+                  className="btn-gradient flex-1"
                   onClick={handleStartWorkflow}
                   disabled={selectedCount === 0}
                 >
                   Start Workflow ({selectedCount} client{selectedCount !== 1 ? 's' : ''})
                 </button>
                 <button
-                  className="btn btn-secondary flex-1"
+                  className="glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg transition-all flex-1"
                   onClick={handleGenerateCombined}
                   disabled={selectedCount === 0 || isGeneratingCombined}
                 >
                   {isGeneratingCombined ? (
                     <>
-                      <span className="loading loading-spinner"></span>
+                      <span className="loading loading-spinner text-accent-purple"></span>
                       Generating... ({generationProgress.current}/{generationProgress.total})
                     </>
                   ) : (
@@ -480,24 +480,24 @@ export default function TestTextReportPage() {
 
           {/* Combined Document Display */}
           {combinedDocument && (
-            <div className="card bg-base-200 shadow-xl mb-6">
+            <div className="card-elevated mb-6">
               <div className="card-body">
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <h2 className="card-title">Combined Document</h2>
-                    <p className="text-sm text-base-content/70">
+                    <h2 className="card-title text-white">Combined Document</h2>
+                    <p className="text-sm text-gray-400">
                       {selectedCount} client{selectedCount !== 1 ? 's' : ''} • {combinedDocument.length.toLocaleString()} characters
                     </p>
                   </div>
                   <button
-                    className="btn btn-sm btn-primary"
+                    className="btn-gradient text-sm"
                     onClick={() => copyToClipboard(combinedDocument)}
                   >
                     Copy Document
                   </button>
                 </div>
 
-                <div className="bg-base-300 p-4 rounded max-h-[600px] overflow-y-auto">
+                <div className="bg-bg-secondary p-4 rounded max-h-[600px] overflow-y-auto">
                   <pre className="text-sm whitespace-pre-wrap">{combinedDocument}</pre>
                 </div>
               </div>
@@ -508,25 +508,25 @@ export default function TestTextReportPage() {
         // Workflow View
         <>
           {/* Progress Bar */}
-          <div className="card bg-base-200 shadow-xl mb-6">
+          <div className="card-elevated mb-6">
             <div className="card-body">
               <div className="flex justify-between items-center mb-2">
-                <h2 className="card-title">
+                <h2 className="card-title text-white">
                   Client {currentClientIndex + 1} of {clientQueue.length}
                 </h2>
                 <button
-                  className="btn btn-sm btn-ghost"
+                  className="glass border border-white/10 hover:border-red-500/50 text-white px-3 py-1.5 rounded-lg text-sm transition-all"
                   onClick={handleReset}
                 >
                   Reset
                 </button>
               </div>
-              <progress 
-                className="progress progress-primary w-full" 
-                value={currentClientIndex + 1} 
+              <progress
+                className="[&::-webkit-progress-bar]:bg-bg-secondary [&::-webkit-progress-value]:bg-gradient-to-r [&::-webkit-progress-value]:from-primary-start [&::-webkit-progress-value]:to-accent-purple [&::-moz-progress-bar]:bg-gradient-to-r [&::-moz-progress-bar]:from-primary-start [&::-moz-progress-bar]:to-accent-purple w-full h-3 rounded-full bg-bg-secondary"
+                value={currentClientIndex + 1}
                 max={clientQueue.length}
               ></progress>
-              <p className="text-sm text-base-content/70">
+              <p className="text-sm text-gray-300">
                 {currentClient?.first_name} {currentClient?.last_name}
               </p>
             </div>
@@ -534,19 +534,19 @@ export default function TestTextReportPage() {
 
           {/* Current Report */}
           {isGenerating ? (
-            <div className="card bg-base-200 shadow-xl">
+            <div className="card-elevated">
               <div className="card-body text-center py-12">
-                <span className="loading loading-spinner loading-lg"></span>
-                <p className="mt-4">Generating report...</p>
+                <span className="loading loading-spinner loading-lg text-accent-purple"></span>
+                <p className="mt-4 text-gray-300">Generating report...</p>
               </div>
             </div>
           ) : currentResult ? (
-            <div className="card bg-base-200 shadow-xl mb-6">
+            <div className="card-elevated mb-6">
               <div className="card-body">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="card-title">Report</h2>
+                  <h2 className="card-title text-white">Report</h2>
                   <button
-                    className="btn btn-sm btn-outline"
+                    className="glass border border-white/10 hover:border-accent-purple/50 text-white px-3 py-1.5 rounded-lg text-sm transition-all"
                     onClick={() => copyToClipboard(currentResult.text)}
                   >
                     Copy Text
@@ -555,14 +555,14 @@ export default function TestTextReportPage() {
 
                 {/* Text Output */}
                 <div className="mb-4">
-                  <div className="bg-base-300 p-4 rounded max-h-96 overflow-y-auto">
+                  <div className="bg-bg-secondary p-4 rounded max-h-96 overflow-y-auto">
                     <pre className="text-sm whitespace-pre-wrap">{currentResult.text}</pre>
                   </div>
                 </div>
 
                 {/* Done Button */}
                 <button
-                  className="btn btn-primary w-full mt-4"
+                  className="btn-gradient w-full mt-4"
                   onClick={handleDone}
                 >
                   {currentClientIndex < clientQueue.length - 1 ? 'Done - Next Client' : 'Done - Complete'}
@@ -573,14 +573,14 @@ export default function TestTextReportPage() {
 
           {/* Completed Clients History */}
           {completedClients.length > 0 && (
-            <div className="card bg-base-200 shadow-xl">
+            <div className="card-elevated">
               <div className="card-body">
-                <h3 className="font-semibold mb-4">Completed ({completedClients.length})</h3>
+                <h3 className="font-semibold mb-4 text-white">Completed ({completedClients.length})</h3>
                 <div className="space-y-2">
                   {completedClients.map((client) => (
-                    <div key={client.id} className="flex justify-between items-center p-2 bg-base-300 rounded">
-                      <span>{client.name}</span>
-                      <span className="text-sm text-base-content/60">
+                    <div key={client.id} className="flex justify-between items-center p-2 bg-bg-secondary rounded">
+                      <span className="text-white">{client.name}</span>
+                      <span className="text-sm text-green-400">
                         ✓ Completed
                       </span>
                     </div>

@@ -204,10 +204,10 @@ export default function ClientSearchBar({
       {/* Search Input */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg 
-            className="h-5 w-5 text-base-content/60" 
-            fill="none" 
-            stroke="currentColor" 
+          <svg
+            className="h-5 w-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path 
@@ -222,7 +222,7 @@ export default function ClientSearchBar({
         <input
           ref={searchInputRef}
           type="text"
-          className="input input-bordered w-full pl-10 pr-4"
+          className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 pl-10 w-full"
           placeholder={placeholder}
           value={searchQuery}
           onChange={handleSearchChange}
@@ -233,41 +233,43 @@ export default function ClientSearchBar({
         
         {isLoading && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <span className="loading loading-spinner loading-sm"></span>
+            <span className="loading loading-spinner loading-sm text-accent-purple"></span>
           </div>
         )}
       </div>
 
       {/* Search Results Dropdown */}
       {isOpen && (
-        <div 
+        <div
           ref={dropdownRef}
-          className="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-xl max-h-80 overflow-y-auto"
+          className="absolute z-50 w-full mt-1 card-elevated border border-white/10 rounded-lg shadow-xl max-h-80 overflow-y-auto"
         >
           {filteredClients.length > 0 ? (
             <div className="py-1">
               {filteredClients.map((client, index) => (
                 <div
                   key={client.id}
-                  className={`px-4 py-3 cursor-pointer transition-colors hover:bg-base-200 ${
-                    index === selectedIndex ? 'bg-primary text-primary-content' : 'text-base-content'
+                  className={`px-4 py-3 cursor-pointer transition-colors ${
+                    index === selectedIndex ? 'bg-accent-purple/20 text-white border-l-2 border-accent-purple' : 'text-gray-300 hover:bg-white/5'
                   }`}
                   onClick={() => navigateToClient(client)}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium">
+                      <div className={`font-medium ${
+                        index === selectedIndex ? 'text-white' : 'text-gray-200'
+                      }`}>
                         {client.first_name} {client.last_name}
                       </div>
                       <div className={`text-sm ${
-                        index === selectedIndex ? 'text-primary-content/80' : 'text-base-content/60'
+                        index === selectedIndex ? 'text-gray-300' : 'text-gray-400'
                       }`}>
                         {client.email}
                       </div>
                     </div>
                     <div className={`text-xs ${
-                      index === selectedIndex ? 'text-primary-content/60' : 'text-base-content/40'
+                      index === selectedIndex ? 'text-accent-purple' : 'text-gray-500'
                     }`}>
                       View Reports →
                     </div>
@@ -276,7 +278,7 @@ export default function ClientSearchBar({
               ))}
             </div>
           ) : searchQuery.trim() && (
-                         <div className="px-4 py-3 text-base-content/60 text-center">
+            <div className="px-4 py-3 text-gray-400 text-center">
                No clients found matching &ldquo;{searchQuery}&rdquo;
              </div>
           )}

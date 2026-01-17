@@ -5,9 +5,16 @@ import ButtonSupport from "@/components/ButtonSupport";
 // Show a cute SVG with your primary color
 export default function Custom404() {
   return (
-    <section className="relative bg-base-100 text-base-content h-screen w-full flex flex-col justify-center gap-8 items-center p-10">
-      <div className="p-6 bg-white rounded-xl">
-        <svg
+    <section className="relative bg-gradient-to-b from-bg-primary via-bg-secondary to-black text-white h-screen w-full overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent-purple/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-accent-violet/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 h-screen w-full flex flex-col justify-center gap-8 items-center p-10">
+        <div className="card-elevated p-8 rounded-2xl">
+          <svg
           xmlns="http://www.w3.org/2000/svg"
           className="w-56 h-56"
           viewBox="0 0 860.13137 571.14799"
@@ -94,29 +101,37 @@ export default function Custom404() {
             d="m858.94 570.84-857.75.308a1.19 1.19 0 1 1 0-2.381l857.75-.308a1.19 1.19 0 0 1 0 2.382Z"
           />
         </svg>
-      </div>
-      <p className="text-lg md:text-xl font-semibold">
-        This page doesn&apos;t exist 😅
-      </p>
+        </div>
 
-      <div className="flex flex-wrap gap-4 justify-center">
-        <Link href="/" className="btn btn-sm">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-5 h-5"
+        <div className="text-center space-y-4">
+          <h1 className="font-display font-bold text-6xl md:text-8xl gradient-text">404</h1>
+          <p className="text-xl md:text-2xl font-medium text-gray-300">
+            This page doesn&apos;t exist
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-4 justify-center">
+          <Link
+            href="/"
+            className="btn-gradient px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 inline-flex items-center gap-2"
           >
-            <path
-              fillRule="evenodd"
-              d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Home
-        </Link>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Home
+          </Link>
 
-        <ButtonSupport />
+          <ButtonSupport />
+        </div>
       </div>
     </section>
   );

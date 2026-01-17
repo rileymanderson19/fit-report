@@ -227,7 +227,7 @@ export default function TrainerizeConfigPage() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center min-h-[200px]">
-          <span className="loading loading-spinner loading-lg"></span>
+          <span className="loading loading-spinner loading-lg text-accent-purple"></span>
         </div>
       </div>
     );
@@ -235,15 +235,15 @@ export default function TrainerizeConfigPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">Trainerize Configuration</h1>
-      <div className="card bg-base-100 shadow-xl">
+      <h1 className="text-3xl font-bold mb-6 gradient-text font-display">Trainerize Configuration</h1>
+      <div className="card-elevated">
         <div className="card-body">
-          <p className="mb-6 text-base-content/80">Configure your Trainerize integration settings here</p>
+          <p className="mb-6 text-gray-300">Configure your Trainerize integration settings here</p>
           
           <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
             <div className="form-control w-full">
               <label htmlFor="username" className="label">
-                <span className="label-text">Username</span>
+                <span className="text-gray-300">Username</span>
               </label>
               <input
                 type="text"
@@ -251,15 +251,15 @@ export default function TrainerizeConfigPage() {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                className="input input-bordered w-full"
+                className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
                 placeholder="Enter your Trainerize username"
                 disabled={isLoading}
               />
             </div>
-            
+
             <div className="form-control w-full">
               <label htmlFor="password" className="label">
-                <span className="label-text">Password</span>
+                <span className="text-gray-300">Password</span>
               </label>
               <input
                 type="password"
@@ -267,15 +267,15 @@ export default function TrainerizeConfigPage() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="input input-bordered w-full"
+                className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
                 placeholder="Enter your Trainerize password"
                 disabled={isLoading}
               />
             </div>
-            
+
             <div className="form-control w-full">
               <label htmlFor="trainerId" className="label">
-                <span className="label-text">Trainer ID</span>
+                <span className="text-gray-300">Trainer ID</span>
               </label>
               <input
                 type="text"
@@ -283,7 +283,7 @@ export default function TrainerizeConfigPage() {
                 name="trainerId"
                 value={formData.trainerId}
                 onChange={handleChange}
-                className="input input-bordered w-full"
+                className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
                 placeholder="Enter your Trainer ID"
                 disabled={isLoading}
               />
@@ -292,16 +292,16 @@ export default function TrainerizeConfigPage() {
             <div className="pt-2 flex gap-3">
               <button
                 type="submit"
-                className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
+                className={`btn-gradient ${isLoading ? 'loading' : ''}`}
                 disabled={isLoading || isLoadingTrainerList}
               >
                 {isLoading ? 'Verifying...' : (hasBeenModified ? 'Save Changes' : 'Saved')}
               </button>
-              
+
               <button
                 type="button"
                 onClick={fetchTrainerList}
-                className={`btn btn-neutral ${isLoadingTrainerList ? 'loading' : ''}`}
+                className={`glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg transition-all ${isLoadingTrainerList ? 'loading' : ''}`}
                 disabled={isLoadingTrainerList || isLoading || !formData.username || !formData.password}
               >
                 {isLoadingTrainerList ? 'Loading...' : 'Get Trainer ID'}
@@ -309,16 +309,16 @@ export default function TrainerizeConfigPage() {
             </div>
 
             {verificationStatus === "success" && hasBeenModified && (
-              <div className="alert alert-success">
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span>Credentials verified and saved successfully!</span>
+              <div className="glass border border-green-500/30 bg-green-500/10 p-4 rounded-lg flex items-start gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span className="text-gray-300">Credentials verified and saved successfully!</span>
               </div>
             )}
 
             {verificationStatus === "error" && (
-              <div className="alert alert-error">
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span>Invalid credentials. Please check and try again.</span>
+              <div className="glass border border-red-500/30 bg-red-500/10 p-4 rounded-lg flex items-start gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span className="text-gray-300">Invalid credentials. Please check and try again.</span>
               </div>
             )}
           </form>
@@ -326,33 +326,33 @@ export default function TrainerizeConfigPage() {
           {/* Trainer List Display */}
           {showTrainerList && trainerList.length > 0 && (
             <div className="mt-6 max-w-md">
-              <div className="card bg-base-200 shadow-md">
+              <div className="card-elevated">
                 <div className="card-body">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="card-title text-lg">Available Trainers</h3>
+                    <h3 className="card-title text-lg text-white">Available Trainers</h3>
                     <button
                       onClick={() => setShowTrainerList(false)}
-                      className="btn btn-ghost btn-sm"
+                      className="glass border border-white/10 hover:border-red-500/50 text-white p-2 rounded transition-all"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {trainerList.map((trainer) => (
                       <div
                         key={trainer.id}
-                        className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-bg-secondary rounded-lg"
                       >
                         <div className="flex-1">
-                          <p className="font-medium">{trainer.firstName}</p>
-                          <p className="text-sm text-base-content/70">ID: {trainer.id}</p>
+                          <p className="font-medium text-white">{trainer.firstName}</p>
+                          <p className="text-sm text-gray-400">ID: {trainer.id}</p>
                         </div>
                         <button
                           onClick={() => copyToClipboard(trainer.id)}
-                          className="btn btn-ghost btn-sm"
+                          className="glass border border-white/10 hover:border-accent-purple/50 text-white p-2 rounded transition-all"
                           title="Copy ID to clipboard"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -362,8 +362,8 @@ export default function TrainerizeConfigPage() {
                       </div>
                     ))}
                   </div>
-                  
-                  <div className="mt-4 text-sm text-base-content/60">
+
+                  <div className="mt-4 text-sm text-gray-400">
                     Click the copy icon to copy a Trainer ID to your clipboard, then paste it into the Trainer ID field above.
                   </div>
                 </div>

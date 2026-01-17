@@ -32,9 +32,18 @@ export const metadata = getSEOTags({
 
 const TOS = () => {
   return (
-    <main className="max-w-xl mx-auto">
-      <div className="p-5">
-        <Link href="/" className="btn btn-ghost">
+    <main className="min-h-screen bg-gradient-to-b from-bg-primary via-bg-secondary to-black text-white relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent-purple/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-accent-violet/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto p-5 md:p-10">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 glass border border-white/10 hover:border-accent-purple/50 px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 mb-8"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
@@ -49,14 +58,15 @@ const TOS = () => {
           </svg>
           Back
         </Link>
-        <h1 className="text-3xl font-extrabold pb-6">
-          Terms and Conditions for {config.appName}
-        </h1>
 
-        <pre
-          className="leading-relaxed whitespace-pre-wrap"
-          style={{ fontFamily: "sans-serif" }}
-        >
+        <div className="card-elevated p-8 md:p-12 rounded-2xl">
+          <h1 className="text-3xl md:text-4xl font-display font-bold mb-8">
+            Terms and Conditions for <span className="gradient-text">{config.appName}</span>
+          </h1>
+
+          <pre
+            className="leading-relaxed whitespace-pre-wrap font-sans text-gray-300"
+          >
           {`Last Updated: September 26, 2023
 
 Welcome to ShipFast!
@@ -90,7 +100,8 @@ We may update these Terms from time to time. Users will be notified of any chang
 For any questions or concerns regarding these Terms of Service, please contact us at marc@shipfa.st.
 
 Thank you for using ShipFast!`}
-        </pre>
+          </pre>
+        </div>
       </div>
     </main>
   );

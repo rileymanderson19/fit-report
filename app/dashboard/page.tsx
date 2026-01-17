@@ -4,6 +4,7 @@ import { createClient } from "@/libs/supabase/server";
 import ButtonCheckout from "@/components/ButtonCheckout";
 import config from "@/config";
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 
 // This is a private page: It's protected by the layout.js component which ensures the user is authenticated.
 // It's a server compoment which means you can fetch data (like the user profile) before the page is rendered.
@@ -25,20 +26,24 @@ export default async function Dashboard() {
 
   return (
     <div className="container mx-auto px-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-display font-bold">
+          <span className="gradient-text">Dashboard</span>
+        </h1>
       </div>
-      
-      <div className="bg-base-100 p-8 rounded-lg shadow-xl border border-base-300">
-        <h2 className="text-xl font-semibold mb-6">Welcome to FitReport</h2>
-        
+
+      <div className="card-elevated p-8 md:p-10 rounded-2xl">
+        <h2 className="text-2xl font-display font-semibold mb-8 text-white">Welcome to FitReport</h2>
+
         {!hasActivePlan ? (
           <div className="space-y-8">
-            <div className="alert alert-warning">
-              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <div className="glass border border-yellow-500/30 bg-yellow-500/10 p-6 rounded-xl flex items-start gap-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-yellow-500 shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
               <div>
-                <h3 className="font-bold">No active subscription</h3>
-                <div className="text-sm">Choose a plan below to start generating reports.</div>
+                <h3 className="font-bold text-yellow-500">No active subscription</h3>
+                <div className="text-sm text-gray-300 mt-1">Choose a plan below to start generating reports.</div>
               </div>
             </div>
 
@@ -47,79 +52,98 @@ export default async function Dashboard() {
                 <div key={plan.priceId} className="relative w-full max-w-lg">
                   {plan.isFeatured && (
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                      <span className="badge text-xs text-primary-content font-semibold border-0 bg-primary">
+                      <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary-start to-accent-purple text-white text-xs font-bold shadow-lg">
+                        <Sparkles className="w-3 h-3" />
                         SAVE 21%
                       </span>
                     </div>
                   )}
 
                   {plan.isFeatured && (
-                    <div className="absolute -inset-[1px] rounded-[9px] bg-primary z-10"></div>
+                    <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-primary-start via-accent-purple to-accent-indigo opacity-75 blur-sm z-10 animate-pulse-glow"></div>
                   )}
 
-                  <div className="relative flex flex-col h-full gap-5 lg:gap-8 z-10 bg-black/40 backdrop-blur-xl p-8 rounded-lg border border-white/10">
+                  <div className={`relative flex flex-col h-full gap-5 lg:gap-8 z-10 p-8 rounded-2xl transition-all duration-300 ${
+                    plan.isFeatured
+                      ? 'card-elevated border-2 border-accent-purple/50'
+                      : 'card-elevated'
+                  }`}>
                     <div className="flex justify-between items-center gap-4">
                       <div>
-                        <p className="text-lg lg:text-xl font-bold">{plan.name}</p>
+                        <p className="text-2xl lg:text-3xl font-display font-bold text-white">{plan.name}</p>
                         {plan.description && (
-                          <p className="text-base-content/80 mt-2">
+                          <p className="text-gray-400 mt-2">
                             {plan.description}
                           </p>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col gap-3">
                       <div className="flex gap-2 items-end">
-                        <p className="text-5xl tracking-tight font-extrabold">
+                        <p className={`text-6xl tracking-tight font-mono font-extrabold ${
+                          plan.isFeatured ? 'gradient-text' : 'text-white'
+                        }`}>
                           ${plan.price}
                         </p>
-                        <div className="flex flex-col justify-end mb-2">
-                          <p className="text-sm text-base-content/60 font-semibold">
+                        <div className="flex flex-col justify-end mb-3">
+                          <p className="text-sm text-gray-400 font-semibold">
                             /mo
                           </p>
                         </div>
                       </div>
-                      
+
                       {plan.billingPeriod === "yearly" && (
-                        <p className="text-sm text-base-content/80">
+                        <p className="text-sm text-gray-400">
                           Billed annually (${plan.price * 12})
                         </p>
                       )}
-                      
+
                       {plan.priceAnchor && (
-                        <p className="text-sm text-base-content/60">
+                        <p className="text-sm text-gray-500">
                           <span className="line-through">${plan.priceAnchor}/mo</span>
                         </p>
                       )}
                     </div>
 
                     {plan.features && (
-                      <ul className="space-y-2.5 leading-relaxed text-base flex-1">
+                      <ul className="space-y-4 leading-relaxed text-base flex-1">
                         {plan.features.map((feature, i) => (
-                          <li key={i} className="flex items-center gap-2">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              className="w-[18px] h-[18px] opacity-80 shrink-0"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span>{feature.name}</span>
+                          <li key={i} className="flex items-center gap-3">
+                            <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
+                              plan.isFeatured
+                                ? 'bg-accent-purple/20'
+                                : 'bg-gray-700/50'
+                            }`}>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                                className={`w-3 h-3 ${
+                                  plan.isFeatured ? 'text-accent-purple' : 'text-gray-400'
+                                }`}
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                            <span className="text-gray-300">{feature.name}</span>
                           </li>
                         ))}
                       </ul>
                     )}
 
-                    <div className="space-y-2">
-                      <ButtonCheckout 
-                        priceId={plan.priceId} 
-                        className={`btn btn-block ${plan.isFeatured ? 'btn-primary' : 'btn-outline'}`}
+                    <div className="space-y-2 mt-4">
+                      <ButtonCheckout
+                        priceId={plan.priceId}
+                        className={`w-full ${
+                          plan.isFeatured
+                            ? 'btn-gradient text-lg font-semibold'
+                            : 'glass border border-white/10 hover:border-accent-purple/50 text-white py-3 px-6 rounded-lg transition-all duration-200'
+                        }`}
                       />
                     </div>
                   </div>
@@ -129,55 +153,75 @@ export default async function Dashboard() {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="alert alert-success bg-primary/10 border-primary">
-              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-primary shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div className="glass border border-green-500/30 bg-green-500/10 p-6 rounded-xl flex items-start gap-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-green-500 shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               <div>
-                <h3 className="font-bold text-primary">Active Subscription</h3>
-                <div className="text-base-content/80">You have full access to all features</div>
+                <h3 className="font-bold text-green-500">Active Subscription</h3>
+                <div className="text-gray-300 mt-1">You have full access to all features</div>
               </div>
             </div>
-            
+
             <div>
-              <h3 className="text-xl font-semibold mb-4">Getting Started</h3>
-              <p className="text-base-content/80 mb-6">Follow these steps to start generating reports:</p>
-              
+              <h3 className="text-2xl font-display font-semibold mb-4 text-white">Getting Started</h3>
+              <p className="text-gray-400 mb-8">Follow these steps to start generating reports:</p>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="card bg-base-200 shadow-lg hover:shadow-xl transition-all">
-                  <div className="card-body">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-semibold">1</div>
-                      <h4 className="font-semibold">Trainerize Setup</h4>
-                    </div>
-                    <p className="text-base-content/80">Enter your Trainerize credentials to connect your account</p>
-                    <div className="card-actions justify-end mt-4">
-                      <Link href="/dashboard/trainerize" className="btn btn-primary btn-sm">Configure</Link>
-                    </div>
+                <div className="card-elevated p-6 rounded-xl hover:scale-105 transition-all duration-200 group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary-start to-accent-purple flex items-center justify-center text-white font-bold text-lg">1</div>
+                    <h4 className="font-semibold text-lg text-white">Trainerize Setup</h4>
+                  </div>
+                  <p className="text-gray-400 mb-4">Enter your Trainerize credentials to connect your account</p>
+                  <div className="mt-auto">
+                    <Link
+                      href="/dashboard/trainerize"
+                      className="inline-flex items-center gap-2 text-accent-purple hover:text-primary-start transition-colors font-medium"
+                    >
+                      Configure
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
                   </div>
                 </div>
 
-                <div className="card bg-base-200 shadow-lg hover:shadow-xl transition-all">
-                  <div className="card-body">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-semibold">2</div>
-                      <h4 className="font-semibold">Import Clients</h4>
-                    </div>
-                    <p className="text-base-content/80">Import your client list from your Trainerize account</p>
-                    <div className="card-actions justify-end mt-4">
-                      <Link href="/dashboard/clients" className="btn btn-primary btn-sm">Import</Link>
-                    </div>
+                <div className="card-elevated p-6 rounded-xl hover:scale-105 transition-all duration-200 group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-accent-violet to-accent-indigo flex items-center justify-center text-white font-bold text-lg">2</div>
+                    <h4 className="font-semibold text-lg text-white">Import Clients</h4>
+                  </div>
+                  <p className="text-gray-400 mb-4">Import your client list from your Trainerize account</p>
+                  <div className="mt-auto">
+                    <Link
+                      href="/dashboard/clients"
+                      className="inline-flex items-center gap-2 text-accent-purple hover:text-primary-start transition-colors font-medium"
+                    >
+                      Import
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
                   </div>
                 </div>
 
-                <div className="card bg-base-200 shadow-lg hover:shadow-xl transition-all">
-                  <div className="card-body">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-semibold">3</div>
-                      <h4 className="font-semibold">Generate Reports</h4>
-                    </div>
-                    <p className="text-base-content/80">Schedule and run reports for your clients</p>
-                    <div className="card-actions justify-end mt-4">
-                      <Link href="/dashboard/reports" className="btn btn-primary btn-sm">Create</Link>
-                    </div>
+                <div className="card-elevated p-6 rounded-xl hover:scale-105 transition-all duration-200 group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-accent-indigo to-accent-pink flex items-center justify-center text-white font-bold text-lg">3</div>
+                    <h4 className="font-semibold text-lg text-white">Generate Reports</h4>
+                  </div>
+                  <p className="text-gray-400 mb-4">Schedule and run reports for your clients</p>
+                  <div className="mt-auto">
+                    <Link
+                      href="/dashboard/reports"
+                      className="inline-flex items-center gap-2 text-accent-purple hover:text-primary-start transition-colors font-medium"
+                    >
+                      Create
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
                   </div>
                 </div>
               </div>
