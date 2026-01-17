@@ -319,7 +319,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
             <div className="flex gap-2">
               <Link
                 href={`/dashboard/clients/${clientId}/reports/new`}
-                className="btn-gradient text-sm"
+                className="btn-gradient px-6 py-3 rounded-lg font-medium text-sm"
               >
                 New Report
               </Link>
@@ -382,13 +382,17 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
             <div className="card-body p-6">
               {selectedReport ? (
                 <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h2 className="text-2xl font-bold text-white">
-                      Report for {client?.first_name} {client?.last_name}
-                    </h2>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <div className="flex flex-col gap-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <h2 className="text-2xl font-bold text-white">
+                        Report for {client?.first_name} {client?.last_name}
+                      </h2>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <button
-                        className="btn-gradient btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
+                        className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
                         onClick={captureAndSendReport}
                         disabled={isCapturing}
                       >
@@ -396,32 +400,32 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                           <span className="loading loading-spinner loading-sm text-white" />
                         ) : (
                           <>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                             </svg>
-                            <span className="ml-2">Download Image</span>
+                            <span>Download Image</span>
                           </>
                         )}
                       </button>
                       <button
-                        className="btn-gradient btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
+                        className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
                         onClick={handleGenerateLink}
                         disabled={isCapturing}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
                         </svg>
-                        <span className="ml-2">Generate Link</span>
+                        <span>Generate Link</span>
                       </button>
                       <button
-                        className="btn-gradient btn-md sm:btn-sm w-full sm:w-auto min-h-[44px] touch-manipulation"
+                        className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
                         onClick={() => setIsSendModalOpen(true)}
                         disabled={isCapturing}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                         </svg>
-                        <span className="ml-2">Send to Client</span>
+                        <span>Send to Client</span>
                       </button>
                     </div>
                   </div>
@@ -547,7 +551,7 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
         onClose={() => setIsLinkModalOpen(false)}
         report={selectedReport}
         client={client}
-        onSuccess={(linkData) => {
+        onSuccess={() => {
           // Modal will handle its own success feedback
           // Optionally close the modal after a delay if desired
         }}
