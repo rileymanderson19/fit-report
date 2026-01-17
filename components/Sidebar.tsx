@@ -34,7 +34,9 @@ export default function Sidebar({ currentPath = "" }: { currentPath?: string }) 
 
       <div className="relative z-10 p-6 border-b border-white/10">
         <Link href="/dashboard" className="flex items-center gap-2 group">
-          <span className="text-2xl font-display font-bold gradient-text">FitReport</span>
+          <span className="text-2xl font-display font-bold text-white hover:text-accent-purple transition-colors">
+            FitReport
+          </span>
         </Link>
       </div>
 

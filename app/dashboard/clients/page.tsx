@@ -395,7 +395,7 @@ export default function ClientsPage() {
                           </Link>
                           <Link
                             href={`/dashboard/reports?selectedClient=${client.id}`}
-                            className="btn-gradient text-sm px-3 py-1.5"
+                            className="btn-gradient text-sm px-3 py-1.5 rounded-lg"
                           >
                             Generate Report
                           </Link>
