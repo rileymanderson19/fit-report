@@ -612,7 +612,7 @@ export default function ReportsPage() {
         {/* Generate Button */}
         <div className="flex justify-end">
           <button
-            className={`btn-gradient btn-lg ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
+            className={`btn-gradient px-8 py-3 rounded-lg font-medium text-lg ${isLoading ? 'opacity-70 cursor-wait' : ''}`}
             onClick={generateReport}
             disabled={selectedClients.length === 0 || !startDate || !endDate || isLoading}
           >

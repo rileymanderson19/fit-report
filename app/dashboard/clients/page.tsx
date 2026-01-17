@@ -280,7 +280,7 @@ export default function ClientsPage() {
         </div>
         <Link
           href="/dashboard/reports"
-          className="btn-gradient"
+          className="btn-gradient px-6 py-3 rounded-lg font-medium"
         >
           Generate Reports
         </Link>

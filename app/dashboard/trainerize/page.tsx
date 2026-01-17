@@ -292,7 +292,7 @@ export default function TrainerizeConfigPage() {
             <div className="pt-2 flex gap-3">
               <button
                 type="submit"
-                className={`btn-gradient ${isLoading ? 'loading' : ''}`}
+                className={`btn-gradient px-6 py-3 rounded-lg font-medium ${isLoading ? 'loading' : ''}`}
                 disabled={isLoading || isLoadingTrainerList}
               >
                 {isLoading ? 'Verifying...' : (hasBeenModified ? 'Save Changes' : 'Saved')}

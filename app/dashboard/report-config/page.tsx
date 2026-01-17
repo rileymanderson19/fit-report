@@ -281,7 +281,7 @@ export default function ReportConfigPage() {
             Reset to Defaults
           </button>
           <button
-            className={`btn-gradient ${saving ? "loading" : ""}`}
+            className={`btn-gradient px-6 py-3 rounded-lg font-medium ${saving ? "loading" : ""}`}
             onClick={saveConfig}
             disabled={saving}
           >
@@ -393,7 +393,7 @@ export default function ReportConfigPage() {
                   />
                   <button
                     type="button"
-                    className="btn-gradient join-item"
+                    className="btn-gradient px-6 py-3 rounded-lg font-medium join-item"
                     onClick={addExcludedWorkout}
                     disabled={!newExcludedWorkout.trim()}
                   >

@@ -454,7 +454,7 @@ export default function TestTextReportPage() {
 
               <div className="flex gap-4 mt-4">
                 <button
-                  className="btn-gradient flex-1"
+                  className="btn-gradient px-6 py-3 rounded-lg font-medium flex-1"
                   onClick={handleStartWorkflow}
                   disabled={selectedCount === 0}
                 >
