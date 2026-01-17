@@ -462,20 +462,22 @@ export default function ClientsPage() {
 
       {/* Import Clients Modal */}
       <dialog id="trainerize_modal" className={`modal ${isModalOpen ? 'modal-open' : ''}`}>
-        <div className="card-elevated w-11/12 max-w-5xl">
-          <h3 className="font-bold text-lg mb-4 text-white">Import Clients from Trainerize</h3>
+        <div className="card-elevated w-11/12 max-w-5xl max-h-[90vh] flex flex-col">
+          <div className="p-6">
+            <h3 className="font-bold text-lg mb-4 text-white">Import Clients from Trainerize</h3>
 
-          <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Search Trainerize clients..."
-              className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
-              value={importSearchQuery}
-              onChange={(e) => setImportSearchQuery(e.target.value)}
-            />
+            <div className="mb-6">
+              <input
+                type="text"
+                placeholder="Search Trainerize clients..."
+                className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
+                value={importSearchQuery}
+                onChange={(e) => setImportSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-auto flex-1 px-6">
             <table className="table w-full">
               <thead>
                 <tr>
@@ -541,9 +543,9 @@ export default function ClientsPage() {
             </table>
           </div>
 
-          <div className="flex justify-end gap-2 mt-6">
+          <div className="flex justify-end gap-2 p-6 border-t border-white/10">
             <button
-              className={`btn-gradient ${isImporting ? 'opacity-50 cursor-not-allowed' : ''} flex items-center gap-2`}
+              className={`btn-gradient px-6 py-3 rounded-lg font-medium ${isImporting ? 'opacity-50 cursor-not-allowed' : ''} flex items-center gap-2`}
               onClick={handleImportClients}
               disabled={isImporting || selectedImportIds.length === 0}
             >
@@ -554,7 +556,7 @@ export default function ClientsPage() {
               ).length})
             </button>
             <button
-              className="glass border border-white/10 hover:border-white/20 px-4 py-2 rounded-lg transition-all"
+              className="glass border border-white/10 hover:border-white/20 px-6 py-3 rounded-lg font-medium transition-all"
               onClick={() => {
                 setIsModalOpen(false);
                 setSelectedImportIds([]);
