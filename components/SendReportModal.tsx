@@ -199,94 +199,112 @@ export default function SendReportModal({
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box w-11/12 max-w-2xl">
-        <h3 className="font-bold text-lg mb-4">
-          Send Fitness Report to {client?.first_name} {client?.last_name}
-        </h3>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
 
-        {isLoadingConfig && (
-          <div className="flex items-center justify-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
-            <span className="ml-2">Loading your configuration...</span>
-          </div>
-        )}
-
-        {!isLoadingConfig && (
-          <div className="space-y-4">
-            {/* Subject */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Subject</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                placeholder={`Your Fitness Report - ${new Date().toLocaleDateString()}`}
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                disabled={isSending}
-              />
-            </div>
-
-            {/* Custom Message */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Message</span>
-              </label>
-              <textarea
-                className="textarea textarea-bordered h-32"
-                placeholder="Enter your message to the client..."
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                disabled={isSending}
-              />
-            </div>
-
-            {/* Signature */}
-            {signature && (
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Signature</span>
-                </label>
-                <textarea
-                  className="textarea textarea-bordered h-20"
-                  placeholder="Your signature..."
-                  value={signature}
-                  onChange={(e) => setSignature(e.target.value)}
-                  disabled={isSending}
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="modal-action">
+      <div className="card-elevated w-11/12 max-w-2xl relative z-50 m-auto mt-20">
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-gradient-to-r from-accent-purple/10 to-accent-violet/10 rounded-t-lg">
+          <h3 className="font-bold text-lg text-white">
+            Send Fitness Report to {client?.first_name} {client?.last_name}
+          </h3>
           <button
-            className="btn btn-ghost"
+            className="glass border border-white/10 hover:border-red-500/50 text-gray-300 hover:text-red-400 p-2 rounded-lg transition-all"
             onClick={handleClose}
             disabled={isSending || isLoadingConfig}
           >
-            Cancel
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
-          <button
-            className="btn btn-primary"
-            onClick={handleSendReport}
-            disabled={isSending || isLoadingConfig || !report || !client}
-          >
-            {isSending ? (
-              <>
-                <span className="loading loading-spinner loading-sm"></span>
-                Sending Report...
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                </svg>
-                Send to {client?.first_name}
-              </>
-            )}
-          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 bg-bg-secondary">
+          {isLoadingConfig && (
+            <div className="flex items-center justify-center py-8">
+              <span className="loading loading-spinner loading-lg text-accent-purple"></span>
+              <span className="ml-2 text-gray-300">Loading your configuration...</span>
+            </div>
+          )}
+
+          {!isLoadingConfig && (
+            <div className="space-y-4">
+              {/* Subject */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium text-white">Subject</span>
+                </label>
+                <input
+                  type="text"
+                  className="glass border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:border-accent-purple focus:outline-none focus:ring-2 focus:ring-accent-purple/50 rounded-lg px-4 py-3 w-full"
+                  placeholder={`Your Fitness Report - ${new Date().toLocaleDateString()}`}
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  disabled={isSending}
+                />
+              </div>
+
+              {/* Custom Message */}
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium text-white">Message</span>
+                </label>
+                <textarea
+                  className="glass border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:border-accent-purple focus:outline-none focus:ring-2 focus:ring-accent-purple/50 rounded-lg p-3 h-32"
+                  placeholder="Enter your message to the client..."
+                  value={customMessage}
+                  onChange={(e) => setCustomMessage(e.target.value)}
+                  disabled={isSending}
+                />
+              </div>
+
+              {/* Signature */}
+              {signature && (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium text-white">Signature</span>
+                  </label>
+                  <textarea
+                    className="glass border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:border-accent-purple focus:outline-none focus:ring-2 focus:ring-accent-purple/50 rounded-lg p-3 h-20"
+                    placeholder="Your signature..."
+                    value={signature}
+                    onChange={(e) => setSignature(e.target.value)}
+                    disabled={isSending}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Footer Actions */}
+          <div className="flex justify-end gap-2 mt-6 pt-6 border-t border-white/10">
+            <button
+              className="glass border border-white/10 hover:border-white/20 px-6 py-3 rounded-lg font-medium transition-all text-white"
+              onClick={handleClose}
+              disabled={isSending || isLoadingConfig}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+              onClick={handleSendReport}
+              disabled={isSending || isLoadingConfig || !report || !client}
+            >
+              {isSending ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Sending Report...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                  </svg>
+                  Send to {client?.first_name}
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

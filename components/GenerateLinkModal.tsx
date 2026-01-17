@@ -165,28 +165,28 @@ export default function GenerateLinkModal({
     >
       {client && (
         <div className="mb-4">
-          <p className="text-sm text-base-content/70">
-            Report for: <span className="font-medium">{client.first_name} {client.last_name}</span>
+          <p className="text-sm text-gray-400">
+            Report for: <span className="font-medium text-white">{client.first_name} {client.last_name}</span>
           </p>
         </div>
       )}
 
       {isGenerating && (
         <div className="flex flex-col items-center py-8">
-          <span className="loading loading-spinner loading-lg mb-4"></span>
-          <p className="text-base-content/70">Generating shareable link...</p>
+          <span className="loading loading-spinner loading-lg mb-4 text-accent-purple"></span>
+          <p className="text-gray-400">Generating shareable link...</p>
         </div>
       )}
 
       {linkData && !isGenerating && (
         <div className="space-y-4">
-          <div className="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <div className="glass border border-green-500/30 bg-green-500/10 p-4 rounded-lg flex items-start gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>
-              {linkData.isExisting 
-                ? 'Existing link retrieved successfully!' 
+            <span className="text-gray-300">
+              {linkData.isExisting
+                ? 'Existing link retrieved successfully!'
                 : 'New shareable link generated!'
               }
             </span>
@@ -194,10 +194,10 @@ export default function GenerateLinkModal({
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-medium">Comment (Optional)</span>
+              <span className="label-text font-medium text-white">Comment (Optional)</span>
             </label>
             <textarea
-              className="textarea textarea-bordered"
+              className="glass border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:border-accent-purple focus:outline-none focus:ring-2 focus:ring-accent-purple/50 rounded-lg p-3"
               placeholder="Add a comment to include with the link..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -207,21 +207,23 @@ export default function GenerateLinkModal({
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-medium">Shareable URL</span>
+              <span className="label-text font-medium text-white">Shareable URL</span>
             </label>
-            <div className="join">
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={linkData.url}
-                className="input input-bordered join-item flex-1 text-sm"
+                className="glass border border-white/10 bg-white/5 text-white rounded-lg px-4 py-3 flex-1 text-sm"
                 readOnly
               />
               <button
-                className={`btn btn-primary join-item ${isCopying ? 'loading' : ''}`}
+                className={`btn-gradient px-4 py-3 rounded-lg font-medium flex items-center gap-2 ${isCopying ? 'opacity-50' : ''}`}
                 onClick={handleCopyLink}
                 disabled={isCopying}
               >
-                {isCopying ? '' : (
+                {isCopying ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
                   <>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -233,16 +235,16 @@ export default function GenerateLinkModal({
             </div>
           </div>
 
-          <div className="bg-base-200 p-4 rounded-lg">
+          <div className="glass border border-yellow-500/30 bg-yellow-500/10 p-4 rounded-lg">
             <div className="flex items-center gap-2 text-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-base-content/70">
-                Expires: <span className="font-medium">{formatExpiryDate(linkData.expiresAt)}</span>
+              <span className="text-gray-300">
+                Expires: <span className="font-medium text-white">{formatExpiryDate(linkData.expiresAt)}</span>
               </span>
             </div>
-            <p className="text-xs text-base-content/60 mt-2">
+            <p className="text-xs text-gray-400 mt-2">
               This link will be valid for 7 days from generation. Anyone with this link can view the report.
             </p>
           </div>
@@ -251,7 +253,7 @@ export default function GenerateLinkModal({
 
       <div className="flex justify-end gap-2 mt-6">
         <button
-          className="btn btn-ghost"
+          className="glass border border-white/10 hover:border-white/20 px-6 py-3 rounded-lg font-medium transition-all text-white"
           onClick={handleClose}
           disabled={isGenerating}
         >
@@ -259,7 +261,7 @@ export default function GenerateLinkModal({
         </button>
         {linkData && (
           <button
-            className="btn btn-primary"
+            className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center gap-2"
             onClick={handleCopyLink}
             disabled={isCopying}
           >
@@ -267,7 +269,7 @@ export default function GenerateLinkModal({
               <span className="loading loading-spinner loading-sm" />
             ) : (
               <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
                 {comment.trim() ? 'Copy Comment & Link' : 'Copy Link'}

@@ -129,14 +129,14 @@ export default function DraggableModal({
 
   return (
     <>
-      {/* Semi-transparent backdrop that doesn't block clicks */}
-      <div className="fixed inset-0 bg-black bg-opacity-10 pointer-events-none z-40" />
-      
+      {/* Semi-transparent backdrop */}
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={onClose} />
+
       {/* Draggable Modal */}
       <div
         ref={modalRef}
-        className={`fixed z-50 bg-base-100 rounded-lg shadow-xl border border-base-300 ${width} ${className} ${
-          isDragging ? 'shadow-2xl cursor-grabbing' : 'shadow-lg'
+        className={`fixed z-50 card-elevated ${width} ${className} ${
+          isDragging ? 'shadow-2xl cursor-grabbing' : ''
         }`}
         style={{
           left: `${position.x}px`,
@@ -151,18 +151,18 @@ export default function DraggableModal({
         {/* Drag Handle Header */}
         <div
           ref={dragHandleRef}
-          className={`flex justify-between items-center p-4 border-b border-base-300 bg-base-200 rounded-t-lg ${
-            supportsDragging 
+          className={`flex justify-between items-center p-4 border-b border-white/10 bg-gradient-to-r from-accent-purple/10 to-accent-violet/10 rounded-t-lg ${
+            supportsDragging
               ? (isDragging ? 'cursor-grabbing' : 'cursor-grab')
               : ''
           }`}
           onMouseDown={handleMouseDown}
         >
-          <h3 className="font-bold text-lg select-none">{title}</h3>
+          <h3 className="font-bold text-lg select-none text-white">{title}</h3>
           <div className="flex items-center gap-2">
             {/* Reset Position Button */}
             <button
-              className="btn btn-ghost btn-xs"
+              className="glass border border-white/10 hover:border-accent-purple/50 text-gray-300 hover:text-white p-2 rounded-lg transition-all"
               onClick={resetPosition}
               title="Reset position"
               type="button"
@@ -173,7 +173,7 @@ export default function DraggableModal({
             </button>
             {/* Close Button */}
             <button
-              className="btn btn-ghost btn-xs"
+              className="glass border border-white/10 hover:border-red-500/50 text-gray-300 hover:text-red-400 p-2 rounded-lg transition-all"
               onClick={onClose}
               type="button"
             >
@@ -185,7 +185,7 @@ export default function DraggableModal({
         </div>
 
         {/* Modal Content */}
-        <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 60px)' }}>
+        <div className="p-6 overflow-y-auto bg-bg-secondary" style={{ maxHeight: 'calc(90vh - 60px)' }}>
           {children}
         </div>
       </div>
