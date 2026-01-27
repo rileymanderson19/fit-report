@@ -4,11 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { ReportVisualization } from '@/components/ReportVisualization';
 import { SevenDayReference } from '@/components/SevenDayReference';
+import { DateRangePicker } from '@/components/DateRangePicker';
 import ClientSearchBar from '@/components/ClientSearchBar';
 import SendReportModal from '@/components/SendReportModal';
 import GenerateLinkModal from '@/components/GenerateLinkModal';
-
-import Link from 'next/link';
 import { toast } from 'sonner';
 
 interface Report {
@@ -36,9 +35,31 @@ interface ClientReportsClientProps {
 
 export default function ClientReportsClient({ clientId }: ClientReportsClientProps) {
   const supabase = createClient();
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'live' | 'snapshots'>('live');
+
+  // Snapshot reports state
   const [reports, setReports] = useState<Report[]>([]);
-  const [client, setClient] = useState<Client | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+
+  // Live report state
+  const [liveReportData, setLiveReportData] = useState<any>(null);
+  const [isGeneratingLive, setIsGeneratingLive] = useState(false);
+  const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [minReps, setMinReps] = useState<number>(6);
+  const [maxReps, setMaxReps] = useState<number>(10);
+  const [reportTemplate, setReportTemplate] = useState<'daily' | 'enhanced'>('enhanced');
+
+  // Action plan state
+  const [clientTasks, setClientTasks] = useState<any[]>([]);
+  const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+
+  // Shared state
+  const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
@@ -46,6 +67,20 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+
+  // Set default date range: last 14 days ending yesterday
+  useEffect(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(23, 59, 59, 999);
+
+    const fourteenDaysAgo = new Date(yesterday);
+    fourteenDaysAgo.setDate(yesterday.getDate() - 13);
+    fourteenDaysAgo.setHours(0, 0, 0, 0);
+
+    setStartDate(fourteenDaysAgo);
+    setEndDate(yesterday);
+  }, []);
 
   useEffect(() => {
     const fetchClientAndReports = async () => {
@@ -84,6 +119,13 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
 
     fetchClientAndReports();
   }, [supabase, clientId]);
+
+  // Auto-generate live report on load
+  useEffect(() => {
+    if (startDate && endDate && client && activeTab === 'live' && !liveReportData) {
+      generateLiveReport();
+    }
+  }, [startDate, endDate, client, activeTab]);
 
   const handleDeleteReport = async (report: Report) => {
     setReportToDelete(report);
@@ -279,6 +321,189 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
     setIsLinkModalOpen(true);
   };
 
+  const generateLiveReport = async () => {
+    if (!startDate || !endDate || !client) {
+      toast.error('Please select a date range');
+      return;
+    }
+
+    setIsGeneratingLive(true);
+    try {
+      const response = await fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          dateRange: {
+            from: startDate.toISOString(),
+            to: endDate.toISOString()
+          },
+          template: reportTemplate,
+          repRange: {
+            min: minReps,
+            max: maxReps
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate report');
+      }
+
+      const data = await response.json();
+      setLiveReportData(data.reportData);
+
+      if (data.cached) {
+        toast.success('Loaded cached report');
+      } else {
+        toast.success('Report generated successfully');
+      }
+    } catch (error) {
+      console.error('Error generating live report:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate report');
+    } finally {
+      setIsGeneratingLive(false);
+    }
+  };
+
+  const saveSnapshot = async () => {
+    if (!liveReportData || !client) {
+      toast.error('No live report to save');
+      return;
+    }
+
+    setIsSavingSnapshot(true);
+    try {
+      const response = await fetch('/api/reports/store', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          reportData: liveReportData,
+          dateRange: {
+            from: startDate!.toISOString(),
+            to: endDate!.toISOString()
+          },
+          repRange: {
+            min: minReps,
+            max: maxReps
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save snapshot');
+      }
+
+      const data = await response.json();
+
+      // Refresh the snapshots list
+      const { data: reportsData, error: reportsError } = await supabase
+        .from('reports')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+
+      if (!reportsError && reportsData) {
+        setReports(reportsData);
+      }
+
+      toast.success('Snapshot saved successfully');
+    } catch (error) {
+      console.error('Error saving snapshot:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save snapshot');
+    } finally {
+      setIsSavingSnapshot(false);
+    }
+  };
+
+  const fetchClientTasks = async () => {
+    setIsLoadingTasks(true);
+    try {
+      const { data, error } = await supabase
+        .from('client_tasks')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClientTasks(data || []);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast.error('Failed to load tasks');
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+
+  const generateActionPlan = async () => {
+    if (!startDate || !endDate) {
+      toast.error('Please select a date range first');
+      return;
+    }
+
+    setIsGeneratingTasks(true);
+    try {
+      const response = await fetch('/api/automations/generate-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          dateRange: {
+            from: startDate.toISOString(),
+            to: endDate.toISOString()
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate action plan');
+      }
+
+      const data = await response.json();
+      setClientTasks(data.tasks || []);
+      toast.success(`Generated ${data.tasks.length} action items`);
+    } catch (error) {
+      console.error('Error generating action plan:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate action plan');
+    } finally {
+      setIsGeneratingTasks(false);
+    }
+  };
+
+  const updateTaskStatus = async (taskId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('client_tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      // Update local state
+      setClientTasks(tasks =>
+        tasks.map(task =>
+          task.id === taskId ? { ...task, status: newStatus } : task
+        )
+      );
+
+      toast.success('Task updated');
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast.error('Failed to update task');
+    }
+  };
+
+  // Load tasks when tab is active
+  useEffect(() => {
+    if (activeTab === 'live' && client) {
+      fetchClientTasks();
+    }
+  }, [activeTab, client]);
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -304,25 +529,280 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Client Search Bar */}
       <div className="mb-6">
-        <ClientSearchBar 
+        <ClientSearchBar
           currentClientId={clientId}
           placeholder="Search clients to quickly navigate..."
           className="max-w-lg"
         />
       </div>
-      
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Reports List Sidebar */}
-        <div className="w-full lg:w-1/4 space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-white">Reports</h2>
-            <div className="flex gap-2">
-              <Link
-                href={`/dashboard/clients/${clientId}/reports/new`}
-                className="btn-gradient px-6 py-3 rounded-lg font-medium text-sm"
-              >
-                New Report
-              </Link>
+
+      {/* Tabs */}
+      <div className="mb-6">
+        <div className="flex gap-2 border-b border-white/10">
+          <button
+            className={`px-6 py-3 font-medium transition-all ${
+              activeTab === 'live'
+                ? 'text-accent-purple border-b-2 border-accent-purple'
+                : 'text-gray-400 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('live')}
+          >
+            Live Report
+          </button>
+          <button
+            className={`px-6 py-3 font-medium transition-all ${
+              activeTab === 'snapshots'
+                ? 'text-accent-purple border-b-2 border-accent-purple'
+                : 'text-gray-400 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('snapshots')}
+          >
+            Snapshots {reports.length > 0 && `(${reports.length})`}
+          </button>
+        </div>
+      </div>
+
+      {/* Live Report Tab */}
+      {activeTab === 'live' && (
+        <div className="space-y-6">
+          {/* Report Configuration */}
+          <div className="card-elevated">
+            <div className="card-body p-6">
+              <h2 className="text-xl font-bold text-white mb-4">Report Configuration</h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Date Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Date Range</label>
+                  <DateRangePicker
+                    from={startDate || undefined}
+                    to={endDate || undefined}
+                    onSelect={(range) => {
+                      setStartDate(range.from || null);
+                      setEndDate(range.to || null);
+                    }}
+                    showPresets={true}
+                  />
+                </div>
+
+                {/* Template */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Template</label>
+                  <select
+                    className="bg-bg-secondary border border-white/10 text-white w-full px-4 py-2 rounded-lg focus:outline-none focus:border-accent-purple"
+                    value={reportTemplate}
+                    onChange={(e) => setReportTemplate(e.target.value as 'daily' | 'enhanced')}
+                  >
+                    <option value="enhanced">Progress Report</option>
+                    <option value="daily">Daily Data</option>
+                  </select>
+                </div>
+
+                {/* Rep Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Min Reps</label>
+                  <input
+                    type="number"
+                    className="bg-bg-secondary border border-white/10 text-white w-full px-4 py-2 rounded-lg focus:outline-none focus:border-accent-purple"
+                    value={minReps}
+                    onChange={(e) => setMinReps(Math.max(1, parseInt(e.target.value) || 1))}
+                    min="1"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Max Reps</label>
+                  <input
+                    type="number"
+                    className="bg-bg-secondary border border-white/10 text-white w-full px-4 py-2 rounded-lg focus:outline-none focus:border-accent-purple"
+                    value={maxReps}
+                    onChange={(e) => setMaxReps(Math.max(minReps + 1, parseInt(e.target.value) || minReps + 1))}
+                    min={minReps + 1}
+                  />
+                </div>
+              </div>
+
+              {/* Generate Button */}
+              <div className="flex gap-3 mt-6">
+                <button
+                  className="btn-gradient px-8 py-3 rounded-lg font-medium flex items-center gap-2"
+                  onClick={generateLiveReport}
+                  disabled={isGeneratingLive || !startDate || !endDate}
+                >
+                  {isGeneratingLive ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                      </svg>
+                      <span>Generate Report</span>
+                    </>
+                  )}
+                </button>
+
+                {liveReportData && (
+                  <button
+                    className="glass border border-accent-purple/50 hover:border-accent-purple text-white px-8 py-3 rounded-lg font-medium"
+                    onClick={saveSnapshot}
+                    disabled={isSavingSnapshot}
+                  >
+                    {isSavingSnapshot ? (
+                      <>
+                        <span className="loading loading-spinner loading-sm" />
+                        <span className="ml-2">Saving...</span>
+                      </>
+                    ) : (
+                      'Save Snapshot'
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Live Report Display */}
+          {liveReportData && (
+            <div className="card-elevated">
+              <div className="card-body p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-white">
+                    Live Report for {client?.first_name} {client?.last_name}
+                  </h2>
+                </div>
+
+                <div id="report-container" className="space-y-8">
+                  <ReportVisualization
+                    data={liveReportData}
+                    onDeleteWorkout={() => {}}
+                    onDeleteExercise={() => {}}
+                    isScreenshotMode={false}
+                    clientName={`${client?.first_name} ${client?.last_name}`}
+                    dateRangeStart={startDate?.toISOString() || ''}
+                    dateRangeEnd={endDate?.toISOString() || ''}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!liveReportData && !isGeneratingLive && (
+            <div className="card-elevated">
+              <div className="card-body p-6">
+                <div className="text-center py-12">
+                  <p className="text-lg text-gray-400">
+                    Click &quot;Generate Report&quot; to create a live report
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Plan Section */}
+          <div className="card-elevated">
+            <div className="card-body p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Action Plan</h2>
+                  <p className="text-gray-400 mt-1">AI-generated tasks and recommendations</p>
+                </div>
+                <button
+                  className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+                  onClick={generateActionPlan}
+                  disabled={isGeneratingTasks || !startDate || !endDate}
+                >
+                  {isGeneratingTasks ? (
+                    <>
+                      <span className="loading loading-spinner loading-sm" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                      </svg>
+                      <span>Generate Action Plan</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Tasks List */}
+              {isLoadingTasks ? (
+                <div className="flex justify-center py-8">
+                  <span className="loading loading-spinner loading-lg text-accent-purple"></span>
+                </div>
+              ) : clientTasks.length > 0 ? (
+                <div className="space-y-4">
+                  {clientTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="glass border border-white/10 rounded-lg p-4 hover:border-accent-purple/50 transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold text-white">{task.title}</h3>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              task.priority === 'urgent' ? 'bg-red-500/20 text-red-400' :
+                              task.priority === 'high' ? 'bg-orange-500/20 text-orange-400' :
+                              task.priority === 'medium' ? 'bg-blue-500/20 text-blue-400' :
+                              'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              {task.priority}
+                            </span>
+                            <span className="px-2 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-400">
+                              {task.category}
+                            </span>
+                          </div>
+                          {task.description && (
+                            <p className="text-gray-300 text-sm mb-2">{task.description}</p>
+                          )}
+                          {task.rationale && (
+                            <p className="text-gray-400 text-xs italic">
+                              <strong>Why:</strong> {task.rationale}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <select
+                            className="bg-bg-secondary border border-white/10 text-white px-3 py-1 rounded text-sm focus:outline-none focus:border-accent-purple"
+                            value={task.status}
+                            onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="dismissed">Dismissed</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">
+                    No action items yet. Click &quot;Generate Action Plan&quot; to create AI-powered recommendations.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Snapshots Tab */}
+      {activeTab === 'snapshots' && (
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Reports List Sidebar */}
+          <div className="w-full lg:w-1/4 space-y-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-white">Saved Reports</h2>
               {reports.length > 0 && (
                 <button
                   onClick={handleDeleteAllReports}
@@ -337,134 +817,134 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
                 </button>
               )}
             </div>
-          </div>
-          
-          <div className="grid gap-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
-            {reports.map((report) => (
-              <div
-                key={report.id}
-                className={`group relative flex flex-col p-4 rounded-xl transition-all duration-200 cursor-pointer ${
-                  selectedReport?.id === report.id
-                    ? 'bg-accent-purple/10 border-2 border-accent-purple shadow-lg'
-                    : 'bg-bg-secondary hover:bg-white/5 border border-white/10'
-                }`}
-                onClick={() => setSelectedReport(report)}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="text-sm text-gray-400 mt-1">
-                      Created: {new Date(report.created_at).toLocaleDateString()}
+
+            <div className="grid gap-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
+              {reports.map((report) => (
+                <div
+                  key={report.id}
+                  className={`group relative flex flex-col p-4 rounded-xl transition-all duration-200 cursor-pointer ${
+                    selectedReport?.id === report.id
+                      ? 'bg-accent-purple/10 border-2 border-accent-purple shadow-lg'
+                      : 'bg-bg-secondary hover:bg-white/5 border border-white/10'
+                  }`}
+                  onClick={() => setSelectedReport(report)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="text-sm text-gray-400 mt-1">
+                        Created: {new Date(report.created_at).toLocaleDateString()}
+                      </div>
                     </div>
+                    <button
+                      className={`glass border border-red-500/50 hover:border-red-500 text-red-400 px-2 py-1 rounded text-xs transition-all opacity-0 group-hover:opacity-100`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteReport(report);
+                      }}
+                      disabled={isDeleting === report.id}
+                    >
+                      {isDeleting === report.id ? (
+                        <span className="loading loading-spinner loading-xs text-white" />
+                      ) : (
+                        'Delete'
+                      )}
+                    </button>
                   </div>
-                  <button
-                    className={`glass border border-red-500/50 hover:border-red-500 text-red-400 px-2 py-1 rounded text-xs transition-all opacity-0 group-hover:opacity-100`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteReport(report);
-                    }}
-                    disabled={isDeleting === report.id}
-                  >
-                    {isDeleting === report.id ? (
-                      <span className="loading loading-spinner loading-xs text-white" />
-                    ) : (
-                      'Delete'
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Report Visualization */}
+          <div className="w-full lg:w-3/4">
+            <div className="card-elevated">
+              <div className="card-body p-6">
+                {selectedReport ? (
+                  <div className="space-y-6">
+                    <div className="flex flex-col gap-6">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <h2 className="text-2xl font-bold text-white">
+                          Report for {client?.first_name} {client?.last_name}
+                        </h2>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
+                          onClick={captureAndSendReport}
+                          disabled={isCapturing}
+                        >
+                          {isCapturing ? (
+                            <span className="loading loading-spinner loading-sm text-white" />
+                          ) : (
+                            <>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                              </svg>
+                              <span>Download Image</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
+                          onClick={handleGenerateLink}
+                          disabled={isCapturing}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                          </svg>
+                          <span>Generate Link</span>
+                        </button>
+                        <button
+                          className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
+                          onClick={() => setIsSendModalOpen(true)}
+                          disabled={isCapturing}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                          </svg>
+                          <span>Send to Client</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 7-Day Reference - Reference tool only, never captured */}
+                    {!isCapturing && (
+                      <SevenDayReference
+                        data={selectedReport.report_data}
+                        clientName={`${client?.first_name} ${client?.last_name}`}
+                        dateRangeStart={selectedReport.date_range_start}
+                        dateRangeEnd={selectedReport.date_range_end}
+                      />
                     )}
-                  </button>
-                </div>
+
+                    <div id="report-container" className={`space-y-8 ${isCapturing ? 'p-8 rounded-lg' : ''}`}>
+                      <ReportVisualization
+                        data={selectedReport.report_data}
+                        onDeleteWorkout={handleDeleteWorkout}
+                        onDeleteExercise={handleDeleteExercise}
+                        isScreenshotMode={isCapturing}
+                        clientName={`${client?.first_name} ${client?.last_name}`}
+                        dateRangeStart={selectedReport.date_range_start}
+                        dateRangeEnd={selectedReport.date_range_end}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-lg text-gray-400">
+                      {reports.length > 0
+                        ? 'Select a report to view details'
+                        : 'No saved reports. Create a live report and save it as a snapshot!'}
+                    </p>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Report Visualization */}
-        <div className="w-full lg:w-3/4">
-          <div className="card-elevated">
-            <div className="card-body p-6">
-              {selectedReport ? (
-                <div className="space-y-6">
-                  <div className="flex flex-col gap-6">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                      <h2 className="text-2xl font-bold text-white">
-                        Report for {client?.first_name} {client?.last_name}
-                      </h2>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
-                        onClick={captureAndSendReport}
-                        disabled={isCapturing}
-                      >
-                        {isCapturing ? (
-                          <span className="loading loading-spinner loading-sm text-white" />
-                        ) : (
-                          <>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                            </svg>
-                            <span>Download Image</span>
-                          </>
-                        )}
-                      </button>
-                      <button
-                        className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
-                        onClick={handleGenerateLink}
-                        disabled={isCapturing}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
-                        </svg>
-                        <span>Generate Link</span>
-                      </button>
-                      <button
-                        className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
-                        onClick={() => setIsSendModalOpen(true)}
-                        disabled={isCapturing}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                        </svg>
-                        <span>Send to Client</span>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* 7-Day Reference - Reference tool only, never captured */}
-                  {!isCapturing && (
-                    <SevenDayReference
-                      data={selectedReport.report_data}
-                      clientName={`${client?.first_name} ${client?.last_name}`}
-                      dateRangeStart={selectedReport.date_range_start}
-                      dateRangeEnd={selectedReport.date_range_end}
-                    />
-                  )}
-                  
-                  <div id="report-container" className={`space-y-8 ${isCapturing ? 'p-8 rounded-lg' : ''}`}>
-                    <ReportVisualization
-                      data={selectedReport.report_data}
-                      onDeleteWorkout={handleDeleteWorkout}
-                      onDeleteExercise={handleDeleteExercise}
-                      isScreenshotMode={isCapturing}
-                      clientName={`${client?.first_name} ${client?.last_name}`}
-                      dateRangeStart={selectedReport.date_range_start}
-                      dateRangeEnd={selectedReport.date_range_end}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-lg text-gray-400">
-                    {reports.length > 0
-                      ? 'Select a report to view details'
-                      : 'No reports available'}
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Delete All Confirmation Modal */}
       <dialog id="delete-all-modal" className="modal modal-bottom sm:modal-middle">

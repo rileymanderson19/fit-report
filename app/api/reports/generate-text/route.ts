@@ -1,6 +1,7 @@
 import { createClient } from '@/libs/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { formatReportAsText } from '@/lib/report-text-formatter';
+import { generateReportData } from '@/lib/report-generator';
 
 interface GenerateTextRequest {
   reportId?: string;  // Optional: use existing report
@@ -99,14 +100,14 @@ export async function POST(req: NextRequest) {
       dateRangeStart = dateRange.from;
       dateRangeEnd = dateRange.to;
 
-      // Fetch report data from Trainerize APIs
+      // Fetch report data from Trainerize APIs using shared generator
       const startDate = new Date(dateRange.from).toISOString().split('T')[0];
       const endDate = new Date(dateRange.to).toISOString().split('T')[0];
 
       try {
         // Get the origin from the request URL
         const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-        
+
         // Get auth headers to pass through
         const authHeader = req.headers.get('authorization') || req.headers.get('cookie');
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -117,148 +118,24 @@ export async function POST(req: NextRequest) {
             headers['cookie'] = authHeader;
           }
         }
-        
-        // Fetch all data in parallel (including goals)
-        const [workoutDataRes, bodyStatsRes, healthDataRes, nutritionRes, sleepRes, goalsRes] = await Promise.all([
-          fetch(`${origin}/api/trainerize/workouts`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              userID: clientData.trainerize_id,
-              startDate,
-              endDate,
-              repRange: { min: 6, max: 10 } // Default rep range
-            }),
-          }),
-          fetch(`${origin}/api/trainerize/bodystats`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              userID: clientData.trainerize_id,
-              startDate,
-              endDate,
-              unitBodystats: 'inches',
-              unitWeight: 'lbs',
-            }),
-          }),
-          fetch(`${origin}/api/trainerize/health-data`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              userID: clientData.trainerize_id,
-              type: 'step',
-              startDate,
-              endDate,
-            }),
-          }),
-          fetch(`${origin}/api/trainerize/nutrition`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              userID: clientData.trainerize_id,
-              startDate,
-              endDate,
-            }),
-          }),
-          fetch(`${origin}/api/trainerize/sleep-data`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              userID: clientData.trainerize_id,
-              startDate,
-              endDate,
-            }),
-          }),
-          fetch(`${origin}/api/trainerize/goals`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              userID: clientData.trainerize_id,
-            }),
-          }),
-        ]);
 
-        const [workoutData, bodyStatsData, healthData, nutritionData, sleepData, goalsData] = await Promise.all([
-          workoutDataRes.json(),
-          bodyStatsRes.json(),
-          healthDataRes.json(),
-          nutritionRes.json(),
-          sleepRes.json(),
-          goalsRes.json().catch(() => ({ goals: [] as any[] })), // Goals are optional, don't fail if missing
-        ]);
+        // Use shared report generation module
+        reportData = await generateReportData(
+          {
+            trainerizeUserId: clientData.trainerize_id,
+            startDate,
+            endDate,
+            repRange: { min: 6, max: 10 }, // Default rep range
+            trainerId: user.id,
+            unitBodystats: 'inches',
+            unitWeight: weightUnit,
+          },
+          origin,
+          headers
+        );
 
-        // Fetch trainer's excluded workout names
-        let excludedWorkoutNames: string[] = [];
-        const { data: reportConfig } = await supabase
-          .from('report_configurations')
-          .select('excluded_workout_names')
-          .eq('trainer_id', user.id)
-          .single();
-        
-        if (reportConfig?.excluded_workout_names) {
-          excludedWorkoutNames = reportConfig.excluded_workout_names;
-        }
-
-        // Filter out excluded workouts
-        if (workoutData.workouts && excludedWorkoutNames.length > 0) {
-          workoutData.workouts = workoutData.workouts.filter((workout: any) => {
-            const workoutTitle = workout.title?.toLowerCase() || '';
-            return !excludedWorkoutNames.some(excluded => 
-              excluded.toLowerCase() === workoutTitle
-            );
-          });
-        }
-
-        // Process workout data to add automatic notes
-        if (workoutData.workouts) {
-          const maxReps = 10;
-          workoutData.workouts = workoutData.workouts.map((workout: any) => {
-            if (workout.exercises) {
-              workout.exercises = workout.exercises.map((exercise: any) => {
-                if (exercise.stats && exercise.stats.length > 0) {
-                  const validReps = exercise.stats.filter((stat: any) => typeof stat.reps === 'number');
-                  
-                  if (validReps.length > 0) {
-                    const isBodyweightMovement = validReps.every((stat: any) => 
-                      typeof stat.reps === 'number' && 
-                      (!stat.weight || stat.weight === 0)
-                    );
-
-                    const allSetsAtTopRange = validReps.every((stat: any) => stat.reps >= maxReps - 1);
-                    
-                    if (isBodyweightMovement) {
-                      exercise.notes = allSetsAtTopRange 
-                        ? "Focus on increasing the number of reps next session"
-                        : "Focus on adding reps";
-                    } else {
-                      exercise.notes = allSetsAtTopRange 
-                        ? "Increase weight next session"
-                        : "Focus on adding reps";
-                    }
-                  }
-                }
-                
-                return {
-                  name: exercise.name,
-                  sets: exercise.sets,
-                  stats: exercise.stats,
-                  notes: exercise.notes || "Focus on adding reps"
-                };
-              });
-            }
-            return workout;
-          });
-        }
-
-        reportData = {
-          bodyStats: bodyStatsData,
-          healthData,
-          nutritionData,
-          sleepData,
-          workoutData,
-          goalsData: goalsData,
-          template: template
-        };
+        // Add template to report data
+        reportData.template = template;
       } catch (fetchError) {
         console.error('Error fetching Trainerize data:', fetchError);
         return NextResponse.json(
