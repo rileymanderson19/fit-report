@@ -1,4 +1,5 @@
 import { createClient } from '@/libs/supabase/server';
+import { getTrainerizeDataWithCache, type TrainerizeCacheParams } from './trainerize-cache';
 
 export interface RepRange {
   min: number;
@@ -13,6 +14,8 @@ export interface ReportGenerationParams {
   trainerId: string;
   unitBodystats?: 'inches' | 'cm';
   unitWeight?: 'lbs' | 'kg';
+  clientId?: string; // Optional: enables Trainerize response caching
+  enableTrainerizeCache?: boolean; // Optional: default true if clientId provided
 }
 
 export interface ReportData {
@@ -23,6 +26,91 @@ export interface ReportData {
   workoutData: any;
   goalsData?: any;
   template?: 'daily' | 'enhanced';
+}
+
+/**
+ * Helper to fetch with timeout
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeout: number = 30000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeout}ms`);
+    }
+    throw error;
+  }
+}
+
+/**
+ * Helper to safely fetch and parse Trainerize data with timeout and fallback
+ */
+async function safeFetchTrainerize(
+  endpoint: string,
+  origin: string,
+  authHeaders: Record<string, string>,
+  body: any,
+  dataType: string,
+  timeout: number = 30000,
+  cacheParams?: { trainerId: string; clientId: string; type: string; startDate?: string; endDate?: string },
+  enableCache: boolean = false
+): Promise<{ data: any; error: string | null }> {
+  // Function to perform the actual fetch
+  const performFetch = async () => {
+    const startTime = performance.now();
+    const response = await fetchWithTimeout(
+      `${origin}/api/trainerize/${endpoint}`,
+      {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(body)
+      },
+      timeout
+    );
+
+    const duration = performance.now() - startTime;
+
+    if (!response.ok) {
+      console.error(`[TRAINERIZE] ${dataType} fetch failed: ${response.status} in ${duration.toFixed(2)}ms`);
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`[TRAINERIZE] ${dataType} fetched successfully in ${duration.toFixed(2)}ms`);
+    return data;
+  };
+
+  try {
+    // Use cache if enabled and params provided
+    if (enableCache && cacheParams) {
+      const data = await getTrainerizeDataWithCache(
+        cacheParams as TrainerizeCacheParams,
+        performFetch,
+        true
+      );
+      return { data, error: null };
+    }
+
+    // Otherwise fetch directly
+    const data = await performFetch();
+    return { data, error: null };
+  } catch (error) {
+    console.error(`[TRAINERIZE] ${dataType} fetch error:`, error);
+    return { data: null, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
 }
 
 /**
@@ -41,78 +129,96 @@ export async function generateReportData(
     repRange = { min: 6, max: 10 },
     trainerId,
     unitBodystats = 'inches',
-    unitWeight = 'lbs'
+    unitWeight = 'lbs',
+    clientId,
+    enableTrainerizeCache = !!clientId // Enable cache by default if clientId provided
   } = params;
 
-  // Fetch all data from Trainerize APIs in parallel
-  const [workoutDataRes, bodyStatsRes, healthDataRes, nutritionRes, sleepRes, goalsRes] = await Promise.all([
-    fetch(`${origin}/api/trainerize/workouts`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        userID: trainerizeUserId,
-        startDate,
-        endDate,
-        repRange
-      }),
-    }),
-    fetch(`${origin}/api/trainerize/bodystats`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        userID: trainerizeUserId,
-        startDate,
-        endDate,
-        unitBodystats,
-        unitWeight,
-      }),
-    }),
-    fetch(`${origin}/api/trainerize/health-data`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        userID: trainerizeUserId,
-        type: 'step',
-        startDate,
-        endDate,
-      }),
-    }),
-    fetch(`${origin}/api/trainerize/nutrition`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        userID: trainerizeUserId,
-        startDate,
-        endDate,
-      }),
-    }),
-    fetch(`${origin}/api/trainerize/sleep-data`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        userID: trainerizeUserId,
-        startDate,
-        endDate,
-      }),
-    }),
-    fetch(`${origin}/api/trainerize/goals`, {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        userID: trainerizeUserId,
-      }),
-    }),
+  // Fetch all data from Trainerize APIs in parallel with timeout and error handling
+  const [workoutResult, bodyStatsResult, healthResult, nutritionResult, sleepResult, goalsResult] = await Promise.all([
+    safeFetchTrainerize(
+      'workouts',
+      origin,
+      authHeaders,
+      { userID: trainerizeUserId, startDate, endDate, repRange },
+      'Workouts',
+      30000,
+      clientId ? { trainerId, clientId, type: 'workouts', startDate, endDate } : undefined,
+      enableTrainerizeCache
+    ),
+    safeFetchTrainerize(
+      'bodystats',
+      origin,
+      authHeaders,
+      { userID: trainerizeUserId, startDate, endDate, unitBodystats, unitWeight },
+      'Body Stats',
+      30000,
+      clientId ? { trainerId, clientId, type: 'bodystats', startDate, endDate } : undefined,
+      enableTrainerizeCache
+    ),
+    safeFetchTrainerize(
+      'health-data',
+      origin,
+      authHeaders,
+      { userID: trainerizeUserId, type: 'step', startDate, endDate },
+      'Health Data',
+      30000,
+      clientId ? { trainerId, clientId, type: 'health-data', startDate, endDate } : undefined,
+      enableTrainerizeCache
+    ),
+    safeFetchTrainerize(
+      'nutrition',
+      origin,
+      authHeaders,
+      { userID: trainerizeUserId, startDate, endDate },
+      'Nutrition',
+      30000,
+      clientId ? { trainerId, clientId, type: 'nutrition', startDate, endDate } : undefined,
+      enableTrainerizeCache
+    ),
+    safeFetchTrainerize(
+      'sleep-data',
+      origin,
+      authHeaders,
+      { userID: trainerizeUserId, startDate, endDate },
+      'Sleep',
+      30000,
+      clientId ? { trainerId, clientId, type: 'sleep-data', startDate, endDate } : undefined,
+      enableTrainerizeCache
+    ),
+    safeFetchTrainerize(
+      'goals',
+      origin,
+      authHeaders,
+      { userID: trainerizeUserId },
+      'Goals',
+      30000,
+      clientId ? { trainerId, clientId, type: 'goals' } : undefined,
+      enableTrainerizeCache
+    )
   ]);
 
-  // Parse responses
-  const [workoutData, bodyStatsData, healthData, nutritionData, sleepData, goalsData] = await Promise.all([
-    workoutDataRes.json(),
-    bodyStatsRes.json(),
-    healthDataRes.json(),
-    nutritionRes.json(),
-    sleepRes.json(),
-    goalsRes.json().catch(() => ({ goals: [] as any[] })), // Goals are optional
-  ]);
+  // Use fetched data with fallbacks for missing data
+  const workoutData = workoutResult.data || { workouts: [] };
+  const bodyStatsData = bodyStatsResult.data || { stats: [] };
+  const healthData = healthResult.data || { data: [] };
+  const nutritionData = nutritionResult.data || { data: [] };
+  const sleepData = sleepResult.data || { data: [] };
+  const goalsData = goalsResult.data || { goals: [] };
+
+  // Log any errors (but continue with partial data)
+  const errors = [
+    workoutResult.error && `Workouts: ${workoutResult.error}`,
+    bodyStatsResult.error && `Body Stats: ${bodyStatsResult.error}`,
+    healthResult.error && `Health Data: ${healthResult.error}`,
+    nutritionResult.error && `Nutrition: ${nutritionResult.error}`,
+    sleepResult.error && `Sleep: ${sleepResult.error}`,
+    goalsResult.error && `Goals: ${goalsResult.error}`
+  ].filter(Boolean);
+
+  if (errors.length > 0) {
+    console.warn(`[REPORT GEN] Partial failure - ${errors.length} endpoints failed:`, errors);
+  }
 
   // Apply excluded workout filtering
   const excludedWorkoutNames = await getExcludedWorkoutNames(trainerId);

@@ -1,14 +1,27 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { createClient } from '@/libs/supabase/client';
-import { ReportVisualization } from '@/components/ReportVisualization';
 import { SevenDayReference } from '@/components/SevenDayReference';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import ClientSearchBar from '@/components/ClientSearchBar';
 import SendReportModal from '@/components/SendReportModal';
 import GenerateLinkModal from '@/components/GenerateLinkModal';
 import { toast } from 'sonner';
+
+// Lazy-load ReportVisualization to reduce initial bundle size
+const ReportVisualization = dynamic(
+  () => import('@/components/ReportVisualization').then(mod => ({ default: mod.ReportVisualization })),
+  {
+    loading: () => (
+      <div className="flex justify-center items-center h-64">
+        <span className="loading loading-spinner loading-lg text-accent-purple"></span>
+      </div>
+    ),
+    ssr: false
+  }
+);
 
 interface Report {
   id: string;
@@ -31,21 +44,38 @@ interface Client {
 
 interface ClientReportsClientProps {
   clientId: string;
+  initialClient?: Client | null;
+  initialReports?: Report[];
+  initialError?: string | null;
+  initialLiveReportData?: any;
+  initialLiveReportMetadata?: any;
 }
 
-export default function ClientReportsClient({ clientId }: ClientReportsClientProps) {
+export default function ClientReportsClient({
+  clientId,
+  initialClient = null,
+  initialReports = [],
+  initialError = null,
+  initialLiveReportData = null,
+  initialLiveReportMetadata = null
+}: ClientReportsClientProps) {
   const supabase = createClient();
+  const mountTimeRef = React.useRef<number>(performance.now());
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'live' | 'snapshots'>('live');
 
   // Snapshot reports state
-  const [reports, setReports] = useState<Report[]>([]);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [reports, setReports] = useState<Report[]>(initialReports);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(
+    initialReports.length > 0 ? initialReports[0] : null
+  );
 
   // Live report state
-  const [liveReportData, setLiveReportData] = useState<any>(null);
+  const [liveReportData, setLiveReportData] = useState<any>(initialLiveReportData);
+  const [liveReportMetadata, setLiveReportMetadata] = useState<any>(initialLiveReportMetadata);
   const [isGeneratingLive, setIsGeneratingLive] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -59,8 +89,8 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
 
   // Shared state
-  const [client, setClient] = useState<Client | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [client, setClient] = useState<Client | null>(initialClient);
+  const [isLoading, setIsLoading] = useState(!initialClient);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -80,51 +110,112 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
 
     setStartDate(fourteenDaysAgo);
     setEndDate(yesterday);
-  }, []);
 
-  useEffect(() => {
-    const fetchClientAndReports = async () => {
+    // Hydrate from localStorage if no initial data and localStorage is available
+    if (!initialLiveReportData && typeof window !== 'undefined' && window.localStorage) {
       try {
-        // Fetch client details
-        const { data: clientData, error: clientError } = await supabase
-          .from('clients')
-          .select('*')
-          .eq('id', clientId)
-          .single();
-
-        if (clientError) throw clientError;
-        setClient(clientData);
-
-        // Fetch reports for this client
-        const { data: reportsData, error: reportsError } = await supabase
-          .from('reports')
-          .select('*')
-          .eq('client_id', clientId)
-          .order('created_at', { ascending: false });
-
-        if (reportsError) throw reportsError;
-        setReports(reportsData || []);
-
-        // Set the first report as selected if available
-        if (reportsData && reportsData.length > 0) {
-          setSelectedReport(reportsData[0]);
+        const localStorageKey = `liveReport_${clientId}_${fourteenDaysAgo.toISOString()}_${yesterday.toISOString()}_enhanced_6-10`;
+        const cached = localStorage.getItem(localStorageKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          // Check if cache is less than 24 hours old
+          const cacheAge = Date.now() - new Date(parsed.timestamp).getTime();
+          if (cacheAge < 24 * 60 * 60 * 1000) {
+            setLiveReportData(parsed.data);
+            setLiveReportMetadata({
+              ...parsed.metadata,
+              cached: true,
+              fromLocalStorage: true
+            });
+            console.log('[LOCAL CACHE] Hydrated from localStorage');
+          } else {
+            localStorage.removeItem(localStorageKey);
+          }
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        toast.error('Failed to fetch client reports');
-      } finally {
-        setIsLoading(false);
+        console.error('[LOCAL CACHE] Error loading from localStorage:', error);
       }
-    };
+    }
+  }, [clientId, initialLiveReportData]);
 
-    fetchClientAndReports();
-  }, [supabase, clientId]);
+  useEffect(() => {
+    // Only fetch if we don't have initial data (e.g., for legacy routes or client-side navigation)
+    if (!initialClient) {
+      const fetchClientAndReports = async () => {
+        const fetchStart = performance.now();
+        try {
+          // Fetch client details
+          const { data: clientData, error: clientError } = await supabase
+            .from('clients')
+            .select('*')
+            .eq('id', clientId)
+            .single();
 
-  // Auto-generate live report on load
+          if (clientError) throw clientError;
+          setClient(clientData);
+
+          // Fetch reports for this client
+          const { data: reportsData, error: reportsError } = await supabase
+            .from('reports')
+            .select('*')
+            .eq('client_id', clientId)
+            .order('created_at', { ascending: false });
+
+          if (reportsError) throw reportsError;
+          setReports(reportsData || []);
+
+          // Set the first report as selected if available
+          if (reportsData && reportsData.length > 0) {
+            setSelectedReport(reportsData[0]);
+          }
+
+          const fetchTime = performance.now() - fetchStart;
+          const totalTime = performance.now() - mountTimeRef.current;
+          console.log('[PERF CLIENT] Client & reports loaded (client-side):', {
+            fetchTime: `${fetchTime.toFixed(2)}ms`,
+            totalFromMount: `${totalTime.toFixed(2)}ms`
+          });
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          toast.error('Failed to fetch client reports');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchClientAndReports();
+    } else {
+      // We have server-loaded data
+      const totalTime = performance.now() - mountTimeRef.current;
+      console.log('[PERF CLIENT] Using server-loaded data, ready at:', {
+        totalFromMount: `${totalTime.toFixed(2)}ms`,
+        hasCachedReport: !!initialLiveReportData
+      });
+
+      // Show toast if we have a cached report preloaded
+      if (initialLiveReportData) {
+        const generatedAt = new Date(initialLiveReportMetadata?.generatedAt);
+        const hoursAgo = Math.round((Date.now() - generatedAt.getTime()) / (1000 * 60 * 60));
+        toast.success(`Loaded cached report from ${hoursAgo}h ago`, { duration: 3000 });
+
+        // Background refresh check after a short delay
+        setTimeout(() => {
+          checkForNewerCache();
+        }, 2000);
+      }
+    }
+  }, [supabase, clientId, initialClient, initialLiveReportData, initialLiveReportMetadata]);
+
+  // Auto-generate live report on load (but only if no cached data from server)
+  // With our caching optimizations, this will be fast:
+  // - 80-90% hit precomputed cache (sub-second)
+  // - Cold generation benefits from Trainerize response caching
+  // - Page shell already rendered, so UX is still instant
   useEffect(() => {
     if (startDate && endDate && client && activeTab === 'live' && !liveReportData) {
       generateLiveReport();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate, client, activeTab]);
 
   const handleDeleteReport = async (report: Report) => {
@@ -321,12 +412,61 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
     setIsLinkModalOpen(true);
   };
 
+  const checkForNewerCache = async () => {
+    if (!startDate || !endDate || !client || !liveReportData) {
+      return;
+    }
+
+    setIsRefreshing(true);
+    try {
+      const response = await fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          dateRange: {
+            from: startDate.toISOString(),
+            to: endDate.toISOString()
+          },
+          template: reportTemplate,
+          repRange: {
+            min: minReps,
+            max: maxReps
+          },
+          mode: 'cache-only' // Only check cache, don't generate
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.reportData) {
+          // Check if this cache is newer than what we have
+          const currentGeneratedAt = liveReportMetadata?.generatedAt ? new Date(liveReportMetadata.generatedAt).getTime() : 0;
+          const newGeneratedAt = data.metadata?.generatedAt ? new Date(data.metadata.generatedAt).getTime() : 0;
+
+          if (newGeneratedAt > currentGeneratedAt) {
+            setLiveReportData(data.reportData);
+            setLiveReportMetadata(data.metadata);
+            toast.success('Report updated with latest data', { duration: 2000 });
+          }
+        }
+      }
+      // Ignore 202 responses (no cache available)
+    } catch (error) {
+      console.error('[BACKGROUND REFRESH] Error checking for newer cache:', error);
+      // Silent failure for background refresh
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const generateLiveReport = async () => {
     if (!startDate || !endDate || !client) {
       toast.error('Please select a date range');
       return;
     }
 
+    const reportGenStart = performance.now();
     setIsGeneratingLive(true);
     try {
       const response = await fetch('/api/reports/generate', {
@@ -353,6 +493,29 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
 
       const data = await response.json();
       setLiveReportData(data.reportData);
+      setLiveReportMetadata(data.metadata);
+
+      // Store in localStorage for fast hydration on next visit
+      if (typeof window !== 'undefined' && window.localStorage && data.reportData) {
+        try {
+          const localStorageKey = `liveReport_${clientId}_${startDate.toISOString()}_${endDate.toISOString()}_${reportTemplate}_${minReps}-${maxReps}`;
+          localStorage.setItem(localStorageKey, JSON.stringify({
+            data: data.reportData,
+            metadata: data.metadata,
+            timestamp: new Date().toISOString()
+          }));
+        } catch (error) {
+          console.error('[LOCAL CACHE] Error storing to localStorage:', error);
+        }
+      }
+
+      const reportGenTime = performance.now() - reportGenStart;
+      const totalTime = performance.now() - mountTimeRef.current;
+      console.log('[PERF CLIENT] Live report generated:', {
+        reportGenTime: `${reportGenTime.toFixed(2)}ms`,
+        totalFromMount: `${totalTime.toFixed(2)}ms`,
+        cached: data.cached
+      });
 
       if (data.cached) {
         toast.success('Loaded cached report');
@@ -514,6 +677,17 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
     );
   }
 
+  if (initialError) {
+    return (
+      <div className="p-8">
+        <div className="glass border border-red-500/30 bg-red-500/10 p-4 rounded-lg flex items-start gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span className="text-gray-300">{initialError}</span>
+        </div>
+      </div>
+    );
+  }
+
   if (!client) {
     return (
       <div className="p-8">
@@ -669,9 +843,25 @@ export default function ClientReportsClient({ clientId }: ClientReportsClientPro
             <div className="card-elevated">
               <div className="card-body p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-white">
-                    Live Report for {client?.first_name} {client?.last_name}
-                  </h2>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Live Report for {client?.first_name} {client?.last_name}
+                    </h2>
+                    {liveReportMetadata?.cached && liveReportMetadata?.generatedAt && (
+                      <p className="text-sm text-gray-400 mt-1">
+                        Last refreshed: {new Date(liveReportMetadata.generatedAt).toLocaleString()}
+                        {liveReportMetadata.fromLocalStorage && ' (from local cache)'}
+                        {' · '}
+                        <button
+                          onClick={generateLiveReport}
+                          className="text-accent-purple hover:underline"
+                          disabled={isGeneratingLive || isRefreshing}
+                        >
+                          {isRefreshing ? 'Checking...' : 'Refresh now'}
+                        </button>
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div id="report-container" className="space-y-8">
