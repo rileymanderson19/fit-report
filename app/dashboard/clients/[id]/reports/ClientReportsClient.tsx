@@ -88,6 +88,11 @@ export default function ClientReportsClient({
   const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
 
+  // Client navigation state
+  const [allClients, setAllClients] = useState<Client[]>([]);
+  const [nextClient, setNextClient] = useState<Client | null>(null);
+  const [prevClient, setPrevClient] = useState<Client | null>(null);
+
   // Shared state
   const [client, setClient] = useState<Client | null>(initialClient);
   const [isLoading, setIsLoading] = useState(!initialClient);
@@ -667,6 +672,40 @@ export default function ClientReportsClient({
     }
   }, [activeTab, client]);
 
+  // Fetch all clients for navigation
+  useEffect(() => {
+    const fetchAllClients = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('active', true)
+          .order('first_name', { ascending: true });
+
+        if (error) throw error;
+
+        const clients = data || [];
+        setAllClients(clients);
+
+        // Find current client index
+        const currentIndex = clients.findIndex(c => c.id === clientId);
+        if (currentIndex !== -1) {
+          // Set next client (wrap around to first if at end)
+          const nextIndex = (currentIndex + 1) % clients.length;
+          setNextClient(clients[nextIndex]);
+
+          // Set previous client (wrap around to last if at beginning)
+          const prevIndex = currentIndex === 0 ? clients.length - 1 : currentIndex - 1;
+          setPrevClient(clients[prevIndex]);
+        }
+      } catch (error) {
+        console.error('Error fetching all clients:', error);
+      }
+    };
+
+    fetchAllClients();
+  }, [supabase, clientId]);
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -740,14 +779,29 @@ export default function ClientReportsClient({
       {activeTab === 'live' && (
         <div className="space-y-6">
           {/* Report Configuration */}
-          <div className="card-elevated">
+          <div className="card-elevated border-2 border-white/10">
             <div className="card-body p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Report Configuration</h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Date Range */}
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Date Range</label>
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
+                    </svg>
+                    Report Configuration
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-1">Customize your report settings</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {/* Date Range - Full Width */}
+                <div className="glass border border-white/10 p-4 rounded-lg">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    Date Range
+                  </label>
                   <DateRangePicker
                     from={startDate || undefined}
                     to={endDate || undefined}
@@ -759,47 +813,63 @@ export default function ClientReportsClient({
                   />
                 </div>
 
-                {/* Template */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Template</label>
-                  <select
-                    className="bg-bg-secondary border border-white/10 text-white w-full px-4 py-2 rounded-lg focus:outline-none focus:border-accent-purple"
-                    value={reportTemplate}
-                    onChange={(e) => setReportTemplate(e.target.value as 'daily' | 'enhanced')}
-                  >
-                    <option value="enhanced">Progress Report</option>
-                    <option value="daily">Daily Data</option>
-                  </select>
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Template Selection */}
+                  <div className="glass border border-white/10 p-4 rounded-lg">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                      </svg>
+                      Report Template
+                    </label>
+                    <select
+                      className="bg-bg-secondary border border-white/20 text-white w-full px-4 py-3 rounded-lg focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
+                      value={reportTemplate}
+                      onChange={(e) => setReportTemplate(e.target.value as 'daily' | 'enhanced')}
+                    >
+                      <option value="enhanced">Progress Report (AI Insights)</option>
+                      <option value="daily">Daily Data (Detailed Breakdown)</option>
+                    </select>
+                  </div>
 
-                {/* Rep Range */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Min Reps</label>
-                  <input
-                    type="number"
-                    className="bg-bg-secondary border border-white/10 text-white w-full px-4 py-2 rounded-lg focus:outline-none focus:border-accent-purple"
-                    value={minReps}
-                    onChange={(e) => setMinReps(Math.max(1, parseInt(e.target.value) || 1))}
-                    min="1"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Max Reps</label>
-                  <input
-                    type="number"
-                    className="bg-bg-secondary border border-white/10 text-white w-full px-4 py-2 rounded-lg focus:outline-none focus:border-accent-purple"
-                    value={maxReps}
-                    onChange={(e) => setMaxReps(Math.max(minReps + 1, parseInt(e.target.value) || minReps + 1))}
-                    min={minReps + 1}
-                  />
+                  {/* Progressive Overload Range */}
+                  <div className="glass border border-white/10 p-4 rounded-lg">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
+                      </svg>
+                      Rep Range ({minReps} - {maxReps})
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Min</label>
+                        <input
+                          type="number"
+                          className="bg-bg-secondary border border-white/20 text-white w-full px-3 py-2 rounded-lg focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
+                          value={minReps}
+                          onChange={(e) => setMinReps(Math.max(1, parseInt(e.target.value) || 1))}
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Max</label>
+                        <input
+                          type="number"
+                          className="bg-bg-secondary border border-white/20 text-white w-full px-3 py-2 rounded-lg focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
+                          value={maxReps}
+                          onChange={(e) => setMaxReps(Math.max(minReps + 1, parseInt(e.target.value) || minReps + 1))}
+                          min={minReps + 1}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Generate Button */}
-              <div className="flex gap-3 mt-6">
+              <div className="flex gap-3 mt-6 pt-6 border-t border-white/10">
                 <button
-                  className="btn-gradient px-8 py-3 rounded-lg font-medium flex items-center gap-2"
+                  className="btn-gradient px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 hover:scale-105 transition-transform"
                   onClick={generateLiveReport}
                   disabled={isGeneratingLive || !startDate || !endDate}
                 >
@@ -820,7 +890,7 @@ export default function ClientReportsClient({
 
                 {liveReportData && (
                   <button
-                    className="glass border border-accent-purple/50 hover:border-accent-purple text-white px-8 py-3 rounded-lg font-medium"
+                    className="glass border border-accent-purple/50 hover:border-accent-purple text-white px-8 py-3 rounded-lg font-medium hover:scale-105 transition-all"
                     onClick={saveSnapshot}
                     disabled={isSavingSnapshot}
                   >
@@ -830,13 +900,52 @@ export default function ClientReportsClient({
                         <span className="ml-2">Saving...</span>
                       </>
                     ) : (
-                      'Save Snapshot'
+                      <span className="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                        </svg>
+                        Save Snapshot
+                      </span>
                     )}
                   </button>
                 )}
               </div>
             </div>
           </div>
+
+          {/* Client Navigation */}
+          {allClients.length > 1 && (
+            <div className="flex gap-3">
+              {prevClient && (
+                <a
+                  href={`/dashboard/clients/${prevClient.id}/reports`}
+                  className="glass border border-white/10 hover:border-accent-purple/50 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 flex-1 hover:scale-105 transition-all group"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:-translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs text-gray-400">Previous</span>
+                    <span className="text-sm">{prevClient.first_name} {prevClient.last_name}</span>
+                  </div>
+                </a>
+              )}
+              {nextClient && (
+                <a
+                  href={`/dashboard/clients/${nextClient.id}/reports`}
+                  className="glass border border-white/10 hover:border-accent-purple/50 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 flex-1 hover:scale-105 transition-all group ml-auto"
+                >
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs text-gray-400">Next</span>
+                    <span className="text-sm">{nextClient.first_name} {nextClient.last_name}</span>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                </a>
+              )}
+            </div>
+          )}
 
           {/* Live Report Display */}
           {liveReportData && (
