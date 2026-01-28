@@ -33,7 +33,7 @@ export interface ReportData {
  */
 async function fetchWithTimeout(
   url: string,
-  options: RequestInit,
+  options: any,
   timeout: number = 30000
 ): Promise<Response> {
   const controller = new AbortController();

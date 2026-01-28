@@ -8,6 +8,7 @@ interface Client {
   id: string;
   first_name: string;
   last_name: string;
+  goal: 'fat_loss' | 'maintenance' | 'muscle_gain' | null;
 }
 
 interface CompletedClient {
@@ -27,7 +28,6 @@ export default function TestTextReportPage() {
   const [dateTo, setDateTo] = useState('');
   const [template, setTemplate] = useState<'daily' | 'weekly' | 'enhanced'>('enhanced');
   const [weightUnit, setWeightUnit] = useState<'lbs' | 'kg'>('lbs');
-  const [goal, setGoal] = useState<'fat loss' | 'maintenance' | 'muscle gain'>('fat loss');
   
   // Workflow state
   const [clientQueue, setClientQueue] = useState<Client[]>([]);
@@ -61,16 +61,42 @@ export default function TestTextReportPage() {
     const loadClients = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          console.log('No user found');
+          return;
+        }
 
-        const { data, error } = await supabase
+        console.log('Loading clients for user:', user.id);
+
+        // Try querying with goal first, fallback to without goal if it fails
+        let result = await supabase
           .from('clients')
-          .select('id, first_name, last_name')
+          .select('id, first_name, last_name, goal')
           .eq('trainer_id', user.id)
           .eq('active', true)
           .order('first_name', { ascending: true });
 
+        let data: Client[] | null = result.data;
+        let error = result.error;
+
+        // If query failed, try without goal column
+        if (error) {
+          console.log('Query with goal failed, trying without goal:', error);
+          const fallbackResult = await supabase
+            .from('clients')
+            .select('id, first_name, last_name')
+            .eq('trainer_id', user.id)
+            .eq('active', true)
+            .order('first_name', { ascending: true });
+
+          // Add goal: null to each client
+          data = fallbackResult.data?.map(client => ({ ...client, goal: null as Client['goal'] })) || null;
+          error = fallbackResult.error;
+        }
+
+        console.log('Query result:', { data, error });
         if (error) throw error;
+        console.log('Setting clients:', data);
         setClients(data || []);
         setFilteredClients(data || []);
       } catch (error) {
@@ -129,6 +155,22 @@ export default function TestTextReportPage() {
     }
   };
 
+  // Convert database goal format to API format
+  const getClientGoal = (client: Client): 'fat loss' | 'maintenance' | 'muscle gain' => {
+    if (!client.goal) return 'fat loss';
+
+    switch (client.goal) {
+      case 'fat_loss':
+        return 'fat loss';
+      case 'muscle_gain':
+        return 'muscle gain';
+      case 'maintenance':
+        return 'maintenance';
+      default:
+        return 'fat loss';
+    }
+  };
+
   // Generate report for a specific client
   const generateReportForClient = async (client: Client) => {
     try {
@@ -145,7 +187,7 @@ export default function TestTextReportPage() {
           },
           template,
           weightUnit,
-          goal
+          goal: getClientGoal(client)
         }),
       });
 
@@ -322,7 +364,7 @@ export default function TestTextReportPage() {
             <div className="card-body">
               <h2 className="card-title mb-4 text-white">Configuration</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Template Selection */}
                 <div className="form-control">
                   <label className="label">
@@ -351,22 +393,6 @@ export default function TestTextReportPage() {
                   >
                     <option value="lbs">Pounds (lbs)</option>
                     <option value="kg">Kilograms (kg)</option>
-                  </select>
-                </div>
-
-                {/* Goal Selection */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="text-gray-300">Goal</span>
-                  </label>
-                  <select
-                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value as any)}
-                  >
-                    <option value="fat loss">Fat Loss</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="muscle gain">Muscle Gain</option>
                   </select>
                 </div>
               </div>
@@ -452,16 +478,9 @@ export default function TestTextReportPage() {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-4">
+              <div className="mt-4">
                 <button
-                  className="btn-gradient px-6 py-3 rounded-lg font-medium flex-1"
-                  onClick={handleStartWorkflow}
-                  disabled={selectedCount === 0}
-                >
-                  Start Workflow ({selectedCount} client{selectedCount !== 1 ? 's' : ''})
-                </button>
-                <button
-                  className="glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg transition-all flex-1"
+                  className="btn-gradient px-6 py-3 rounded-lg font-medium w-full"
                   onClick={handleGenerateCombined}
                   disabled={selectedCount === 0 || isGeneratingCombined}
                 >
@@ -471,7 +490,7 @@ export default function TestTextReportPage() {
                       Generating... ({generationProgress.current}/{generationProgress.total})
                     </>
                   ) : (
-                    `Generate Combined Document (${selectedCount})`
+                    `Create Text Report (${selectedCount})`
                   )}
                 </button>
               </div>
@@ -490,7 +509,7 @@ export default function TestTextReportPage() {
                     </p>
                   </div>
                   <button
-                    className="btn-gradient text-sm"
+                    className="btn-gradient px-6 py-3 rounded-lg text-sm font-medium"
                     onClick={() => copyToClipboard(combinedDocument)}
                   >
                     Copy Document
