@@ -211,13 +211,13 @@ export default async function Dashboard() {
                     <div className="w-10 h-10 rounded-full bg-gradient-to-r from-accent-indigo to-accent-pink flex items-center justify-center text-white font-bold text-lg">3</div>
                     <h4 className="font-semibold text-lg text-white">Generate Reports</h4>
                   </div>
-                  <p className="text-gray-400 mb-4">Schedule and run reports for your clients</p>
+                  <p className="text-gray-400 mb-4">Generate reports from individual client pages</p>
                   <div className="mt-auto">
                     <Link
-                      href="/dashboard/reports"
+                      href="/dashboard/clients"
                       className="inline-flex items-center gap-2 text-accent-purple hover:text-primary-start transition-colors font-medium"
                     >
-                      Create
+                      View Clients
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
