@@ -6,19 +6,19 @@ interface PaginationControlsProps {
 
 export function PaginationControls({ totalPages, currentPage, onPageChange }: PaginationControlsProps) {
   return (
-    <div className="flex justify-center gap-2 mt-4">
+    <div className="flex justify-center gap-2 mt-3">
       <button
-        className="btn btn-sm"
+        className="btn btn-sm text-xs"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
         Previous
       </button>
-      <span className="flex items-center px-4">
+      <span className="flex items-center px-3 text-xs">
         Page {currentPage} of {totalPages}
       </span>
       <button
-        className="btn btn-sm"
+        className="btn btn-sm text-xs"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >

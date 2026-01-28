@@ -4,7 +4,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { Upload, Edit2 } from 'lucide-react';
 import { PaginationControls } from '../../components/PaginationControls';
+import GoalBadge from '@/components/GoalBadge';
+import ClientActionsMenu from '@/components/ClientActionsMenu';
 
 interface Client {
   id: string;
@@ -17,6 +20,7 @@ interface Client {
   updated_at: string;
   active: boolean;
   notes: string | null;
+  goal: 'fat_loss' | 'maintenance' | 'muscle_gain' | null;
 }
 
 interface TrainerizeClient {
@@ -35,7 +39,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 25;
+  const itemsPerPage = 10;
 
   // Import-specific state
   const [trainerizeClients, setTrainerizeClients] = useState<TrainerizeClient[]>([]);
@@ -48,6 +52,7 @@ export default function ClientsPage() {
   // Notes editing state
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<string>('');
+  const [editingGoal, setEditingGoal] = useState<Client['goal']>(null);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
 
   // Fetch clients from Supabase
@@ -270,32 +275,24 @@ export default function ClientsPage() {
   );
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-display font-bold gradient-text">Clients</h1>
-          <p className="text-gray-400 mt-2">
-            Manage your client list and import from Trainerize
-          </p>
-        </div>
-        <Link
-          href="/dashboard/reports"
-          className="btn-gradient px-6 py-3 rounded-lg font-medium"
-        >
-          Generate Reports
-        </Link>
+    <div className="p-6">
+      <div className="mb-4">
+        <h1 className="text-2xl font-display font-bold gradient-text">Clients</h1>
+        <p className="text-gray-400 text-sm mt-1">
+          Manage your client list and import from Trainerize
+        </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Client Management Section */}
         <div className="card-elevated">
-          <div className="card-body">
-            <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="card-body p-4">
+            <div className="flex items-center justify-between gap-4 mb-4">
               <div className="flex-1">
                 <input
                   type="text"
                   placeholder="Search clients..."
-                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
+                  className="bg-bg-secondary border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-3 py-1.5 w-full"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -306,106 +303,117 @@ export default function ClientsPage() {
               <div className="flex gap-2">
                 {selectedClients.length > 0 && (
                   <button
-                    className="glass border border-red-500/50 hover:border-red-500 text-red-400 hover:text-red-300 px-4 py-2 rounded-lg transition-all"
+                    className="glass border border-red-500/50 hover:border-red-500 text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-lg transition-all"
                     onClick={handleDeleteSelected}
                   >
                     Delete Selected ({selectedClients.length})
                   </button>
                 )}
                 <button
-                  className={`glass border border-white/10 hover:border-accent-purple/50 px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`glass border border-white/10 hover:border-accent-purple/50 text-sm px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   onClick={fetchTrainerizeClients}
                   disabled={isLoading}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd"/>
-                  </svg>
+                  <Upload className="h-4 w-4" />
                   {isLoading ? 'Loading...' : 'Import Clients'}
                 </button>
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="table w-full">
+              <table className="table w-full table-sm">
                 <thead>
                   <tr>
-                    <th className="text-gray-400">
+                    <th className="text-gray-400 text-xs w-12 py-2">
                       <label>
                         <input
                           type="checkbox"
-                          className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
+                          className="checkbox checkbox-sm border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                           checked={currentClients.length > 0 && currentClients.every(client => selectedClients.includes(client.id))}
                           onChange={handleSelectAll}
                         />
                       </label>
                     </th>
-                    <th className="text-gray-400">Name</th>
-                    <th className="text-gray-400">Notes</th>
-                    <th className="text-gray-400">Actions</th>
+                    <th className="text-gray-400 text-xs py-2">Client</th>
+                    <th className="text-gray-400 text-xs py-2">Notes</th>
+                    <th className="text-gray-400 text-xs text-center py-2">Goal</th>
+                    <th className="w-12 py-2"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentClients.map((client) => (
                     <tr key={client.id} className={selectedClients.includes(client.id) ? 'bg-white/5' : 'hover:bg-white/5'}>
-                      <td>
+                      <td className="py-2">
                         <label>
                           <input
                             type="checkbox"
-                            className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
+                            className="checkbox checkbox-sm border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
                             checked={selectedClients.includes(client.id)}
                             onChange={() => handleClientSelect(client.id)}
                           />
                         </label>
                       </td>
-                      <td className="text-white">{`${client.first_name} ${client.last_name}`}</td>
-                      <td>
-                        {client.notes ? (
-                          <div className="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <span className="text-sm text-gray-300 truncate max-w-xs" title={client.notes}>
-                              {client.notes.length > 50 ? `${client.notes.substring(0, 50)}...` : client.notes}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-500">No notes</span>
-                        )}
+                      <td className="py-2">
+                        <Link
+                          href={`/dashboard/clients/${client.id}/reports`}
+                          className="block hover:text-accent-purple transition-colors font-medium text-white text-sm"
+                        >
+                          {client.first_name} {client.last_name}
+                        </Link>
                       </td>
-                      <td>
-                        <div className="flex gap-2">
+                      <td className="py-2">
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex-1 min-w-0 max-w-md">
+                            {client.notes ? (
+                              <span className="text-xs text-gray-300 truncate block" title={client.notes}>
+                                {client.notes.length > 50 ? `${client.notes.substring(0, 50)}...` : client.notes}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-500">No notes</span>
+                            )}
+                          </div>
                           <button
-                            className="glass border border-white/10 hover:border-accent-purple/50 p-2 rounded-lg transition-all"
+                            className="glass border border-white/10 hover:border-accent-purple/50 p-0.5 rounded transition-all flex-shrink-0"
                             onClick={() => {
                               setEditingClientId(client.id);
                               setEditingNotes(client.notes || '');
+                              setEditingGoal(client.goal || null);
                               (document.getElementById('edit-notes-modal') as HTMLDialogElement)?.showModal();
                             }}
-                            title="Edit Notes"
+                            title="Edit Notes & Goal"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
+                            <Edit2 className="h-3 w-3 text-gray-400 hover:text-accent-purple" />
                           </button>
-                          <Link
-                            href={`/dashboard/clients/${client.id}/reports`}
-                            className="glass border border-white/10 hover:border-accent-purple/50 px-3 py-1.5 rounded-lg text-sm transition-all"
-                          >
-                            View Reports
-                          </Link>
-                          <Link
-                            href={`/dashboard/reports?selectedClient=${client.id}`}
-                            className="btn-gradient text-sm px-3 py-1.5 rounded-lg"
-                          >
-                            Generate Report
-                          </Link>
                         </div>
+                      </td>
+                      <td className="text-center py-2">
+                        <button
+                          className="hover:opacity-80 transition-opacity cursor-pointer"
+                          onClick={() => {
+                            setEditingClientId(client.id);
+                            setEditingNotes(client.notes || '');
+                            setEditingGoal(client.goal || null);
+                            (document.getElementById('edit-notes-modal') as HTMLDialogElement)?.showModal();
+                          }}
+                          title="Click to change goal"
+                        >
+                          <GoalBadge goal={client.goal} />
+                        </button>
+                      </td>
+                      <td className="py-2">
+                        <ClientActionsMenu
+                          client={client}
+                          onDelete={(id) => {
+                            setSelectedClients([id]);
+                            handleDeleteSelected();
+                          }}
+                        />
                       </td>
                     </tr>
                   ))}
                   {filteredClients.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="text-center py-4 text-gray-400">
+                      <td colSpan={5} className="text-center py-4 text-gray-400">
                         {clients.length === 0 ? 'No clients imported yet' : 'No clients found matching your search'}
                       </td>
                     </tr>
@@ -577,25 +585,43 @@ export default function ClientsPage() {
       </dialog>
 
       {/* Edit Notes Modal */}
-      <dialog id="edit-notes-modal" className="modal">
-        <div className="card-elevated max-w-2xl">
-          <h3 className="font-bold text-lg mb-4 text-white">
-            Edit Client Notes
+      <dialog id="edit-notes-modal" className="modal modal-top">
+        <div className="card-elevated max-w-lg w-full mx-auto mt-16 px-6 py-5">
+          <h3 className="font-bold text-base mb-3 text-white">
+            Edit Client Details
           </h3>
           {editingClientId && (
             <p className="text-sm text-gray-300 mb-4">
               {clients.find(c => c.id === editingClientId)?.first_name} {clients.find(c => c.id === editingClientId)?.last_name}
             </p>
           )}
-          <textarea
-            className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full min-h-[200px]"
-            placeholder="Enter client notes/context here..."
-            value={editingNotes}
-            onChange={(e) => setEditingNotes(e.target.value)}
-          />
-          <div className="flex justify-end gap-2 mt-4">
+
+          <div className="mb-3">
+            <label className="text-xs text-gray-400 mb-1.5 block">Goal</label>
+            <select
+              className="bg-bg-secondary border border-white/10 text-white text-sm rounded-lg px-3 py-2 w-full focus:outline-none focus:border-accent-purple"
+              value={editingGoal || ''}
+              onChange={(e) => setEditingGoal(e.target.value as Client['goal'])}
+            >
+              <option value="">Not Set</option>
+              <option value="fat_loss">Fat Loss</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="muscle_gain">Muscle Gain</option>
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="text-xs text-gray-400 mb-1.5 block">Notes</label>
+            <textarea
+              className="bg-bg-secondary border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-3 py-2 w-full min-h-[120px] resize-y"
+              placeholder="Enter client notes/context here..."
+              value={editingNotes}
+              onChange={(e) => setEditingNotes(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
             <button
-              className={`btn-gradient ${isSavingNotes ? 'opacity-50 cursor-not-allowed' : ''} flex items-center gap-2`}
+              className={`btn-gradient text-sm px-4 py-2 rounded-lg ${isSavingNotes ? 'opacity-50 cursor-not-allowed' : ''} flex items-center gap-2`}
               onClick={async () => {
                 if (!editingClientId) return;
                 setIsSavingNotes(true);
@@ -607,7 +633,8 @@ export default function ClientsPage() {
                     },
                     body: JSON.stringify({
                       clientId: editingClientId,
-                      notes: editingNotes.trim() || null
+                      notes: editingNotes.trim() || null,
+                      goal: editingGoal || null
                     }),
                   });
 
@@ -620,14 +647,15 @@ export default function ClientsPage() {
                   // Update local state
                   setClients(clients.map(c =>
                     c.id === editingClientId
-                      ? { ...c, notes: editingNotes.trim() || null }
+                      ? { ...c, notes: editingNotes.trim() || null, goal: editingGoal || null }
                       : c
                   ));
 
-                  toast.success('Notes updated successfully');
+                  toast.success('Client details updated successfully');
                   (document.getElementById('edit-notes-modal') as HTMLDialogElement)?.close();
                   setEditingClientId(null);
                   setEditingNotes('');
+                  setEditingGoal(null);
                 } catch (error) {
                   console.error('Error updating notes:', error);
                   toast.error(error instanceof Error ? error.message : 'Failed to update notes');
@@ -641,11 +669,12 @@ export default function ClientsPage() {
               Save
             </button>
             <button
-              className="glass border border-white/10 hover:border-white/20 px-4 py-2 rounded-lg transition-all"
+              className="glass border border-white/10 hover:border-white/20 text-sm px-4 py-2 rounded-lg transition-all"
               onClick={() => {
                 (document.getElementById('edit-notes-modal') as HTMLDialogElement)?.close();
                 setEditingClientId(null);
                 setEditingNotes('');
+                setEditingGoal(null);
               }}
             >
               Cancel
@@ -656,6 +685,7 @@ export default function ClientsPage() {
           <button onClick={() => {
             setEditingClientId(null);
             setEditingNotes('');
+            setEditingGoal(null);
           }}>close</button>
         </form>
       </dialog>

@@ -24,17 +24,18 @@ isProject: false
 
 ## Current state (what you have today)
 
-- **Manual report generation (client-side)**: [`app/dashboard/reports/page.tsx`](app/dashboard/reports/page.tsx) calls multiple Trainerize routes in the browser and then persists `report_data` via [`app/api/reports/store/route.ts`](app/api/reports/store/route.ts).
+- **Manual report generation (client-side)**: `[app/dashboard/reports/page.tsx](app/dashboard/reports/page.tsx)` calls multiple Trainerize routes in the browser and then persists `report_data` via `[app/api/reports/store/route.ts](app/api/reports/store/route.ts)`.
   - The fetch/store logic is embedded client-side:
+
 ```94:252:/Users/riley/CODE/fit-report-sf/fit-report/app/dashboard/reports/page.tsx
   const generateReportForClient = async (client: Client) => {
     // fetch /api/trainerize/* then POST /api/reports/store
   };
 ```
 
-- **Text reports are already server-side + on-the-fly**: [`app/api/reports/generate-text/route.ts`](app/api/reports/generate-text/route.ts) can generate from an existing stored report **or** by fetching Trainerize data server-side.
-- **Report display is snapshot-based**: client report viewer loads rows from `public.reports` and renders `report_data` using [`components/ReportVisualization.tsx`](components/ReportVisualization.tsx).
-- **Scheduling UI exists but backend missing**: [`components/ScheduleReportModal.tsx`](components/ScheduleReportModal.tsx) POSTs to `/api/scheduled-reports`, but there is no such API route.
+- **Text reports are already server-side + on-the-fly**: `[app/api/reports/generate-text/route.ts](app/api/reports/generate-text/route.ts)` can generate from an existing stored report **or** by fetching Trainerize data server-side.
+- **Report display is snapshot-based**: client report viewer loads rows from `public.reports` and renders `report_data` using `[components/ReportVisualization.tsx](components/ReportVisualization.tsx)`.
+- **Scheduling UI exists but backend missing**: `[components/ScheduleReportModal.tsx](components/ScheduleReportModal.tsx)` POSTs to `/api/scheduled-reports`, but there is no such API route.
 - **There’s a broken link**: `ClientReportsClient` links to `/dashboard/clients/${clientId}/reports/new`, but no route exists (glob found none).
 
 ## Target behavior (your choices)
@@ -66,7 +67,7 @@ isProject: false
 ### 1) Create a shared server-side report generation module
 
 - Add a new module such as:
-  - [`lib/report-generator.ts`](lib/report-generator.ts) (or `libs/reporting/reportGenerator.ts`)
+  - `[lib/report-generator.ts](lib/report-generator.ts)` (or `libs/reporting/reportGenerator.ts`)
 - It should:
   - Fetch Trainerize data (workouts/bodystats/health/nutrition/sleep/goals)
   - Apply excluded workout filtering (currently duplicated)
@@ -75,8 +76,8 @@ isProject: false
 
 **Why**: today the same logic exists in two places:
 
-- [`app/dashboard/reports/page.tsx`](app/dashboard/reports/page.tsx)
-- [`app/api/reports/generate-text/route.ts`](app/api/reports/generate-text/route.ts)
+- `[app/dashboard/reports/page.tsx](app/dashboard/reports/page.tsx)`
+- `[app/api/reports/generate-text/route.ts](app/api/reports/generate-text/route.ts)`
 
 ### 2) Add “Live report cache” table and API
 
@@ -96,9 +97,8 @@ isProject: false
     - `error_message text`
     - `created_at/updated_at`
   - RLS: trainer-only access like `reports`.
-
 - New API route:
-  - [`app/api/reports/generate/route.ts`](app/api/reports/generate/route.ts)
+  - `[app/api/reports/generate/route.ts](app/api/reports/generate/route.ts)`
   - Behavior:
     - Compute cache key
     - If unexpired cache exists → return cached `report_data`
@@ -106,39 +106,36 @@ isProject: false
 
 ### 3) Update UI to be client-centric and auto-generate on click
 
-- Update [`app/dashboard/clients/page.tsx`](app/dashboard/clients/page.tsx):
+- Update `[app/dashboard/clients/page.tsx](app/dashboard/clients/page.tsx)`:
   - Change “View Reports” to open a new client detail view that defaults to Live Report.
   - Keep “Snapshots” accessible.
-
-- Update [`app/dashboard/clients/[id]/reports/ClientReportsClient.tsx`](app/dashboard/clients/[id]/reports/ClientReportsClient.tsx):
+- Update `[app/dashboard/clients/[id]/reports/ClientReportsClient.tsx](app/dashboard/clients/[id]/reports/ClientReportsClient.tsx)`:
   - Add two tabs:
     - **Live** (default): date picker (default last 14 days ending yesterday) + template selector
     - **Snapshots**: existing list of saved reports from `public.reports`
   - Live tab calls `/api/reports/generate` and renders `ReportVisualization` directly from returned `report_data`.
   - Add a **Save snapshot** button that calls existing `/api/reports/store` using the currently displayed live `report_data`.
-
 - Fix the broken “New Report” link in `ClientReportsClient`:
   - Either remove it or implement a real route (recommended: remove and replace with Live tab).
 
 ### 4) Align date defaults everywhere
 
 - Standardize default date range to **last 14 days ending yesterday**:
-  - `DateRangePicker` already supports “Last 14 days” preset: [`components/DateRangePicker.tsx`](components/DateRangePicker.tsx)
+  - `DateRangePicker` already supports “Last 14 days” preset: `[components/DateRangePicker.tsx](components/DateRangePicker.tsx)`
   - Main reports currently default to last 7 days when `selectedClient` is present:
+
 ```49:55:/Users/riley/CODE/fit-report-sf/fit-report/app/dashboard/reports/page.tsx
       const sevenDaysAgo = new Date(today);
       sevenDaysAgo.setDate(today.getDate() - 7);
 ```
-
 
 ### 5) Implement Automation V1 (no n8n): coach profile + client tasks
 
 - Add migrations:
   - `coach_profiles` (per trainer): voice/tone, constraints, preferred goal, etc.
   - `client_tasks` (per client): title, rationale, category, priority, status, due_date, generated_from (report_run_id), created_at.
-
 - Add API route:
-  - [`app/api/automations/generate-tasks/route.ts`](app/api/automations/generate-tasks/route.ts)
+  - `[app/api/automations/generate-tasks/route.ts](app/api/automations/generate-tasks/route.ts)`
   - Inputs:
     - `clientId`, `dateRange`, optional `goal`
   - Reads:
@@ -148,7 +145,6 @@ isProject: false
   - Calls LLM provider (existing `libs/gpt.ts` is available but should be wrapped so we can swap providers later).
   - Validates structured JSON output with `zod` (already a dependency).
   - Inserts tasks into `client_tasks` and returns them.
-
 - Add UI:
   - On the client page (Live tab), a button: **Generate Action Plan**
   - Show tasks list with status toggles (complete/pending).
@@ -157,9 +153,9 @@ isProject: false
 
 - **Stop browser-side fan-out** to Trainerize routes (reduces credential exposure surface and rate-limit risk).
 - Add server-side caching + rate limiting:
-  - You already have [`libs/rateLimit.ts`](libs/rateLimit.ts) (not consistently applied).
+  - You already have `[libs/rateLimit.ts](libs/rateLimit.ts)` (not consistently applied).
 - Implement credential encryption at rest:
-  - You already have [`libs/encryption.ts`](libs/encryption.ts) but Trainerize creds appear stored plaintext in `profiles` today.
+  - You already have `[libs/encryption.ts](libs/encryption.ts)` but Trainerize creds appear stored plaintext in `profiles` today.
 
 ## How you’ll run/operate this with Claude Code CLI
 
@@ -176,3 +172,4 @@ isProject: false
 - **Phase 1 (core UX)**: Live report endpoint + cache + client page Live tab + Save snapshot.
 - **Phase 2 (automation V1)**: coach profile + client tasks + generate-tasks endpoint + UI.
 - **Phase 3 (hardening)**: credential encryption, rate limiting, caching tuning, scheduled reports execution.
+

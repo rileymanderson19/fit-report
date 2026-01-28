@@ -8,7 +8,8 @@ import { z } from 'zod';
 // Client Notes Schema
 export const ClientNotesSchema = z.object({
   clientId: z.string().uuid('Invalid client ID format'),
-  notes: z.string().max(5000, 'Notes must be less than 5000 characters').optional().nullable()
+  notes: z.string().max(5000, 'Notes must be less than 5000 characters').optional().nullable(),
+  goal: z.enum(['fat_loss', 'maintenance', 'muscle_gain']).optional().nullable()
 });
 
 export type ClientNotesInput = z.infer<typeof ClientNotesSchema>;
