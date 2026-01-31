@@ -225,15 +225,19 @@ export default function ShareProgressModal({
       };
     }
 
-    const trend: 'up' | 'down' | 'stable' = consistencyAnalysis.weight.weeklyTrend < -0.1 ? 'down' :
-      consistencyAnalysis.weight.weeklyTrend > 0.1 ? 'up' : 'stable';
+    // Use weekly average trend (smooths out daily noise)
+    // This matches the Weekly Progress Summary calculation
+    const weeklyChange = consistencyAnalysis.weight.weeklyTrend;
+
+    const trend: 'up' | 'down' | 'stable' = weeklyChange < -0.1 ? 'down' :
+      weeklyChange > 0.1 ? 'up' : 'stable';
 
     return {
       startWeight: consistencyAnalysis.weight.start,
       currentWeight: consistencyAnalysis.weight.latest,
       lowestWeight: consistencyAnalysis.weight.min,
       trend,
-      weeklyChange: consistencyAnalysis.weight.weeklyTrend
+      weeklyChange
     };
   }, [consistencyAnalysis]);
 
@@ -247,7 +251,22 @@ export default function ShareProgressModal({
         avgCalories: 0,
         avgProtein: 0,
         avgSleep: 0,
-        bestDay: undefined
+        weekOverWeek: undefined
+      };
+    }
+
+    // Calculate week-over-week changes if we have at least 2 weeks of data
+    let weekOverWeek: { steps?: number; weight?: number; protein?: number; sleep?: number } | undefined;
+    const weeklyAvgs = processedData.weeklyAverages;
+    if (weeklyAvgs.length >= 2) {
+      const lastWeek = weeklyAvgs[weeklyAvgs.length - 1];
+      const prevWeek = weeklyAvgs[weeklyAvgs.length - 2];
+
+      weekOverWeek = {
+        weight: lastWeek.avgWeight && prevWeek.avgWeight ? lastWeek.avgWeight - prevWeek.avgWeight : undefined,
+        steps: lastWeek.avgSteps && prevWeek.avgSteps ? Math.round(lastWeek.avgSteps - prevWeek.avgSteps) : undefined,
+        protein: lastWeek.avgProtein && prevWeek.avgProtein ? lastWeek.avgProtein - prevWeek.avgProtein : undefined,
+        sleep: lastWeek.avgSleepHours && prevWeek.avgSleepHours ? lastWeek.avgSleepHours - prevWeek.avgSleepHours : undefined
       };
     }
 
@@ -259,9 +278,9 @@ export default function ShareProgressModal({
       avgCalories: consistencyAnalysis.calories.avg,
       avgProtein: consistencyAnalysis.protein.avg,
       avgSleep: consistencyAnalysis.sleep.avg,
-      bestDay: bestDay || undefined
+      weekOverWeek
     };
-  }, [consistencyAnalysis, bestDay]);
+  }, [consistencyAnalysis, processedData.weeklyAverages]);
 
   // Download function
   const handleDownload = useCallback(async () => {

@@ -70,6 +70,15 @@ export default function ShareWeightProgressChart({
   const endWeight = chartData.length > 0 ? chartData[chartData.length - 1].weight : 0;
   const totalChange = endWeight - startWeight;
 
+  // Calculate average change per week using weekly averages (smooths out daily noise)
+  // This matches the Weekly Progress Summary calculation
+  let avgChangePerWeek = 0;
+  if (weeklyAverages.length >= 2) {
+    const firstWeekAvg = weeklyAverages[0].avgWeight;
+    const lastWeekAvg = weeklyAverages[weeklyAverages.length - 1].avgWeight;
+    avgChangePerWeek = (lastWeekAvg - firstWeekAvg) / (weeklyAverages.length - 1);
+  }
+
   // Custom tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length && !isScreenshotMode) {
@@ -120,6 +129,10 @@ export default function ShareWeightProgressChart({
               {totalChange > 0 ? '+' : ''}{totalChange.toFixed(1)} lbs
             </div>
             <div className="text-xs text-gray-500">total change</div>
+            <div className={`text-sm font-medium mt-1 ${avgChangePerWeek <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+              {avgChangePerWeek > 0 ? '+' : ''}{avgChangePerWeek.toFixed(2)} lbs/week
+            </div>
+            <div className="text-xs text-gray-500">avg change</div>
           </div>
         </div>
       </div>

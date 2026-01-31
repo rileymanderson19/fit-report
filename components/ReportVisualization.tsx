@@ -107,6 +107,7 @@ export function ReportVisualization({
   forceTemplate,
   clientName = "Client",
   dateRangeStart,
+  dateRangeEnd,
   last7ReportData
 }: ReportVisualizationProps) {
   // Weight unit toggle state
@@ -256,7 +257,17 @@ export function ReportVisualization({
       }
     });
 
+    // Filter to only include dates within the specified range
+    const rangeStartDate = dateRangeStart ? new Date(dateRangeStart.split('T')[0]) : null;
+    const rangeEndDate = dateRangeEnd ? new Date(dateRangeEnd.split('T')[0]) : null;
+
     return Array.from(dailyData.values())
+      .filter(day => {
+        const dayDate = new Date(day.date);
+        if (rangeStartDate && dayDate < rangeStartDate) return false;
+        if (rangeEndDate && dayDate > rangeEndDate) return false;
+        return true;
+      })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [
     data.bodyStats?.bodyStats,
@@ -264,6 +275,8 @@ export function ReportVisualization({
     data.nutritionData?.nutrition,
     data.sleepData?.sleep,
     data.workoutData?.workouts,
+    dateRangeStart,
+    dateRangeEnd,
   ]);
 
   // Helper function to calculate averages only for days with data
@@ -488,7 +501,17 @@ export function ReportVisualization({
       }
     });
 
+    // Filter to only include dates within the specified range
+    const rangeStartDate = dateRangeStart ? new Date(dateRangeStart.split('T')[0]) : null;
+    const rangeEndDate = dateRangeEnd ? new Date(dateRangeEnd.split('T')[0]) : null;
+
     return Array.from(dailyData.values())
+      .filter(day => {
+        const dayDate = new Date(day.date);
+        if (rangeStartDate && dayDate < rangeStartDate) return false;
+        if (rangeEndDate && dayDate > rangeEndDate) return false;
+        return true;
+      })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [
     data.bodyStats?.bodyStats,
@@ -496,6 +519,8 @@ export function ReportVisualization({
     data.nutritionData?.nutrition,
     data.sleepData?.sleep,
     data.workoutData?.workouts,
+    dateRangeStart,
+    dateRangeEnd,
   ]);
 
   // Create weekly averages specifically for analytics (based on unmodified data)

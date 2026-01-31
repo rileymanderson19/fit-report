@@ -1,7 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Dumbbell, Footprints, Utensils, Moon, Star, CheckCircle } from 'lucide-react';
+import { Dumbbell, Footprints, Utensils, Moon, TrendingUp, TrendingDown, Minus, CheckCircle } from 'lucide-react';
+
+interface WeekOverWeekChanges {
+  steps?: number;      // Change in daily avg steps
+  weight?: number;     // Change in weight (lbs)
+  protein?: number;    // Change in daily avg protein (g)
+  sleep?: number;      // Change in avg sleep (hrs)
+}
 
 interface WeeklyData {
   workoutsCompleted: number;
@@ -14,10 +21,7 @@ interface WeeklyData {
   proteinGoal?: number;
   avgSleep: number;
   sleepGoal?: number;
-  bestDay?: {
-    date: string;
-    highlights: string[];
-  };
+  weekOverWeek?: WeekOverWeekChanges;
 }
 
 interface ShareWeeklyHighlightsCardProps {
@@ -38,11 +42,6 @@ export default function ShareWeeklyHighlightsCard({
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const formatBestDayDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
   // Calculate percentages for progress bars
@@ -196,25 +195,70 @@ export default function ShareWeeklyHighlightsCard({
         )}
       </div>
 
-      {/* Best Day Highlight */}
-      {weeklyData.bestDay && weeklyData.bestDay.highlights.length > 0 && (
+      {/* Week-over-Week Changes */}
+      {weeklyData.weekOverWeek && (
         <div className="mt-5 bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-            <span className="text-sm font-medium text-gray-700">Best Day</span>
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp className="w-4 h-4 text-purple-500" />
+            <span className="text-sm font-medium text-gray-700">Week-over-Week</span>
           </div>
-          <div className="text-sm font-semibold text-purple-700 mb-1">
-            {formatBestDayDate(weeklyData.bestDay.date)}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {weeklyData.bestDay.highlights.map((highlight, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-white text-gray-700 border border-purple-100"
-              >
-                {highlight}
-              </span>
-            ))}
+          <div className="grid grid-cols-2 gap-3">
+            {weeklyData.weekOverWeek.weight !== undefined && weeklyData.weekOverWeek.weight !== 0 && (
+              <div className="flex items-center gap-2">
+                {weeklyData.weekOverWeek.weight < 0 ? (
+                  <TrendingDown className="w-3 h-3 text-green-500" />
+                ) : weeklyData.weekOverWeek.weight > 0 ? (
+                  <TrendingUp className="w-3 h-3 text-orange-500" />
+                ) : (
+                  <Minus className="w-3 h-3 text-gray-400" />
+                )}
+                <span className={`text-sm font-medium ${weeklyData.weekOverWeek.weight <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                  {weeklyData.weekOverWeek.weight > 0 ? '+' : ''}{weeklyData.weekOverWeek.weight.toFixed(1)} lbs
+                </span>
+              </div>
+            )}
+            {weeklyData.weekOverWeek.steps !== undefined && weeklyData.weekOverWeek.steps !== 0 && (
+              <div className="flex items-center gap-2">
+                {weeklyData.weekOverWeek.steps > 0 ? (
+                  <TrendingUp className="w-3 h-3 text-green-500" />
+                ) : weeklyData.weekOverWeek.steps < 0 ? (
+                  <TrendingDown className="w-3 h-3 text-orange-500" />
+                ) : (
+                  <Minus className="w-3 h-3 text-gray-400" />
+                )}
+                <span className={`text-sm font-medium ${weeklyData.weekOverWeek.steps >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                  {weeklyData.weekOverWeek.steps > 0 ? '+' : ''}{weeklyData.weekOverWeek.steps.toLocaleString()} steps
+                </span>
+              </div>
+            )}
+            {weeklyData.weekOverWeek.protein !== undefined && weeklyData.weekOverWeek.protein !== 0 && (
+              <div className="flex items-center gap-2">
+                {weeklyData.weekOverWeek.protein > 0 ? (
+                  <TrendingUp className="w-3 h-3 text-green-500" />
+                ) : weeklyData.weekOverWeek.protein < 0 ? (
+                  <TrendingDown className="w-3 h-3 text-orange-500" />
+                ) : (
+                  <Minus className="w-3 h-3 text-gray-400" />
+                )}
+                <span className={`text-sm font-medium ${weeklyData.weekOverWeek.protein >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                  {weeklyData.weekOverWeek.protein > 0 ? '+' : ''}{Math.round(weeklyData.weekOverWeek.protein)}g protein
+                </span>
+              </div>
+            )}
+            {weeklyData.weekOverWeek.sleep !== undefined && weeklyData.weekOverWeek.sleep !== 0 && (
+              <div className="flex items-center gap-2">
+                {weeklyData.weekOverWeek.sleep > 0 ? (
+                  <TrendingUp className="w-3 h-3 text-green-500" />
+                ) : weeklyData.weekOverWeek.sleep < 0 ? (
+                  <TrendingDown className="w-3 h-3 text-orange-500" />
+                ) : (
+                  <Minus className="w-3 h-3 text-gray-400" />
+                )}
+                <span className={`text-sm font-medium ${weeklyData.weekOverWeek.sleep >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                  {weeklyData.weekOverWeek.sleep > 0 ? '+' : ''}{weeklyData.weekOverWeek.sleep.toFixed(1)} hrs sleep
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
