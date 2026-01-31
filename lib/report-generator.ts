@@ -260,7 +260,7 @@ function filterExcludedWorkouts(workoutData: any, excludedWorkoutNames: string[]
     return workoutData;
   }
 
-  return {
+  const result = {
     ...workoutData,
     workouts: workoutData.workouts.filter((workout: any) => {
       const workoutTitle = workout.title?.toLowerCase() || '';
@@ -269,6 +269,18 @@ function filterExcludedWorkouts(workoutData: any, excludedWorkoutNames: string[]
       );
     })
   };
+
+  // Also filter workoutCalendar if present
+  if (workoutData.workoutCalendar) {
+    result.workoutCalendar = workoutData.workoutCalendar.filter((item: any) => {
+      const workoutTitle = item.title?.toLowerCase() || '';
+      return !excludedWorkoutNames.some(excluded =>
+        excluded.toLowerCase() === workoutTitle
+      );
+    });
+  }
+
+  return result;
 }
 
 /**

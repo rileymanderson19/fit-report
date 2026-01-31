@@ -28,9 +28,10 @@ interface EnhancedAnalyticsProps {
   dailyData: DailyData[];
   weeklyAverages: WeeklyAverage[];
   clientName: string;
+  last7ReportData?: any;
 }
 
-export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: EnhancedAnalyticsProps) {
+export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7ReportData }: EnhancedAnalyticsProps) {
   // Check data availability for each metric
   const dataAvailability = React.useMemo(() => {
     const hasSteps = dailyData.some(day => day.steps > 0);
@@ -281,6 +282,86 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  // Process last 7 days data for calendar view
+  const last7DaysCalendar = React.useMemo(() => {
+    if (!last7ReportData) return null;
+
+    // Generate last 7 days ending today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = [];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      days.push(date.toISOString().split('T')[0]);
+    }
+
+    // Build data map from last7ReportData
+    const dataMap = new Map<string, any>();
+    
+    // Process nutrition
+    last7ReportData.nutritionData?.nutrition?.forEach((item: any) => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dataMap.has(date)) dataMap.set(date, {});
+      dataMap.get(date).calories = item.calories || 0;
+      dataMap.get(date).protein = item.proteinGrams || 0;
+    });
+
+    // Process steps
+    last7ReportData.healthData?.healthData?.forEach((item: any) => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dataMap.has(date)) dataMap.set(date, {});
+      dataMap.get(date).steps = item.data?.steps || 0;
+    });
+
+    // Process weight (weigh-ins)
+    last7ReportData.bodyStats?.bodyStats?.forEach((item: any) => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dataMap.has(date)) dataMap.set(date, {});
+      dataMap.get(date).weight = item.weight || 0;
+    });
+
+    // Process workout calendar
+    const workoutMap = new Map<string, any>();
+    last7ReportData.workoutData?.workoutCalendar?.forEach((item: any) => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!workoutMap.has(date)) {
+        workoutMap.set(date, { scheduled: 0, tracked: 0 });
+      }
+      const dayWorkouts = workoutMap.get(date);
+      if (item.status === 'tracked') {
+        dayWorkouts.tracked++;
+      } else if (item.status === 'scheduled') {
+        dayWorkouts.scheduled++;
+      }
+    });
+
+    return days.map(dateStr => {
+      const data = dataMap.get(dateStr) || {};
+      const workouts = workoutMap.get(dateStr) || { scheduled: 0, tracked: 0 };
+      
+      // Parse date for display
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      
+      return {
+        date: dateStr,
+        dayName: dayNames[date.getDay()],
+        dayNum: date.getDate(),
+        calories: data.calories || 0,
+        protein: data.protein || 0,
+        steps: data.steps || 0,
+        weight: data.weight || 0,
+        workoutStatus: 
+          workouts.tracked > 0 ? 'completed' :
+          workouts.scheduled > 0 ? 'not-completed' :
+          'none'
+      };
+    });
+  }, [last7ReportData]);
+
   if (!consistencyAnalysis) return null;
 
   // Check if we have any data to display
@@ -453,6 +534,118 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName }: Enh
           </div>
         </div>
       </div>
+
+      {/* Last 7 Days Calendar */}
+      {last7DaysCalendar && (
+        <div className="card bg-base-200/50 shadow-lg">
+          <div className="card-body">
+            <div className="mb-6">
+              <h3 className="text-xl font-bold">Last 7 Days</h3>
+              <p className="text-sm text-base-content/70 mt-1">
+                Rolling 7-day snapshot of daily performance
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-7 gap-2 md:gap-3">
+              {last7DaysCalendar.map((day: any) => {
+                const hasAnyData = day.calories > 0 || day.steps > 0 || day.weight > 0 || day.workoutStatus !== 'none';
+                
+                return (
+                  <div 
+                    key={day.date}
+                    className={`bg-base-100 rounded-lg p-2 md:p-3 border transition-shadow ${
+                      hasAnyData 
+                        ? 'border-base-300 hover:shadow-md' 
+                        : 'border-base-200 opacity-75'
+                    }`}
+                  >
+                    {/* Date Header */}
+                    <div className="text-center mb-3 pb-2 border-b border-base-300">
+                      <div className="text-xs font-medium text-base-content/60">{day.dayName}</div>
+                      <div className="text-lg font-bold text-primary">{day.dayNum}</div>
+                    </div>
+
+                    {/* Nutrition */}
+                    <div className="mb-3">
+                      <div className="text-xs font-semibold text-base-content/70 mb-1">Nutrition</div>
+                      {day.calories > 0 ? (
+                        <div className="space-y-0.5">
+                          <div className="text-xs">
+                            <span className="font-medium">{Math.round(day.calories)}</span>
+                            <span className="text-base-content/60 ml-0.5">cal</span>
+                          </div>
+                          <div className="text-xs">
+                            <span className="font-medium">{Math.round(day.protein)}</span>
+                            <span className="text-base-content/60 ml-0.5">g protein</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-base-content/40">—</div>
+                      )}
+                    </div>
+
+                    {/* Steps */}
+                    <div className="mb-3">
+                      <div className="text-xs font-semibold text-base-content/70 mb-1">Steps</div>
+                      {day.steps > 0 ? (
+                        <div className="text-xs font-medium">{day.steps.toLocaleString()}</div>
+                      ) : (
+                        <div className="text-xs text-base-content/40">—</div>
+                      )}
+                    </div>
+
+                    {/* Workout Status */}
+                    <div className="mb-3">
+                      <div className="text-xs font-semibold text-base-content/70 mb-1">Workout</div>
+                      {day.workoutStatus === 'completed' && (
+                        <div className="flex items-center gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-success" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-xs font-medium text-success">Done</span>
+                        </div>
+                      )}
+                      {day.workoutStatus === 'not-completed' && (
+                        <div className="flex items-center gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-xs font-medium text-warning">Missed</span>
+                        </div>
+                      )}
+                      {day.workoutStatus === 'none' && (
+                        <div className="text-xs text-base-content/40">—</div>
+                      )}
+                    </div>
+
+                    {/* Weigh-in */}
+                    <div>
+                      <div className="text-xs font-semibold text-base-content/70 mb-1">Weigh-in</div>
+                      {day.weight > 0 ? (
+                        <div className="flex items-center gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-info" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-xs font-medium text-info">{day.weight.toFixed(1)} lbs</span>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-base-content/40">—</div>
+                      )}
+                    </div>
+
+                    {/* No data indicator */}
+                    {!hasAnyData && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-xs text-base-content/30">No data</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
 
 

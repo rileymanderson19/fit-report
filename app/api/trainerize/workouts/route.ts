@@ -53,6 +53,14 @@ interface WorkoutResponse {
   dailyWorkouts: WorkoutDetail[];
 }
 
+interface WorkoutCalendarItem {
+  date: string;
+  title: string;
+  status: string;
+  id?: number;
+  workoutID?: number;
+}
+
 export async function POST(request: Request) {
   try {
     // Initialize Supabase client
@@ -105,7 +113,25 @@ export async function POST(request: Request) {
 
     const calendarData = await calendarResponse.json() as CalendarResponse;
 
-    // Extract workout IDs and basic info
+    // Extract workout calendar (all scheduled/tracked workouts) for 7-day view
+    const workoutCalendar: WorkoutCalendarItem[] = [];
+    calendarData.calendar?.forEach((day: CalendarDay) => {
+      if (day.items) {
+        day.items.forEach((item: CalendarItem) => {
+          if (item.type === 'workoutRegular') {
+            workoutCalendar.push({
+              date: day.date,
+              title: item.title,
+              status: item.status, // 'tracked', 'scheduled', etc.
+              id: item.id,
+              workoutID: item.detail?.workoutID
+            });
+          }
+        });
+      }
+    });
+
+    // Extract workout IDs and basic info (only tracked workouts for detailed reports)
     const workouts: WorkoutBasic[] = [];
     calendarData.calendar?.forEach((day: CalendarDay) => {
       if (day.items) {
@@ -122,9 +148,9 @@ export async function POST(request: Request) {
       }
     });
 
-    // If no workouts found, return empty array
+    // If no workouts found, return empty arrays
     if (workouts.length === 0) {
-      return NextResponse.json({ workouts: [] });
+      return NextResponse.json({ workouts: [], workoutCalendar });
     }
 
     // Step 2: Get detailed workout data for each workout
@@ -168,7 +194,7 @@ export async function POST(request: Request) {
       };
     });
 
-    return NextResponse.json({ workouts: processedWorkouts });
+    return NextResponse.json({ workouts: processedWorkouts, workoutCalendar });
   } catch (error) {
     console.error('Error in workouts route:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

@@ -84,6 +84,7 @@ interface ReportVisualizationProps {
   clientName?: string;
   dateRangeStart?: string;
   dateRangeEnd?: string;
+  last7ReportData?: any; // Last 7 days report data for calendar view
 }
 
 interface WeeklyAverage {
@@ -105,7 +106,8 @@ export function ReportVisualization({
   isScreenshotMode = false,
   forceTemplate,
   clientName = "Client",
-  dateRangeStart
+  dateRangeStart,
+  last7ReportData
 }: ReportVisualizationProps) {
   // Weight unit toggle state
   const [useMetric, setUseMetric] = useState(false);
@@ -572,6 +574,7 @@ export function ReportVisualization({
           dailyData={analyticsData}
           weeklyAverages={analyticsWeeklyAverages}
           clientName={clientName}
+          last7ReportData={last7ReportData}
         />
       )}
       

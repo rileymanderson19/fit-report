@@ -83,6 +83,10 @@ export default function ClientReportsClient({
   const [maxReps, setMaxReps] = useState<number>(10);
   const [reportTemplate, setReportTemplate] = useState<'daily' | 'enhanced'>('enhanced');
 
+  // Last 7 days report state (for calendar view)
+  const [last7ReportData, setLast7ReportData] = useState<any>(null);
+  const [isLoadingLast7, setIsLoadingLast7] = useState(false);
+
   // Action plan state
   const [clientTasks, setClientTasks] = useState<any[]>([]);
   const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
@@ -665,12 +669,86 @@ export default function ClientReportsClient({
     }
   };
 
+  // Fetch last 7 days report for calendar view
+  const fetchLast7DaysReport = async () => {
+    if (!client) return;
+
+    setIsLoadingLast7(true);
+    try {
+      // Calculate last 7 days ending today
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 6);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+
+      // Try cache-only first for fast load
+      let response = await fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          dateRange: {
+            from: sevenDaysAgo.toISOString(),
+            to: today.toISOString()
+          },
+          template: 'enhanced',
+          repRange: {
+            min: minReps,
+            max: maxReps
+          },
+          mode: 'cache-only'
+        })
+      });
+
+      // If no cache, generate
+      if (response.status === 202) {
+        response = await fetch('/api/reports/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId,
+            dateRange: {
+              from: sevenDaysAgo.toISOString(),
+              to: today.toISOString()
+            },
+            template: 'enhanced',
+            repRange: {
+              min: minReps,
+              max: maxReps
+            }
+          })
+        });
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.reportData) {
+          setLast7ReportData(data.reportData);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching last 7 days report:', error);
+      // Silent failure - this is a nice-to-have feature
+    } finally {
+      setIsLoadingLast7(false);
+    }
+  };
+
   // Load tasks when tab is active
   useEffect(() => {
     if (activeTab === 'live' && client) {
       fetchClientTasks();
     }
   }, [activeTab, client]);
+
+  // Fetch last 7 days report when client is loaded
+  useEffect(() => {
+    if (client && activeTab === 'live') {
+      fetchLast7DaysReport();
+    }
+  }, [client, activeTab]);
 
   // Fetch all clients for navigation
   useEffect(() => {
@@ -982,6 +1060,7 @@ export default function ClientReportsClient({
                     clientName={`${client?.first_name} ${client?.last_name}`}
                     dateRangeStart={startDate?.toISOString() || ''}
                     dateRangeEnd={endDate?.toISOString() || ''}
+                    last7ReportData={last7ReportData}
                   />
                 </div>
               </div>
