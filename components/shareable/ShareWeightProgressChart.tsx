@@ -34,6 +34,7 @@ interface ShareWeightProgressChartProps {
   isScreenshotMode?: boolean;
   hideFooter?: boolean;
   hideHeader?: boolean;
+  hideWeightChange?: boolean;
 }
 
 export default function ShareWeightProgressChart({
@@ -45,7 +46,8 @@ export default function ShareWeightProgressChart({
   dateRangeEnd,
   isScreenshotMode = false,
   hideFooter = false,
-  hideHeader = false
+  hideHeader = false,
+  hideWeightChange = false
 }: ShareWeightProgressChartProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -132,16 +134,18 @@ export default function ShareWeightProgressChart({
               </p>
             </div>
           )}
-          <div className={`text-right ${hideHeader ? 'ml-auto' : ''}`}>
-            <div className={`text-2xl font-bold ${totalChange <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-              {totalChange > 0 ? '+' : ''}{totalChange.toFixed(1)} lbs
+          {!hideWeightChange && (
+            <div className={`text-right ${hideHeader ? 'ml-auto' : ''}`}>
+              <div className={`text-2xl font-bold ${totalChange <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                {totalChange > 0 ? '+' : ''}{totalChange.toFixed(1)} lbs
+              </div>
+              <div className="text-xs text-gray-500">total change</div>
+              <div className={`text-sm font-medium mt-1 ${avgChangePerWeek <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                {avgChangePerWeek > 0 ? '+' : ''}{avgChangePerWeek.toFixed(2)} lbs/week
+              </div>
+              <div className="text-xs text-gray-500">avg change</div>
             </div>
-            <div className="text-xs text-gray-500">total change</div>
-            <div className={`text-sm font-medium mt-1 ${avgChangePerWeek <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-              {avgChangePerWeek > 0 ? '+' : ''}{avgChangePerWeek.toFixed(2)} lbs/week
-            </div>
-            <div className="text-xs text-gray-500">avg change</div>
-          </div>
+          )}
         </div>
       </div>
 

@@ -256,7 +256,7 @@ export default function ShareProgressModal({
     }
 
     // Calculate week-over-week changes if we have at least 2 weeks of data
-    let weekOverWeek: { steps?: number; weight?: number; protein?: number; sleep?: number } | undefined;
+    let weekOverWeek: { steps?: number; weight?: number; protein?: number; calories?: number; sleep?: number } | undefined;
     const weeklyAvgs = processedData.weeklyAverages;
     if (weeklyAvgs.length >= 2) {
       const lastWeek = weeklyAvgs[weeklyAvgs.length - 1];
@@ -266,6 +266,7 @@ export default function ShareProgressModal({
         weight: lastWeek.avgWeight && prevWeek.avgWeight ? lastWeek.avgWeight - prevWeek.avgWeight : undefined,
         steps: lastWeek.avgSteps && prevWeek.avgSteps ? Math.round(lastWeek.avgSteps - prevWeek.avgSteps) : undefined,
         protein: lastWeek.avgProtein && prevWeek.avgProtein ? lastWeek.avgProtein - prevWeek.avgProtein : undefined,
+        calories: lastWeek.avgCalories && prevWeek.avgCalories ? lastWeek.avgCalories - prevWeek.avgCalories : undefined,
         sleep: lastWeek.avgSleepHours && prevWeek.avgSleepHours ? lastWeek.avgSleepHours - prevWeek.avgSleepHours : undefined
       };
     }
@@ -467,21 +468,9 @@ export default function ShareProgressModal({
                   </div>
 
                   {/* Side-by-side layout */}
-                  <div className="flex gap-6">
-                    {/* Left column: Summary + Weekly */}
-                    <div className="flex flex-col gap-4" style={{ width: '400px', flexShrink: 0 }}>
-                      <ShareProgressSummaryCard
-                        clientName={clientName}
-                        dateRangeStart={dateRangeStart}
-                        dateRangeEnd={dateRangeEnd}
-                        weightData={weightData}
-                        workoutsCompleted={consistencyAnalysis?.workouts.totalWorkouts || 0}
-                        consistencyScore={consistencyAnalysis?.overallScore || 0}
-                        isScreenshotMode={true}
-                        hideFooter={true}
-                        hideHeader={true}
-                        compactMode={true}
-                      />
+                  <div className="flex gap-6 items-start">
+                    {/* Left column: Weekly Highlights */}
+                    <div style={{ width: '400px', flexShrink: 0 }}>
                       <ShareWeeklyHighlightsCard
                         clientName={clientName}
                         dateRangeStart={dateRangeStart}
@@ -490,7 +479,6 @@ export default function ShareProgressModal({
                         isScreenshotMode={true}
                         hideFooter={true}
                         hideHeader={true}
-                        hideWeightInWoW={true}
                       />
                     </div>
 
@@ -509,6 +497,7 @@ export default function ShareProgressModal({
                         isScreenshotMode={true}
                         hideFooter={true}
                         hideHeader={true}
+                        hideWeightChange={true}
                       />
                     </div>
                   </div>

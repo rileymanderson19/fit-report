@@ -109,28 +109,30 @@ export default function ShareProgressSummaryCard({
         </div>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Workouts Completed */}
-        <div className="bg-gray-50 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Dumbbell className="w-4 h-4 text-purple-500" />
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Workouts</span>
+      {/* Stats Grid (hidden in compact mode for full report view) */}
+      {!compactMode && (
+        <div className="grid grid-cols-2 gap-4">
+          {/* Workouts Completed */}
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Dumbbell className="w-4 h-4 text-purple-500" />
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Workouts</span>
+            </div>
+            <div className="text-2xl font-bold text-gray-900">{workoutsCompleted}</div>
+            <div className="text-xs text-gray-500">completed</div>
           </div>
-          <div className="text-2xl font-bold text-gray-900">{workoutsCompleted}</div>
-          <div className="text-xs text-gray-500">completed</div>
-        </div>
 
-        {/* Consistency Score */}
-        <div className="bg-gray-50 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="w-4 h-4 text-purple-500" />
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Consistency</span>
+          {/* Consistency Score */}
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-4 h-4 text-purple-500" />
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Consistency</span>
+            </div>
+            <div className="text-2xl font-bold text-gray-900">{Math.round(consistencyScore)}%</div>
+            <div className="text-xs text-gray-500">overall</div>
           </div>
-          <div className="text-2xl font-bold text-gray-900">{Math.round(consistencyScore)}%</div>
-          <div className="text-xs text-gray-500">overall</div>
         </div>
-      </div>
+      )}
 
       {/* Branding Footer */}
       {!hideFooter && (
