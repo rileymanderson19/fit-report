@@ -1,15 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dumbbell, Footprints, Utensils, Moon, TrendingUp, TrendingDown, Minus, CheckCircle } from 'lucide-react';
-
-interface WeekOverWeekChanges {
-  steps?: number;      // Change in daily avg steps
-  weight?: number;     // Change in weight (lbs)
-  protein?: number;    // Change in daily avg protein (g)
-  calories?: number;   // Change in daily avg calories
-  sleep?: number;      // Change in avg sleep (hrs)
-}
+import { Dumbbell, Footprints, Utensils, TrendingDown, TrendingUp, CheckCircle } from 'lucide-react';
 
 interface WeeklyData {
   workoutsCompleted: number;
@@ -20,9 +12,6 @@ interface WeeklyData {
   caloriesGoal?: number;
   avgProtein: number;
   proteinGoal?: number;
-  avgSleep: number;
-  sleepGoal?: number;
-  weekOverWeek?: WeekOverWeekChanges;
 }
 
 interface ShareWeeklyHighlightsCardProps {
@@ -30,10 +19,10 @@ interface ShareWeeklyHighlightsCardProps {
   dateRangeStart: string;
   dateRangeEnd: string;
   weeklyData: WeeklyData;
+  weightChange?: number;  // Total weight change over period
   isScreenshotMode?: boolean;
   hideFooter?: boolean;
   hideHeader?: boolean;
-  hideWeightInWoW?: boolean;
 }
 
 export default function ShareWeeklyHighlightsCard({
@@ -41,10 +30,10 @@ export default function ShareWeeklyHighlightsCard({
   dateRangeStart,
   dateRangeEnd,
   weeklyData,
+  weightChange,
   isScreenshotMode = false,
   hideFooter = false,
-  hideHeader = false,
-  hideWeightInWoW = false
+  hideHeader = false
 }: ShareWeeklyHighlightsCardProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -57,14 +46,6 @@ export default function ShareWeeklyHighlightsCard({
     : weeklyData.workoutsCompleted > 0 ? 100 : 0;
 
   const stepsPercent = Math.min((weeklyData.avgDailySteps / weeklyData.stepsGoal) * 100, 100);
-
-  const proteinPercent = weeklyData.proteinGoal
-    ? Math.min((weeklyData.avgProtein / weeklyData.proteinGoal) * 100, 100)
-    : weeklyData.avgProtein >= 100 ? 100 : (weeklyData.avgProtein / 100) * 100;
-
-  const sleepPercent = weeklyData.sleepGoal
-    ? Math.min((weeklyData.avgSleep / weeklyData.sleepGoal) * 100, 100)
-    : weeklyData.avgSleep >= 7.5 ? 100 : (weeklyData.avgSleep / 7.5) * 100;
 
   const getProgressColor = (percent: number) => {
     if (percent >= 90) return 'bg-green-500';
@@ -94,141 +75,28 @@ export default function ShareWeeklyHighlightsCard({
         </div>
       )}
 
-      {/* Week-over-Week Changes - At Top */}
-      {weeklyData.weekOverWeek && (
-        <div className="mb-5 bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-purple-500" />
-            <span className="text-sm font-medium text-gray-700">Week-over-Week</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {!hideWeightInWoW && weeklyData.weekOverWeek.weight !== undefined && weeklyData.weekOverWeek.weight !== 0 && (
-              <div className="flex items-center gap-2">
-                {weeklyData.weekOverWeek.weight < 0 ? (
-                  <TrendingDown className="w-3 h-3 text-green-500" />
-                ) : weeklyData.weekOverWeek.weight > 0 ? (
-                  <TrendingUp className="w-3 h-3 text-orange-500" />
-                ) : (
-                  <Minus className="w-3 h-3 text-gray-400" />
-                )}
-                <span className={`text-sm font-medium ${weeklyData.weekOverWeek.weight <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                  <span className="text-gray-500">Weight:</span> {weeklyData.weekOverWeek.weight > 0 ? '+' : ''}{weeklyData.weekOverWeek.weight.toFixed(1)} lbs
-                </span>
-              </div>
-            )}
-            {weeklyData.weekOverWeek.steps !== undefined && weeklyData.weekOverWeek.steps !== 0 && (
-              <div className="flex items-center gap-2">
-                {weeklyData.weekOverWeek.steps > 0 ? (
-                  <TrendingUp className="w-3 h-3 text-green-500" />
-                ) : weeklyData.weekOverWeek.steps < 0 ? (
-                  <TrendingDown className="w-3 h-3 text-orange-500" />
-                ) : (
-                  <Minus className="w-3 h-3 text-gray-400" />
-                )}
-                <span className={`text-sm font-medium ${weeklyData.weekOverWeek.steps >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                  <span className="text-gray-500">Steps:</span> {weeklyData.weekOverWeek.steps > 0 ? '+' : ''}{weeklyData.weekOverWeek.steps.toLocaleString()}
-                </span>
-              </div>
-            )}
-            {weeklyData.weekOverWeek.protein !== undefined && weeklyData.weekOverWeek.protein !== 0 && (
-              <div className="flex items-center gap-2">
-                {weeklyData.weekOverWeek.protein > 0 ? (
-                  <TrendingUp className="w-3 h-3 text-green-500" />
-                ) : weeklyData.weekOverWeek.protein < 0 ? (
-                  <TrendingDown className="w-3 h-3 text-orange-500" />
-                ) : (
-                  <Minus className="w-3 h-3 text-gray-400" />
-                )}
-                <span className={`text-sm font-medium ${weeklyData.weekOverWeek.protein >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                  <span className="text-gray-500">Protein:</span> {weeklyData.weekOverWeek.protein > 0 ? '+' : ''}{Math.round(weeklyData.weekOverWeek.protein)}g
-                </span>
-              </div>
-            )}
-            {weeklyData.weekOverWeek.calories !== undefined && weeklyData.weekOverWeek.calories !== 0 && (
-              <div className="flex items-center gap-2">
-                {weeklyData.weekOverWeek.calories > 0 ? (
-                  <TrendingUp className="w-3 h-3 text-green-500" />
-                ) : weeklyData.weekOverWeek.calories < 0 ? (
-                  <TrendingDown className="w-3 h-3 text-orange-500" />
-                ) : (
-                  <Minus className="w-3 h-3 text-gray-400" />
-                )}
-                <span className={`text-sm font-medium ${weeklyData.weekOverWeek.calories >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                  <span className="text-gray-500">Calories:</span> {weeklyData.weekOverWeek.calories > 0 ? '+' : ''}{Math.round(weeklyData.weekOverWeek.calories)}
-                </span>
-              </div>
-            )}
-            {weeklyData.weekOverWeek.sleep !== undefined && weeklyData.weekOverWeek.sleep !== 0 && (
-              <div className="flex items-center gap-2">
-                {weeklyData.weekOverWeek.sleep > 0 ? (
-                  <TrendingUp className="w-3 h-3 text-green-500" />
-                ) : weeklyData.weekOverWeek.sleep < 0 ? (
-                  <TrendingDown className="w-3 h-3 text-orange-500" />
-                ) : (
-                  <Minus className="w-3 h-3 text-gray-400" />
-                )}
-                <span className={`text-sm font-medium ${weeklyData.weekOverWeek.sleep >= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                  <span className="text-gray-500">Sleep:</span> {weeklyData.weekOverWeek.sleep > 0 ? '+' : ''}{weeklyData.weekOverWeek.sleep.toFixed(1)} hrs
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Metrics Grid */}
+      {/* Metrics Grid - Order: Weight Change, Calories, Protein, Steps, Workouts */}
       <div className="space-y-4">
-        {/* Workouts */}
-        <div className="bg-gray-50 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Dumbbell className="w-4 h-4 text-purple-500" />
-              <span className="text-sm font-medium text-gray-700">Workouts</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-gray-900">
-                {weeklyData.workoutsCompleted}
-                {weeklyData.workoutsScheduled > 0 && ` / ${weeklyData.workoutsScheduled}`}
+        {/* Weight Change per Week */}
+        {weightChange !== undefined && weightChange !== 0 && (
+          <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {weightChange < 0 ? (
+                  <TrendingDown className="w-5 h-5 text-green-500" />
+                ) : weightChange > 0 ? (
+                  <TrendingUp className="w-5 h-5 text-orange-500" />
+                ) : null}
+                <span className="text-sm font-medium text-gray-700">Avg Weight Change</span>
+              </div>
+              <span className={`text-xl font-bold ${weightChange <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                {weightChange > 0 ? '+' : ''}{weightChange.toFixed(2)} lbs/wk
               </span>
-              {getStatusIcon(workoutPercent)}
-            </div>
-          </div>
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${getProgressColor(workoutPercent)} transition-all duration-300`}
-              style={{ width: `${Math.min(workoutPercent, 100)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Steps */}
-        {weeklyData.avgDailySteps > 0 && (
-          <div className="bg-gray-50 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Footprints className="w-4 h-4 text-purple-500" />
-                <span className="text-sm font-medium text-gray-700">Daily Steps</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-900">
-                  {weeklyData.avgDailySteps.toLocaleString()} avg
-                </span>
-                {getStatusIcon(stepsPercent)}
-              </div>
-            </div>
-            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className={`h-full ${getProgressColor(stepsPercent)} transition-all duration-300`}
-                style={{ width: `${stepsPercent}%` }}
-              />
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Goal: {weeklyData.stepsGoal.toLocaleString()} steps
             </div>
           </div>
         )}
 
-        {/* Nutrition Row */}
+        {/* Nutrition Row - Calories & Protein */}
         <div className="grid grid-cols-2 gap-3">
           {/* Calories */}
           {weeklyData.avgCalories > 0 && (
@@ -261,29 +129,55 @@ export default function ShareWeeklyHighlightsCard({
           )}
         </div>
 
-        {/* Sleep */}
-        {weeklyData.avgSleep > 0 && (
+        {/* Steps */}
+        {weeklyData.avgDailySteps > 0 && (
           <div className="bg-gray-50 rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Moon className="w-4 h-4 text-purple-500" />
-                <span className="text-sm font-medium text-gray-700">Sleep</span>
+                <Footprints className="w-4 h-4 text-purple-500" />
+                <span className="text-sm font-medium text-gray-700">Daily Steps</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-gray-900">
-                  {weeklyData.avgSleep.toFixed(1)} hrs avg
+                  {weeklyData.avgDailySteps.toLocaleString()} avg
                 </span>
-                {getStatusIcon(sleepPercent)}
+                {getStatusIcon(stepsPercent)}
               </div>
             </div>
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className={`h-full ${getProgressColor(sleepPercent)} transition-all duration-300`}
-                style={{ width: `${sleepPercent}%` }}
+                className={`h-full ${getProgressColor(stepsPercent)} transition-all duration-300`}
+                style={{ width: `${stepsPercent}%` }}
               />
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              Goal: {weeklyData.stepsGoal.toLocaleString()} steps
             </div>
           </div>
         )}
+
+        {/* Workouts */}
+        <div className="bg-gray-50 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Dumbbell className="w-4 h-4 text-purple-500" />
+              <span className="text-sm font-medium text-gray-700">Workouts</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-gray-900">
+                {weeklyData.workoutsCompleted}
+                {weeklyData.workoutsScheduled > 0 && ` / ${weeklyData.workoutsScheduled}`}
+              </span>
+              {getStatusIcon(workoutPercent)}
+            </div>
+          </div>
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${getProgressColor(workoutPercent)} transition-all duration-300`}
+              style={{ width: `${Math.min(workoutPercent, 100)}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Branding Footer */}

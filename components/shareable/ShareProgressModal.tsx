@@ -249,25 +249,7 @@ export default function ShareProgressModal({
         avgDailySteps: 0,
         stepsGoal: 10000,
         avgCalories: 0,
-        avgProtein: 0,
-        avgSleep: 0,
-        weekOverWeek: undefined
-      };
-    }
-
-    // Calculate week-over-week changes if we have at least 2 weeks of data
-    let weekOverWeek: { steps?: number; weight?: number; protein?: number; calories?: number; sleep?: number } | undefined;
-    const weeklyAvgs = processedData.weeklyAverages;
-    if (weeklyAvgs.length >= 2) {
-      const lastWeek = weeklyAvgs[weeklyAvgs.length - 1];
-      const prevWeek = weeklyAvgs[weeklyAvgs.length - 2];
-
-      weekOverWeek = {
-        weight: lastWeek.avgWeight && prevWeek.avgWeight ? lastWeek.avgWeight - prevWeek.avgWeight : undefined,
-        steps: lastWeek.avgSteps && prevWeek.avgSteps ? Math.round(lastWeek.avgSteps - prevWeek.avgSteps) : undefined,
-        protein: lastWeek.avgProtein && prevWeek.avgProtein ? lastWeek.avgProtein - prevWeek.avgProtein : undefined,
-        calories: lastWeek.avgCalories && prevWeek.avgCalories ? lastWeek.avgCalories - prevWeek.avgCalories : undefined,
-        sleep: lastWeek.avgSleepHours && prevWeek.avgSleepHours ? lastWeek.avgSleepHours - prevWeek.avgSleepHours : undefined
+        avgProtein: 0
       };
     }
 
@@ -277,11 +259,9 @@ export default function ShareProgressModal({
       avgDailySteps: Math.round(consistencyAnalysis.steps.avg),
       stepsGoal: 10000,
       avgCalories: consistencyAnalysis.calories.avg,
-      avgProtein: consistencyAnalysis.protein.avg,
-      avgSleep: consistencyAnalysis.sleep.avg,
-      weekOverWeek
+      avgProtein: consistencyAnalysis.protein.avg
     };
-  }, [consistencyAnalysis, processedData.weeklyAverages]);
+  }, [consistencyAnalysis]);
 
   // Download function
   const handleDownload = useCallback(async () => {
@@ -446,6 +426,7 @@ export default function ShareProgressModal({
                   dateRangeStart={dateRangeStart}
                   dateRangeEnd={dateRangeEnd}
                   weeklyData={weeklyData}
+                  weightChange={weightData.weeklyChange}
                 />
               )}
               {activeTab === 'full' && (
@@ -476,6 +457,7 @@ export default function ShareProgressModal({
                         dateRangeStart={dateRangeStart}
                         dateRangeEnd={dateRangeEnd}
                         weeklyData={weeklyData}
+                        weightChange={weightData.weeklyChange}
                         isScreenshotMode={true}
                         hideFooter={true}
                         hideHeader={true}
