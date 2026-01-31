@@ -32,6 +32,8 @@ interface ShareWeightProgressChartProps {
   dateRangeStart: string;
   dateRangeEnd: string;
   isScreenshotMode?: boolean;
+  hideFooter?: boolean;
+  hideHeader?: boolean;
 }
 
 export default function ShareWeightProgressChart({
@@ -41,7 +43,9 @@ export default function ShareWeightProgressChart({
   clientName,
   dateRangeStart,
   dateRangeEnd,
-  isScreenshotMode = false
+  isScreenshotMode = false,
+  hideFooter = false,
+  hideHeader = false
 }: ShareWeightProgressChartProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -111,20 +115,24 @@ export default function ShareWeightProgressChart({
   return (
     <div
       id="share-weight-chart"
-      className={`bg-white rounded-2xl shadow-lg overflow-hidden ${isScreenshotMode ? 'p-8' : 'p-6'}`}
-      style={{ width: isScreenshotMode ? '600px' : '100%', maxWidth: '600px' }}
+      className={`bg-white overflow-hidden ${hideHeader ? '' : 'rounded-2xl shadow-lg'} ${isScreenshotMode ? 'p-8' : 'p-6'}`}
+      style={{ width: hideHeader ? '100%' : (isScreenshotMode ? '600px' : '100%'), maxWidth: hideHeader ? 'none' : '600px' }}
     >
       {/* Header */}
       <div className="mb-6">
-        <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
+        {!hideHeader && (
+          <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
+        )}
         <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Weight Progress</h2>
-            <p className="text-sm text-gray-500">
-              {formatDate(dateRangeStart)} - {formatDate(dateRangeEnd)}
-            </p>
-          </div>
-          <div className="text-right">
+          {!hideHeader && (
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Weight Progress</h2>
+              <p className="text-sm text-gray-500">
+                {formatDate(dateRangeStart)} - {formatDate(dateRangeEnd)}
+              </p>
+            </div>
+          )}
+          <div className={`text-right ${hideHeader ? 'ml-auto' : ''}`}>
             <div className={`text-2xl font-bold ${totalChange <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
               {totalChange > 0 ? '+' : ''}{totalChange.toFixed(1)} lbs
             </div>
@@ -218,9 +226,11 @@ export default function ShareWeightProgressChart({
       </div>
 
       {/* Branding Footer */}
-      <div className="mt-4 flex items-center justify-center">
-        <span className="text-xs text-gray-400">Powered by FitReport</span>
-      </div>
+      {!hideFooter && (
+        <div className="mt-4 flex items-center justify-center">
+          <span className="text-xs text-gray-400">Powered by FitReport</span>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { X, Download, Copy, Check, BarChart3, Scale, Calendar } from 'lucide-react';
+import { X, Download, Copy, Check, BarChart3, Scale, Calendar, FileText } from 'lucide-react';
 import ShareProgressSummaryCard from './ShareProgressSummaryCard';
 import ShareWeightProgressChart from './ShareWeightProgressChart';
 import ShareWeeklyHighlightsCard from './ShareWeeklyHighlightsCard';
@@ -17,7 +17,7 @@ interface ShareProgressModalProps {
   goalWeight?: number;
 }
 
-type TabType = 'summary' | 'weight' | 'weekly';
+type TabType = 'summary' | 'weight' | 'weekly' | 'full';
 
 export default function ShareProgressModal({
   isOpen,
@@ -287,7 +287,8 @@ export default function ShareProgressModal({
     setIsDownloading(true);
     try {
       const elementId = activeTab === 'summary' ? 'share-progress-summary' :
-        activeTab === 'weight' ? 'share-weight-chart' : 'share-weekly-highlights';
+        activeTab === 'weight' ? 'share-weight-chart' :
+        activeTab === 'weekly' ? 'share-weekly-highlights' : 'share-full-report';
 
       const element = document.getElementById(elementId);
       if (!element) throw new Error('Element not found');
@@ -314,7 +315,8 @@ export default function ShareProgressModal({
   const handleCopy = useCallback(async () => {
     try {
       const elementId = activeTab === 'summary' ? 'share-progress-summary' :
-        activeTab === 'weight' ? 'share-weight-chart' : 'share-weekly-highlights';
+        activeTab === 'weight' ? 'share-weight-chart' :
+        activeTab === 'weekly' ? 'share-weekly-highlights' : 'share-full-report';
 
       const element = document.getElementById(elementId);
       if (!element) throw new Error('Element not found');
@@ -361,8 +363,9 @@ export default function ShareProgressModal({
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'summary', label: 'Summary', icon: <BarChart3 className="w-4 h-4" /> },
-    { id: 'weight', label: 'Weight Chart', icon: <Scale className="w-4 h-4" /> },
-    { id: 'weekly', label: 'Weekly', icon: <Calendar className="w-4 h-4" /> }
+    { id: 'weight', label: 'Weight', icon: <Scale className="w-4 h-4" /> },
+    { id: 'weekly', label: 'Weekly', icon: <Calendar className="w-4 h-4" /> },
+    { id: 'full', label: 'Full Report', icon: <FileText className="w-4 h-4" /> }
   ];
 
   return (
@@ -376,7 +379,9 @@ export default function ShareProgressModal({
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="bg-bg-secondary rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden pointer-events-auto"
+          className={`bg-bg-secondary rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-hidden pointer-events-auto ${
+            activeTab === 'full' ? 'max-w-5xl' : 'max-w-2xl'
+          }`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -441,6 +446,78 @@ export default function ShareProgressModal({
                   dateRangeEnd={dateRangeEnd}
                   weeklyData={weeklyData}
                 />
+              )}
+              {activeTab === 'full' && (
+                <div
+                  id="share-full-report"
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden p-8"
+                  style={{ width: '1100px' }}
+                >
+                  {/* Header */}
+                  <div className="mb-6">
+                    <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900">{clientName}</h2>
+                        <p className="text-sm text-gray-500">
+                          Progress Report: {new Date(dateRangeStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(dateRangeEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Side-by-side layout */}
+                  <div className="flex gap-6">
+                    {/* Left column: Summary + Weekly */}
+                    <div className="flex flex-col gap-4" style={{ width: '400px', flexShrink: 0 }}>
+                      <ShareProgressSummaryCard
+                        clientName={clientName}
+                        dateRangeStart={dateRangeStart}
+                        dateRangeEnd={dateRangeEnd}
+                        weightData={weightData}
+                        workoutsCompleted={consistencyAnalysis?.workouts.totalWorkouts || 0}
+                        consistencyScore={consistencyAnalysis?.overallScore || 0}
+                        isScreenshotMode={true}
+                        hideFooter={true}
+                        hideHeader={true}
+                        compactMode={true}
+                      />
+                      <ShareWeeklyHighlightsCard
+                        clientName={clientName}
+                        dateRangeStart={dateRangeStart}
+                        dateRangeEnd={dateRangeEnd}
+                        weeklyData={weeklyData}
+                        isScreenshotMode={true}
+                        hideFooter={true}
+                        hideHeader={true}
+                        hideWeightInWoW={true}
+                      />
+                    </div>
+
+                    {/* Right column: Weight Chart */}
+                    <div className="flex-1" style={{ minWidth: 0 }}>
+                      <ShareWeightProgressChart
+                        dailyData={processedData.dailyData.map(d => ({ date: d.date, weight: d.weight }))}
+                        weeklyAverages={processedData.weeklyAverages.map(w => ({
+                          weekStart: w.weekStart,
+                          avgWeight: w.avgWeight
+                        }))}
+                        goalWeight={goalWeight}
+                        clientName={clientName}
+                        dateRangeStart={dateRangeStart}
+                        dateRangeEnd={dateRangeEnd}
+                        isScreenshotMode={true}
+                        hideFooter={true}
+                        hideHeader={true}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Branding Footer */}
+                  <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-center">
+                    <span className="text-xs text-gray-400">Powered by FitReport</span>
+                  </div>
+                </div>
               )}
             </div>
           </div>

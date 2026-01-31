@@ -30,6 +30,9 @@ interface ShareWeeklyHighlightsCardProps {
   dateRangeEnd: string;
   weeklyData: WeeklyData;
   isScreenshotMode?: boolean;
+  hideFooter?: boolean;
+  hideHeader?: boolean;
+  hideWeightInWoW?: boolean;
 }
 
 export default function ShareWeeklyHighlightsCard({
@@ -37,7 +40,10 @@ export default function ShareWeeklyHighlightsCard({
   dateRangeStart,
   dateRangeEnd,
   weeklyData,
-  isScreenshotMode = false
+  isScreenshotMode = false,
+  hideFooter = false,
+  hideHeader = false,
+  hideWeightInWoW = false
 }: ShareWeeklyHighlightsCardProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -73,17 +79,19 @@ export default function ShareWeeklyHighlightsCard({
   return (
     <div
       id="share-weekly-highlights"
-      className={`bg-white rounded-2xl shadow-lg overflow-hidden ${isScreenshotMode ? 'p-8' : 'p-6'}`}
-      style={{ width: isScreenshotMode ? '400px' : '100%', maxWidth: '400px' }}
+      className={`bg-white overflow-hidden ${hideHeader ? 'rounded-xl' : 'rounded-2xl shadow-lg'} ${isScreenshotMode ? 'p-8' : 'p-6'}`}
+      style={{ width: hideHeader ? '100%' : (isScreenshotMode ? '400px' : '100%'), maxWidth: hideHeader ? 'none' : '400px' }}
     >
       {/* Header */}
-      <div className="mb-6">
-        <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
-        <h2 className="text-xl font-bold text-gray-900">Weekly Highlights</h2>
-        <p className="text-sm text-gray-500">
-          {formatDate(dateRangeStart)} - {formatDate(dateRangeEnd)}
-        </p>
-      </div>
+      {!hideHeader && (
+        <div className="mb-6">
+          <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
+          <h2 className="text-xl font-bold text-gray-900">Weekly Highlights</h2>
+          <p className="text-sm text-gray-500">
+            {formatDate(dateRangeStart)} - {formatDate(dateRangeEnd)}
+          </p>
+        </div>
+      )}
 
       {/* Metrics Grid */}
       <div className="space-y-4">
@@ -203,7 +211,7 @@ export default function ShareWeeklyHighlightsCard({
             <span className="text-sm font-medium text-gray-700">Week-over-Week</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {weeklyData.weekOverWeek.weight !== undefined && weeklyData.weekOverWeek.weight !== 0 && (
+            {!hideWeightInWoW && weeklyData.weekOverWeek.weight !== undefined && weeklyData.weekOverWeek.weight !== 0 && (
               <div className="flex items-center gap-2">
                 {weeklyData.weekOverWeek.weight < 0 ? (
                   <TrendingDown className="w-3 h-3 text-green-500" />
@@ -264,9 +272,11 @@ export default function ShareWeeklyHighlightsCard({
       )}
 
       {/* Branding Footer */}
-      <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-center">
-        <span className="text-xs text-gray-400">Powered by FitReport</span>
-      </div>
+      {!hideFooter && (
+        <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-center">
+          <span className="text-xs text-gray-400">Powered by FitReport</span>
+        </div>
+      )}
     </div>
   );
 }
