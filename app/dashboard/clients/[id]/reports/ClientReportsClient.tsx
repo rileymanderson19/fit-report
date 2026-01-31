@@ -8,6 +8,7 @@ import { DateRangePicker } from '@/components/DateRangePicker';
 import ClientSearchBar from '@/components/ClientSearchBar';
 import SendReportModal from '@/components/SendReportModal';
 import GenerateLinkModal from '@/components/GenerateLinkModal';
+import { ShareProgressModal } from '@/components/shareable';
 import { toast } from 'sonner';
 
 // Lazy-load ReportVisualization to reduce initial bundle size
@@ -106,6 +107,7 @@ export default function ClientReportsClient({
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Set default date range: last 14 days ending yesterday
   useEffect(() => {
@@ -967,25 +969,38 @@ export default function ClientReportsClient({
                 </button>
 
                 {liveReportData && (
-                  <button
-                    className="glass border border-accent-purple/50 hover:border-accent-purple text-white px-8 py-3 rounded-lg font-medium hover:scale-105 transition-all"
-                    onClick={saveSnapshot}
-                    disabled={isSavingSnapshot}
-                  >
-                    {isSavingSnapshot ? (
-                      <>
-                        <span className="loading loading-spinner loading-sm" />
-                        <span className="ml-2">Saving...</span>
-                      </>
-                    ) : (
+                  <>
+                    <button
+                      className="glass border border-accent-purple/50 hover:border-accent-purple text-white px-8 py-3 rounded-lg font-medium hover:scale-105 transition-all"
+                      onClick={saveSnapshot}
+                      disabled={isSavingSnapshot}
+                    >
+                      {isSavingSnapshot ? (
+                        <>
+                          <span className="loading loading-spinner loading-sm" />
+                          <span className="ml-2">Saving...</span>
+                        </>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                          </svg>
+                          Save Snapshot
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      className="glass border border-green-500/50 hover:border-green-500 text-white px-8 py-3 rounded-lg font-medium hover:scale-105 transition-all"
+                      onClick={() => setIsShareModalOpen(true)}
+                    >
                       <span className="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                          <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
                         </svg>
-                        Save Snapshot
+                        Share Progress
                       </span>
-                    )}
-                  </button>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -1413,6 +1428,16 @@ export default function ClientReportsClient({
           // Modal will handle its own success feedback
           // Optionally close the modal after a delay if desired
         }}
+      />
+
+      {/* Share Progress Modal */}
+      <ShareProgressModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        reportData={liveReportData}
+        clientName={client ? `${client.first_name} ${client.last_name}` : 'Client'}
+        dateRangeStart={startDate?.toISOString() || ''}
+        dateRangeEnd={endDate?.toISOString() || ''}
       />
     </div>
   );
