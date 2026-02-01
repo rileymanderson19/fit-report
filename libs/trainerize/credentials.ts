@@ -27,11 +27,10 @@ export async function getTrainerizeCredentials(
 ): Promise<TrainerizeCredentials | null> {
   const supabase = createClient();
 
+  // First, try to get plaintext credentials (always available)
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select(
-      "trainerize_username, trainerize_password, trainerize_id, trainerize_username_encrypted, trainerize_password_encrypted"
-    )
+    .select("trainerize_username, trainerize_password, trainerize_id")
     .eq("id", userId)
     .single();
 
@@ -40,21 +39,29 @@ export async function getTrainerizeCredentials(
     return null;
   }
 
-  // Try encrypted credentials first (if encryption is configured)
-  if (
-    hasEncryptionKey() &&
-    profile.trainerize_username_encrypted &&
-    profile.trainerize_password_encrypted
-  ) {
+  // Try encrypted credentials if encryption is configured
+  if (hasEncryptionKey()) {
     try {
-      return {
-        username: decrypt(profile.trainerize_username_encrypted),
-        password: decrypt(profile.trainerize_password_encrypted),
-        trainerId: profile.trainerize_id || "",
-      };
+      // Query encrypted columns separately in case they don't exist yet
+      const { data: encryptedProfile } = await supabase
+        .from("profiles")
+        .select("trainerize_username_encrypted, trainerize_password_encrypted")
+        .eq("id", userId)
+        .single();
+
+      if (
+        encryptedProfile?.trainerize_username_encrypted &&
+        encryptedProfile?.trainerize_password_encrypted
+      ) {
+        return {
+          username: decrypt(encryptedProfile.trainerize_username_encrypted),
+          password: decrypt(encryptedProfile.trainerize_password_encrypted),
+          trainerId: profile.trainerize_id || "",
+        };
+      }
     } catch (error) {
-      console.error("Error decrypting credentials:", error);
-      // Fall through to plaintext
+      // Encrypted columns might not exist yet - fall through to plaintext
+      console.log("Encrypted credentials not available, using plaintext");
     }
   }
 
@@ -72,7 +79,7 @@ export async function getTrainerizeCredentials(
 
 /**
  * Save Trainerize credentials for a user
- * Encrypts credentials if encryption key is available
+ * Encrypts credentials if encryption key is available and columns exist
  *
  * @param userId - The user's auth ID
  * @param credentials - The credentials to save
@@ -83,29 +90,37 @@ export async function saveTrainerizeCredentials(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient();
 
+  // Always save plaintext for now (encrypted column migration may not be complete)
   const updates: Record<string, string | null> = {
     trainerize_id: credentials.trainerId,
+    trainerize_username: credentials.username,
+    trainerize_password: credentials.password,
   };
 
+  // Try to also save encrypted if available
   if (hasEncryptionKey()) {
-    // Save encrypted credentials
     try {
-      updates.trainerize_username_encrypted = encrypt(credentials.username);
-      updates.trainerize_password_encrypted = encrypt(credentials.password);
-      // Clear plaintext if it exists
-      updates.trainerize_username = null;
-      updates.trainerize_password = null;
+      const encryptedUsername = encrypt(credentials.username);
+      const encryptedPassword = encrypt(credentials.password);
+
+      // Try to update encrypted columns separately (they may not exist)
+      const { error: encryptError } = await supabase
+        .from("profiles")
+        .update({
+          trainerize_username_encrypted: encryptedUsername,
+          trainerize_password_encrypted: encryptedPassword,
+        })
+        .eq("id", userId);
+
+      if (!encryptError) {
+        // Clear plaintext if encrypted save succeeded
+        updates.trainerize_username = null;
+        updates.trainerize_password = null;
+      }
     } catch (error) {
-      console.error("Error encrypting credentials:", error);
-      return { success: false, error: "Failed to encrypt credentials" };
+      // Encrypted columns may not exist - continue with plaintext
+      console.log("Could not save encrypted credentials, using plaintext");
     }
-  } else {
-    // Save plaintext (no encryption key configured)
-    console.warn(
-      "ENCRYPTION_KEY not set - storing credentials in plaintext (insecure)"
-    );
-    updates.trainerize_username = credentials.username;
-    updates.trainerize_password = credentials.password;
   }
 
   const { error } = await supabase
