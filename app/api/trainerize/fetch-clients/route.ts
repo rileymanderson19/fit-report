@@ -49,11 +49,16 @@ export async function GET(req: NextRequest) {
     );
     if (rateLimitResult) return rateLimitResult;
 
+    console.log("[fetch-clients] Getting credentials for user:", user.id, "email:", user.email);
+
     // Get Trainerize credentials (handles encrypted vs plaintext automatically)
     const credentials: TrainerizeCredentials | null =
       await getTrainerizeCredentials(user.id);
 
+    console.log("[fetch-clients] credentials result:", credentials ? "found" : "null");
+
     if (!credentials || !credentials.username) {
+      console.log("[fetch-clients] No credentials found, returning 400");
       return NextResponse.json(
         { error: "Trainerize credentials not found" },
         { status: 400 }

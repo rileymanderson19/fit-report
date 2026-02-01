@@ -34,6 +34,10 @@ export async function getTrainerizeCredentials(
     .eq("id", userId)
     .single();
 
+  console.log("[getTrainerizeCredentials] userId:", userId);
+  console.log("[getTrainerizeCredentials] profile:", profile);
+  console.log("[getTrainerizeCredentials] error:", error);
+
   if (error || !profile) {
     console.error("Error fetching profile for credentials:", error);
     return null;
