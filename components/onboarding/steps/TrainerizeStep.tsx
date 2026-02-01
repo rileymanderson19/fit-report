@@ -165,7 +165,12 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
         return;
       }
 
-      const { error } = await supabase
+      console.log("[TrainerizeStep] Saving credentials for user:", user.id);
+      console.log("[TrainerizeStep] Username:", formData.username);
+      console.log("[TrainerizeStep] Has password:", !!formData.password);
+      console.log("[TrainerizeStep] Trainer ID:", formData.trainerId);
+
+      const { error, data } = await supabase
         .from("profiles")
         .update({
           trainerize_username: formData.username,
@@ -173,7 +178,10 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
           trainerize_id: formData.trainerId,
           onboarding_status: "credentials_setup",
         })
-        .eq("id", user.id);
+        .eq("id", user.id)
+        .select();
+
+      console.log("[TrainerizeStep] Update result - error:", error, "data:", data);
 
       if (error) throw error;
 
