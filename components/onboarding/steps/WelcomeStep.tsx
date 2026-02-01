@@ -49,7 +49,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
         </div>
       </div>
 
-      <button onClick={onNext} className="btn btn-primary btn-lg">
+      <button onClick={() => onNext()} className="btn btn-primary btn-lg">
         Let&apos;s Get Started
         <svg
           className="w-5 h-5 ml-2"

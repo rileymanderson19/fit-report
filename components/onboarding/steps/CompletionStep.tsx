@@ -58,7 +58,7 @@ export function CompletionStep({ onComplete }: CompletionStepProps) {
       </div>
 
       <button
-        onClick={onComplete}
+        onClick={() => onComplete()}
         className="btn btn-primary btn-lg"
       >
         Go to Dashboard
