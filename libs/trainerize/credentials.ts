@@ -1,5 +1,18 @@
 import { createClient } from "@/libs/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { encrypt, decrypt } from "@/libs/encryption";
+
+// Admin client to bypass RLS for reading credentials
+function getAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  return createSupabaseClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
 
 export interface TrainerizeCredentials {
   username: string;
@@ -25,7 +38,8 @@ function hasEncryptionKey(): boolean {
 export async function getTrainerizeCredentials(
   userId: string
 ): Promise<TrainerizeCredentials | null> {
-  const supabase = createClient();
+  // Use admin client to bypass RLS - credentials should always be readable for authenticated users
+  const supabase = getAdminClient();
 
   // First, try to get plaintext credentials (always available)
   const { data: profile, error } = await supabase
@@ -35,7 +49,7 @@ export async function getTrainerizeCredentials(
     .single();
 
   console.log("[getTrainerizeCredentials] userId:", userId);
-  console.log("[getTrainerizeCredentials] profile:", profile);
+  console.log("[getTrainerizeCredentials] profile:", JSON.stringify(profile));
   console.log("[getTrainerizeCredentials] error:", error);
 
   if (error || !profile) {
