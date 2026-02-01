@@ -4,6 +4,7 @@ import { createClient } from "@/libs/supabase/server";
 import config from "@/config";
 import Sidebar from "@/components/Sidebar";
 import { headers } from "next/headers";
+import { isConciergeOnboardingEnabled } from "@/libs/featureFlags";
 
 // This is a server-side component to ensure the user is logged in.
 // If not, it will redirect to the login page.
@@ -23,6 +24,24 @@ export default async function LayoutPrivate({
 
   if (!user) {
     redirect(config.auth.loginUrl);
+  }
+
+  // Check onboarding status when concierge mode is enabled
+  if (isConciergeOnboardingEnabled()) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_status")
+      .eq("id", user.id)
+      .single();
+
+    // Redirect to onboarding if not completed (and user has been invited)
+    if (
+      profile?.onboarding_status &&
+      profile.onboarding_status !== "pending" &&
+      profile.onboarding_status !== "completed"
+    ) {
+      redirect("/onboarding");
+    }
   }
 
   // Get the current path to highlight the active sidebar item

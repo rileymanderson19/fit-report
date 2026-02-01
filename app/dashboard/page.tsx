@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { createClient } from "@/libs/supabase/server";
 import ButtonCheckout from "@/components/ButtonCheckout";
 import config from "@/config";
+import { isStripeGatingEnabled } from "@/libs/featureFlags";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 
@@ -22,7 +23,10 @@ export default async function Dashboard() {
     .eq("id", user?.id)
     .single();
 
-  const hasActivePlan = profile?.has_access === true;
+  // When Stripe gating is disabled (concierge mode), all authenticated users have access
+  const hasActivePlan = isStripeGatingEnabled()
+    ? profile?.has_access === true
+    : true;
 
   return (
     <div className="container mx-auto px-8">
