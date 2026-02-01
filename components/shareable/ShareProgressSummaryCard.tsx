@@ -20,6 +20,7 @@ interface ShareProgressSummaryCardProps {
   hideFooter?: boolean;
   hideHeader?: boolean;
   compactMode?: boolean;
+  unitPreference?: 'lbs' | 'kg';
 }
 
 export default function ShareProgressSummaryCard({
@@ -32,14 +33,19 @@ export default function ShareProgressSummaryCard({
   isScreenshotMode = false,
   hideFooter = false,
   hideHeader = false,
-  compactMode = false
+  compactMode = false,
+  unitPreference = 'lbs'
 }: ShareProgressSummaryCardProps) {
+  // Unit conversion helpers
+  const convertWeight = (lbs: number): number => unitPreference === 'kg' ? lbs * 0.453592 : lbs;
+  const weightUnit = unitPreference === 'kg' ? 'kg' : 'lbs';
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const weightChange = weightData.currentWeight - weightData.startWeight;
+  const weightChange = convertWeight(weightData.currentWeight - weightData.startWeight);
   const weightChangeAbs = Math.abs(weightChange);
 
   const getTrendIcon = () => {
@@ -86,24 +92,24 @@ export default function ShareProgressSummaryCard({
             <span className={`text-4xl font-bold ${getTrendColor()}`}>
               {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)}
             </span>
-            <span className="text-lg text-gray-500 mb-1">lbs</span>
+            <span className="text-lg text-gray-500 mb-1">{weightUnit}</span>
           </div>
 
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <div>
               <span className="text-gray-400">Start:</span>{' '}
-              <span className="font-medium">{weightData.startWeight.toFixed(1)} lbs</span>
+              <span className="font-medium">{convertWeight(weightData.startWeight).toFixed(1)} {weightUnit}</span>
             </div>
             <div className="w-px h-4 bg-gray-300" />
             <div>
               <span className="text-gray-400">Current:</span>{' '}
-              <span className="font-medium">{weightData.currentWeight.toFixed(1)} lbs</span>
+              <span className="font-medium">{convertWeight(weightData.currentWeight).toFixed(1)} {weightUnit}</span>
             </div>
           </div>
 
           {weightData.weeklyChange !== 0 && (
             <div className="mt-3 text-xs text-gray-500">
-              Avg: {weightData.weeklyChange > 0 ? '+' : ''}{weightData.weeklyChange.toFixed(2)} lbs/week
+              Avg: {weightData.weeklyChange > 0 ? '+' : ''}{convertWeight(weightData.weeklyChange).toFixed(2)} {weightUnit}/week
             </div>
           )}
         </div>

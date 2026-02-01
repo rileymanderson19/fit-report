@@ -31,6 +31,7 @@ export default function ShareProgressModal({
   const [activeTab, setActiveTab] = useState<TabType>('summary');
   const [isCopied, setIsCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [unitPreference, setUnitPreference] = useState<'lbs' | 'kg'>('lbs');
 
   // Process report data into daily data format
   const processedData = React.useMemo(() => {
@@ -225,9 +226,23 @@ export default function ShareProgressModal({
       };
     }
 
-    // Use weekly average trend (smooths out daily noise)
-    // This matches the Weekly Progress Summary calculation
-    const weeklyChange = consistencyAnalysis.weight.weeklyTrend;
+    // Calculate weekly change from actual first/last weight measurements
+    // This avoids issues where weeklyAverages may have entries with avgWeight = 0
+    // (weeks that have nutrition/steps data but no weight measurements)
+    let weeklyChange = 0;
+    const weightsWithData = processedData.dailyData.filter(d => d.weight > 0);
+    if (weightsWithData.length >= 2) {
+      const firstWeight = weightsWithData[0].weight;
+      const lastWeight = weightsWithData[weightsWithData.length - 1].weight;
+      const firstDate = new Date(weightsWithData[0].date);
+      const lastDate = new Date(weightsWithData[weightsWithData.length - 1].date);
+      const daysBetween = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+      const weeksBetween = daysBetween / 7;
+
+      if (weeksBetween > 0) {
+        weeklyChange = (lastWeight - firstWeight) / weeksBetween;
+      }
+    }
 
     const trend: 'up' | 'down' | 'stable' = weeklyChange < -0.1 ? 'down' :
       weeklyChange > 0.1 ? 'up' : 'stable';
@@ -239,7 +254,7 @@ export default function ShareProgressModal({
       trend,
       weeklyChange
     };
-  }, [consistencyAnalysis]);
+  }, [consistencyAnalysis, processedData.dailyData]);
 
   const weeklyData = React.useMemo(() => {
     if (!consistencyAnalysis) {
@@ -368,12 +383,37 @@ export default function ShareProgressModal({
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-accent-purple/10 to-accent-violet/10">
             <h2 className="text-lg font-bold text-white">Share Progress</h2>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
+            <div className="flex items-center gap-3">
+              {/* Unit Toggle */}
+              <div className="flex items-center gap-0.5 bg-gray-700/50 border border-gray-600 rounded-lg p-0.5">
+                <button
+                  onClick={() => setUnitPreference('lbs')}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                    unitPreference === 'lbs'
+                      ? 'bg-accent-purple text-white shadow'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
+                  }`}
+                >
+                  lbs
+                </button>
+                <button
+                  onClick={() => setUnitPreference('kg')}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                    unitPreference === 'kg'
+                      ? 'bg-accent-purple text-white shadow'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
+                  }`}
+                >
+                  kg
+                </button>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -405,6 +445,7 @@ export default function ShareProgressModal({
                   weightData={weightData}
                   workoutsCompleted={consistencyAnalysis?.workouts.totalWorkouts || 0}
                   consistencyScore={consistencyAnalysis?.overallScore || 0}
+                  unitPreference={unitPreference}
                 />
               )}
               {activeTab === 'weight' && (
@@ -418,6 +459,7 @@ export default function ShareProgressModal({
                   clientName={clientName}
                   dateRangeStart={dateRangeStart}
                   dateRangeEnd={dateRangeEnd}
+                  unitPreference={unitPreference}
                 />
               )}
               {activeTab === 'weekly' && (
@@ -427,6 +469,7 @@ export default function ShareProgressModal({
                   dateRangeEnd={dateRangeEnd}
                   weeklyData={weeklyData}
                   weightChange={weightData.weeklyChange}
+                  unitPreference={unitPreference}
                 />
               )}
               {activeTab === 'full' && (
@@ -461,6 +504,7 @@ export default function ShareProgressModal({
                         isScreenshotMode={true}
                         hideFooter={true}
                         hideHeader={true}
+                        unitPreference={unitPreference}
                       />
                     </div>
 
@@ -480,6 +524,7 @@ export default function ShareProgressModal({
                         hideFooter={true}
                         hideHeader={true}
                         hideWeightChange={true}
+                        unitPreference={unitPreference}
                       />
                     </div>
                   </div>

@@ -309,20 +309,29 @@ export function ReportVisualization({
     if (processedDailyData.length === 0) return [];
 
     // Use dateRangeStart as the starting point for weekly boundaries, fallback to first data point
-    const rangeStart = dateRangeStart 
+    const rangeStart = dateRangeStart
       ? new Date(dateRangeStart.split('T')[0])
       : new Date(processedDailyData[0].date);
+
+    // Use dateRangeEnd as the stopping point, fallback to last data point
+    const rangeEnd = dateRangeEnd
+      ? new Date(dateRangeEnd.split('T')[0])
+      : new Date(processedDailyData[processedDailyData.length - 1].date);
 
     const weeks: WeeklyAverage[] = [];
     let currentWeekStart = new Date(rangeStart);
     let weekNumber = 1;
 
-    // Generate weeks based on the date range, not data availability
-    const lastDataDate = new Date(processedDailyData[processedDailyData.length - 1].date);
-    
-    while (currentWeekStart <= lastDataDate && weekNumber <= 10) {
-      const currentWeekEnd = new Date(currentWeekStart);
+    // Generate weeks based on the selected date range
+    while (currentWeekStart <= rangeEnd && weekNumber <= 10) {
+      // Calculate week end, but cap it at the range end date
+      let currentWeekEnd = new Date(currentWeekStart);
       currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+
+      // Don't let week end extend past the selected range end
+      if (currentWeekEnd > rangeEnd) {
+        currentWeekEnd = new Date(rangeEnd);
+      }
 
       // Collect data for this week
       const currentWeekData = processedDailyData.filter(dayData => {
@@ -330,7 +339,7 @@ export function ReportVisualization({
         return dataDate >= currentWeekStart && dataDate <= currentWeekEnd;
       });
 
-      // Only add the week if it has any data or if it's within our expected range
+      // Only add the week if it has any data
       if (currentWeekData.length > 0) {
         weeks.push({
           weekStart: currentWeekStart.toISOString().split('T')[0],
@@ -351,7 +360,7 @@ export function ReportVisualization({
     }
 
     return weeks;
-  }, [processedDailyData, dateRangeStart]);
+  }, [processedDailyData, dateRangeStart, dateRangeEnd]);
 
 
 
@@ -528,20 +537,29 @@ export function ReportVisualization({
     if (analyticsData.length === 0) return [];
 
     // Use dateRangeStart as the starting point for weekly boundaries, fallback to first data point
-    const rangeStart = dateRangeStart 
+    const rangeStart = dateRangeStart
       ? new Date(dateRangeStart.split('T')[0])
       : new Date(analyticsData[0].date);
+
+    // Use dateRangeEnd as the stopping point, fallback to last data point
+    const rangeEnd = dateRangeEnd
+      ? new Date(dateRangeEnd.split('T')[0])
+      : new Date(analyticsData[analyticsData.length - 1].date);
 
     const weeks: WeeklyAverage[] = [];
     let currentWeekStart = new Date(rangeStart);
     let weekNumber = 1;
-    
-    // Generate weeks based on the date range, not data availability
-    const lastDataDate = new Date(analyticsData[analyticsData.length - 1].date);
-    
-    while (currentWeekStart <= lastDataDate && weekNumber <= 10) {
-      const currentWeekEnd = new Date(currentWeekStart);
+
+    // Generate weeks based on the selected date range
+    while (currentWeekStart <= rangeEnd && weekNumber <= 10) {
+      // Calculate week end, but cap it at the range end date
+      let currentWeekEnd = new Date(currentWeekStart);
       currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+
+      // Don't let week end extend past the selected range end
+      if (currentWeekEnd > rangeEnd) {
+        currentWeekEnd = new Date(rangeEnd);
+      }
 
       // Collect data for this week
       const currentWeekData = analyticsData.filter(dayData => {

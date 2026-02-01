@@ -35,6 +35,7 @@ interface ShareWeightProgressChartProps {
   hideFooter?: boolean;
   hideHeader?: boolean;
   hideWeightChange?: boolean;
+  unitPreference?: 'lbs' | 'kg';
 }
 
 export default function ShareWeightProgressChart({
@@ -47,25 +48,33 @@ export default function ShareWeightProgressChart({
   isScreenshotMode = false,
   hideFooter = false,
   hideHeader = false,
-  hideWeightChange = false
+  hideWeightChange = false,
+  unitPreference = 'lbs'
 }: ShareWeightProgressChartProps) {
+  // Unit conversion helpers
+  const convertWeight = (lbs: number): number => unitPreference === 'kg' ? lbs * 0.453592 : lbs;
+  const weightUnit = unitPreference === 'kg' ? 'kg' : 'lbs';
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Filter to only days with weight data and format for chart
+  // Filter to only days with weight data and format for chart (convert units)
   const chartData = dailyData
     .filter(d => d.weight > 0)
     .map(d => ({
       date: d.date,
       displayDate: formatDate(d.date),
-      weight: d.weight
+      weight: convertWeight(d.weight)
     }));
+
+  // Convert goal weight if present
+  const convertedGoalWeight = goalWeight ? convertWeight(goalWeight) : undefined;
 
   // Calculate min/max for Y axis with padding
   const weights = chartData.map(d => d.weight);
-  const minWeight = Math.min(...weights, goalWeight || Infinity);
+  const minWeight = Math.min(...weights, convertedGoalWeight || Infinity);
   const maxWeight = Math.max(...weights);
   const padding = (maxWeight - minWeight) * 0.1 || 5;
   const yMin = Math.floor(minWeight - padding);
@@ -76,13 +85,23 @@ export default function ShareWeightProgressChart({
   const endWeight = chartData.length > 0 ? chartData[chartData.length - 1].weight : 0;
   const totalChange = endWeight - startWeight;
 
-  // Calculate average change per week using weekly averages (smooths out daily noise)
-  // This matches the Weekly Progress Summary calculation
+  // Calculate average change per week using actual first/last weight measurements
+  // This avoids issues where weeklyAverages may have entries with avgWeight = 0
+  // (weeks that have nutrition/steps data but no weight measurements)
   let avgChangePerWeek = 0;
-  if (weeklyAverages.length >= 2) {
-    const firstWeekAvg = weeklyAverages[0].avgWeight;
-    const lastWeekAvg = weeklyAverages[weeklyAverages.length - 1].avgWeight;
-    avgChangePerWeek = (lastWeekAvg - firstWeekAvg) / (weeklyAverages.length - 1);
+  if (chartData.length >= 2) {
+    // chartData already filters for weight > 0 and has converted weights
+    const firstWeight = chartData[0].weight;
+    const lastWeight = chartData[chartData.length - 1].weight;
+    const firstDate = new Date(chartData[0].date);
+    const lastDate = new Date(chartData[chartData.length - 1].date);
+    const daysBetween = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+    const weeksBetween = daysBetween / 7;
+
+    if (weeksBetween > 0) {
+      // chartData weights are already in display units (converted)
+      avgChangePerWeek = (lastWeight - firstWeight) / weeksBetween;
+    }
   }
 
   // Custom tooltip
@@ -92,7 +111,7 @@ export default function ShareWeightProgressChart({
         <div className="bg-white shadow-lg rounded-lg p-3 border border-gray-100">
           <p className="text-sm font-medium text-gray-900">{label}</p>
           <p className="text-sm text-purple-600">
-            {payload[0].value.toFixed(1)} lbs
+            {payload[0].value.toFixed(1)} {weightUnit}
           </p>
         </div>
       );
@@ -137,11 +156,11 @@ export default function ShareWeightProgressChart({
           {!hideWeightChange && (
             <div className={`text-right ${hideHeader ? 'ml-auto' : ''}`}>
               <div className={`text-2xl font-bold ${totalChange <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                {totalChange > 0 ? '+' : ''}{totalChange.toFixed(1)} lbs
+                {totalChange > 0 ? '+' : ''}{totalChange.toFixed(1)} {weightUnit}
               </div>
               <div className="text-xs text-gray-500">total change</div>
               <div className={`text-sm font-medium mt-1 ${avgChangePerWeek <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                {avgChangePerWeek > 0 ? '+' : ''}{avgChangePerWeek.toFixed(2)} lbs/week
+                {avgChangePerWeek > 0 ? '+' : ''}{avgChangePerWeek.toFixed(2)} {weightUnit}/week
               </div>
               <div className="text-xs text-gray-500">avg change</div>
             </div>
@@ -178,13 +197,13 @@ export default function ShareWeightProgressChart({
             {!isScreenshotMode && <Tooltip content={<CustomTooltip />} />}
 
             {/* Goal weight reference line */}
-            {goalWeight && (
+            {convertedGoalWeight && (
               <ReferenceLine
-                y={goalWeight}
+                y={convertedGoalWeight}
                 stroke="#10B981"
                 strokeDasharray="5 5"
                 label={{
-                  value: `Goal: ${goalWeight} lbs`,
+                  value: `Goal: ${convertedGoalWeight.toFixed(0)} ${weightUnit}`,
                   position: 'right',
                   fill: '#10B981',
                   fontSize: 11
@@ -217,15 +236,15 @@ export default function ShareWeightProgressChart({
       <div className="mt-6 pt-4 border-t border-gray-100 grid grid-cols-3 gap-4 text-center">
         <div>
           <div className="text-xs text-gray-500 mb-1">Start</div>
-          <div className="text-lg font-semibold text-gray-900">{startWeight.toFixed(1)} lbs</div>
+          <div className="text-lg font-semibold text-gray-900">{startWeight.toFixed(1)} {weightUnit}</div>
         </div>
         <div>
           <div className="text-xs text-gray-500 mb-1">Current</div>
-          <div className="text-lg font-semibold text-gray-900">{endWeight.toFixed(1)} lbs</div>
+          <div className="text-lg font-semibold text-gray-900">{endWeight.toFixed(1)} {weightUnit}</div>
         </div>
         <div>
           <div className="text-xs text-gray-500 mb-1">Lowest</div>
-          <div className="text-lg font-semibold text-green-600">{Math.min(...weights).toFixed(1)} lbs</div>
+          <div className="text-lg font-semibold text-green-600">{Math.min(...weights).toFixed(1)} {weightUnit}</div>
         </div>
       </div>
 

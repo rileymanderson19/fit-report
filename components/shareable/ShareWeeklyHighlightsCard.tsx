@@ -23,6 +23,7 @@ interface ShareWeeklyHighlightsCardProps {
   isScreenshotMode?: boolean;
   hideFooter?: boolean;
   hideHeader?: boolean;
+  unitPreference?: 'lbs' | 'kg';
 }
 
 export default function ShareWeeklyHighlightsCard({
@@ -33,8 +34,12 @@ export default function ShareWeeklyHighlightsCard({
   weightChange,
   isScreenshotMode = false,
   hideFooter = false,
-  hideHeader = false
+  hideHeader = false,
+  unitPreference = 'lbs'
 }: ShareWeeklyHighlightsCardProps) {
+  // Unit conversion helpers
+  const convertWeight = (lbs: number): number => unitPreference === 'kg' ? lbs * 0.453592 : lbs;
+  const weightUnit = unitPreference === 'kg' ? 'kg' : 'lbs';
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -90,7 +95,7 @@ export default function ShareWeeklyHighlightsCard({
                 <span className="text-sm font-medium text-gray-700">Avg Weight Change</span>
               </div>
               <span className={`text-xl font-bold ${weightChange <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                {weightChange > 0 ? '+' : ''}{weightChange.toFixed(2)} lbs/wk
+                {weightChange > 0 ? '+' : ''}{convertWeight(weightChange).toFixed(2)} {weightUnit}/wk
               </span>
             </div>
           </div>
