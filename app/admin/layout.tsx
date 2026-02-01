@@ -1,3 +1,4 @@
+import React from "react";
 import { createClient } from "@/libs/supabase/server";
 import { redirect } from "next/navigation";
 import config from "@/config";

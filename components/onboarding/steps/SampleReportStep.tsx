@@ -257,7 +257,7 @@ export function SampleReportStep({
               </div>
             )}
 
-            <button onClick={onNext} className="btn btn-primary w-full">
+            <button onClick={() => onNext()} className="btn btn-primary w-full">
               Continue to Final Step
             </button>
           </>
