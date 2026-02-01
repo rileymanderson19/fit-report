@@ -170,18 +170,19 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
       console.log("[TrainerizeStep] Has password:", !!formData.password);
       console.log("[TrainerizeStep] Trainer ID:", formData.trainerId);
 
+      // Use upsert to handle case where profile doesn't exist yet
       const { error, data } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          id: user.id,
           trainerize_username: formData.username,
           trainerize_password: formData.password,
           trainerize_id: formData.trainerId,
           onboarding_status: "credentials_setup",
         })
-        .eq("id", user.id)
         .select();
 
-      console.log("[TrainerizeStep] Update result - error:", error, "data:", data);
+      console.log("[TrainerizeStep] Upsert result - error:", error, "data:", data);
 
       if (error) throw error;
 
