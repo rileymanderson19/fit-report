@@ -13,8 +13,20 @@ import { rateLimitMiddleware, getClientIdentifier } from "@/libs/rateLimit";
 // Force dynamic to prevent static optimization
 export const dynamic = "force-dynamic";
 
+// Trainerize API response format
+interface TrainerizeApiResponse {
+  users?: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    photoUrl?: string;
+  }>;
+}
+
+// Our normalized response format
 interface ClientListResponse {
-  clients?: Array<{
+  clients: Array<{
     id: string;
     displayName: string;
     email?: string;
@@ -69,7 +81,7 @@ export async function GET(req: NextRequest) {
     const client = createTrainerizeClient(credentials);
 
     // Make request to Trainerize API
-    const { data } = await client.request<ClientListResponse>(
+    const { data } = await client.request<TrainerizeApiResponse>(
       "/v03/user/getClientList",
       {
         method: "POST",
@@ -83,7 +95,17 @@ export async function GET(req: NextRequest) {
 
     console.log("[fetch-clients] Trainerize API response:", JSON.stringify(data));
 
-    return NextResponse.json(data);
+    // Transform the response to our normalized format
+    const clients = (data.users || []).map(user => ({
+      id: user.id,
+      displayName: `${user.firstName} ${user.lastName}`.trim(),
+      email: user.email,
+      photoUrl: user.photoUrl,
+    }));
+
+    console.log("[fetch-clients] Transformed clients count:", clients.length);
+
+    return NextResponse.json({ clients });
   } catch (error) {
     console.error("Error fetching Trainerize clients:", error);
 
