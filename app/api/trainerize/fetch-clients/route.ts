@@ -81,6 +81,8 @@ export async function GET(req: NextRequest) {
       }
     );
 
+    console.log("[fetch-clients] Trainerize API response:", JSON.stringify(data));
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching Trainerize clients:", error);
