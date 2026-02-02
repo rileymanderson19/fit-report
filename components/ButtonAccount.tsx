@@ -6,7 +6,7 @@ import { Popover, Transition } from "@headlessui/react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/libs/supabase/client";
 import apiClient from "@/libs/api";
-import config from "@/config";
+import Link from "next/link";
 
 // A button to show user some account actions
 //  1. Billing: open a Stripe Customer Portal to manage their billing (cancel subscription, update payment method, etc.).
@@ -82,16 +82,13 @@ const ButtonAccount = () => {
                 />
               ) : (
                 <div className="w-8 h-8 bg-primary text-primary-content flex justify-center items-center rounded-full capitalize">
-                  {user?.email?.charAt(0)}
+                  {profile?.full_name?.charAt(0) || user?.email?.charAt(0)}
                 </div>
               )}
-              <div>
-                <div className="font-medium text-base-content text-left">
-                  {user?.email?.split('@')[0] || 'Account'}
-                </div>
-                <div className="text-xs text-base-content/60">
-                  {profile?.has_access ? config.stripe.plans[0].name : "Free Plan"}
-                </div>
+              <div className="font-medium text-base-content text-left">
+                {profile?.full_name
+                  ? profile.full_name.split(' ')[0]
+                  : user?.email?.split('@')[0] || 'Account'}
               </div>
               {isLoading ? (
                 <span className="loading loading-spinner loading-xs ml-auto"></span>
@@ -114,6 +111,19 @@ const ButtonAccount = () => {
               <Popover.Panel className="absolute left-full top-0 ml-2 z-[-9999]">
                 <div className="overflow-hidden rounded-lg shadow-xl ring-1 ring-base-content ring-opacity-5 bg-base-100 p-1">
                   <div className="space-y-0.5 text-sm">
+                    {!profile?.full_name && (
+                      <Link
+                        href="/dashboard/account"
+                        className="flex items-center gap-2 hover:bg-primary/20 hover:text-primary duration-200 py-1.5 px-3 w-full rounded-md whitespace-nowrap"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Complete Profile
+                      </Link>
+                    )}
+
                     <button
                       className="flex items-center gap-2 hover:bg-base-300 duration-200 py-1.5 px-3 w-full rounded-md whitespace-nowrap"
                       onClick={handleBilling}

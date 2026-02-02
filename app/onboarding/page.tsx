@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/libs/supabase/client";
 import { WelcomeStep } from "@/components/onboarding/steps/WelcomeStep";
+import { ProfileStep } from "@/components/onboarding/steps/ProfileStep";
 import { TrainerizeStep } from "@/components/onboarding/steps/TrainerizeStep";
 import { ImportClientsStep } from "@/components/onboarding/steps/ImportClientsStep";
 import { TemplateDefaultsStep } from "@/components/onboarding/steps/TemplateDefaultsStep";
@@ -19,6 +20,7 @@ type OnboardingStatus =
 
 const STEPS = [
   { id: "welcome", label: "Welcome", component: WelcomeStep, minStatus: "invited" },
+  { id: "profile", label: "Profile", component: ProfileStep, minStatus: "invited" },
   { id: "trainerize", label: "Trainerize", component: TrainerizeStep, minStatus: "invited" },
   { id: "import", label: "Import Clients", component: ImportClientsStep, minStatus: "credentials_setup" },
   { id: "templates", label: "Templates", component: TemplateDefaultsStep, minStatus: "clients_imported" },
@@ -40,11 +42,11 @@ function getStepIndexFromStatus(status: OnboardingStatus): number {
     case "invited":
       return 0; // Welcome
     case "credentials_setup":
-      return 2; // Import Clients
+      return 3; // Import Clients (after Profile and Trainerize)
     case "clients_imported":
-      return 3; // Template Defaults
+      return 4; // Template Defaults
     case "completed":
-      return 5; // Completion
+      return 6; // Completion
     default:
       return 0;
   }
