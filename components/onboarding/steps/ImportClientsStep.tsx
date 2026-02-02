@@ -31,6 +31,8 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
   const [importedCount, setImportedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [importSuccess, setImportSuccess] = useState(false);
+  const [justImportedCount, setJustImportedCount] = useState(0);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -126,10 +128,9 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
           .eq("id", user.id);
       }
 
-      // Move to next step
-      setTimeout(() => {
-        onNext("clients_imported");
-      }, 1000);
+      // Show success state
+      setImportSuccess(true);
+      setJustImportedCount(clientsToImport.length);
     } catch (error) {
       console.error("Error importing clients:", error);
       toast.error(
@@ -139,6 +140,61 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
       setIsImporting(false);
     }
   };
+
+  const handleContinue = () => {
+    onNext("clients_imported");
+  };
+
+  const handleSkip = async () => {
+    // Update status even when skipping so they can continue
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ onboarding_status: "clients_imported" })
+        .eq("id", user.id);
+    }
+    onNext("clients_imported");
+  };
+
+  // Success state after import
+  if (importSuccess) {
+    return (
+      <div className="card-elevated rounded-2xl p-8">
+        <div className="text-center">
+          <div className="text-6xl mb-6">✅</div>
+          <h2 className="text-2xl font-display font-bold text-white mb-4">
+            Clients Imported!
+          </h2>
+          <p className="text-gray-400 mb-8">
+            Successfully imported {justImportedCount} client{justImportedCount !== 1 ? "s" : ""}.
+            You can now generate reports for them.
+          </p>
+          <button
+            onClick={handleContinue}
+            className="btn btn-primary btn-lg"
+          >
+            Continue
+            <svg
+              className="w-5 h-5 ml-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -231,25 +287,41 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
-            <button onClick={onBack} className="btn btn-ghost">
-              Back
-            </button>
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              <button onClick={onBack} className="btn btn-ghost">
+                Back
+              </button>
+              <button
+                onClick={handleImport}
+                className="btn btn-primary flex-1"
+                disabled={isImporting || selectedClients.size === 0}
+              >
+                {isImporting ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Importing...
+                  </>
+                ) : (
+                  `Import ${selectedClients.size} Client${
+                    selectedClients.size !== 1 ? "s" : ""
+                  }`
+                )}
+              </button>
+            </div>
+            {importedCount > 0 && (
+              <button
+                onClick={handleContinue}
+                className="btn btn-outline w-full"
+              >
+                Continue with {importedCount} existing client{importedCount !== 1 ? "s" : ""}
+              </button>
+            )}
             <button
-              onClick={handleImport}
-              className="btn btn-primary flex-1"
-              disabled={isImporting || selectedClients.size === 0}
+              onClick={handleSkip}
+              className="btn btn-ghost btn-sm text-gray-500"
             >
-              {isImporting ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Importing...
-                </>
-              ) : (
-                `Import ${selectedClients.size} Client${
-                  selectedClients.size !== 1 ? "s" : ""
-                }`
-              )}
+              Skip for now
             </button>
           </div>
         </>
