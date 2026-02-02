@@ -1,24 +1,26 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Popover, Transition } from "@headlessui/react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/libs/supabase/client";
-import apiClient from "@/libs/api";
 import Link from "next/link";
 
-// A button to show user some account actions
-//  1. Billing: open a Stripe Customer Portal to manage their billing (cancel subscription, update payment method, etc.).
-//     You have to manually activate the Customer Portal in your Stripe Dashboard (https://dashboard.stripe.com/test/settings/billing/portal)
-//     This is only available if the customer has a customerId (they made a purchase previously)
-//  2. Logout: sign out and go back to homepage
-// See more at https://shipfa.st/docs/components/buttonAccount
+// A button to show user account info and actions (settings, logout)
 const ButtonAccount = () => {
   const supabase = createClient();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    setProfile(profile);
+  }, [supabase]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -29,40 +31,35 @@ const ButtonAccount = () => {
       setUser(user);
 
       if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        setProfile(profile);
+        fetchProfile(user.id);
       }
     };
 
     getUser();
-  }, [supabase]);
+  }, [supabase, fetchProfile]);
+
+  // Listen for profile updates from other components
+  useEffect(() => {
+    const handleProfileUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ fullName?: string }>;
+      // If the event includes the name, update local state immediately
+      if (customEvent.detail?.fullName !== undefined) {
+        setProfile((prev: any) => ({ ...prev, full_name: customEvent.detail.fullName }));
+      } else if (user) {
+        // Otherwise refetch from the server
+        fetchProfile(user.id);
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdate);
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdate);
+    };
+  }, [user, fetchProfile]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
-  };
-
-  const handleBilling = async () => {
-    setIsLoading(true);
-
-    try {
-      const { url }: { url: string } = await apiClient.post(
-        "/stripe/create-portal",
-        {
-          returnUrl: window.location.href,
-        }
-      );
-
-      window.location.href = url;
-    } catch (e) {
-      console.error(e);
-    }
-
-    setIsLoading(false);
   };
 
   return (
@@ -90,15 +87,11 @@ const ButtonAccount = () => {
                   ? profile.full_name.split(' ')[0]
                   : user?.email?.split('@')[0] || 'Account'}
               </div>
-              {isLoading ? (
-                <span className="loading loading-spinner loading-xs ml-auto"></span>
-              ) : (
-                <div className="ml-auto text-base-content/60">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-                </div>
-              )}
+              <div className="ml-auto text-base-content/60">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
             </Popover.Button>
             <Transition
               enter="transition duration-100 ease-out"
@@ -108,43 +101,41 @@ const ButtonAccount = () => {
               leaveFrom="transform scale-100 opacity-100"
               leaveTo="transform scale-95 opacity-0"
             >
-              <Popover.Panel className="absolute left-full top-0 ml-2 z-[-9999]">
-                <div className="overflow-hidden rounded-lg shadow-xl ring-1 ring-base-content ring-opacity-5 bg-base-100 p-1">
-                  <div className="space-y-0.5 text-sm">
-                    {!profile?.full_name && (
-                      <Link
-                        href="/dashboard/account"
-                        className="flex items-center gap-2 hover:bg-primary/20 hover:text-primary duration-200 py-1.5 px-3 w-full rounded-md whitespace-nowrap"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        Complete Profile
-                      </Link>
-                    )}
+              <Popover.Panel className="absolute left-full bottom-0 ml-2 z-50">
+                <div className="overflow-hidden rounded-xl shadow-2xl border border-white/10 bg-base-200/95 backdrop-blur-sm min-w-[180px]">
+                  {/* User info header */}
+                  <div className="px-4 py-3 border-b border-white/10">
+                    <p className="font-medium text-white truncate">
+                      {profile?.full_name || user?.email?.split('@')[0] || 'Account'}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                  </div>
 
-                    <button
-                      className="flex items-center gap-2 hover:bg-base-300 duration-200 py-1.5 px-3 w-full rounded-md whitespace-nowrap"
-                      onClick={handleBilling}
+                  {/* Menu items */}
+                  <div className="p-1.5">
+                    <Link
+                      href="/dashboard/account"
+                      className="flex items-center gap-3 hover:bg-white/10 text-gray-300 hover:text-white duration-150 py-2.5 px-3 w-full rounded-lg"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="20" height="14" x="2" y="5" rx="2"></rect>
-                        <line x1="2" x2="22" y1="10" y2="10"></line>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
                       </svg>
-                      Billing
-                    </button>
+                      Account Settings
+                    </Link>
+
+                    <div className="my-1.5 border-t border-white/10" />
 
                     <button
-                      className="flex items-center gap-2 hover:bg-error/20 hover:text-error duration-200 py-1.5 px-3 w-full rounded-md whitespace-nowrap"
+                      className="flex items-center gap-3 hover:bg-error/20 text-gray-300 hover:text-error duration-150 py-2.5 px-3 w-full rounded-lg"
                       onClick={handleSignOut}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                         <polyline points="16 17 21 12 16 7"></polyline>
                         <line x1="21" y1="12" x2="9" y2="12"></line>
                       </svg>
-                      Logout
+                      Log out
                     </button>
                   </div>
                 </div>

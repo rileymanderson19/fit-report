@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/libs/supabase/client";
 import { toast } from "sonner";
 
@@ -11,6 +11,22 @@ export default function AccountPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Broadcast name changes to other components for real-time preview
+  const broadcastNameChange = useCallback((first: string, last: string) => {
+    const fullName = `${first.trim()} ${last.trim()}`.trim();
+    window.dispatchEvent(new CustomEvent("profile-updated", { detail: { fullName } }));
+  }, []);
+
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value);
+    broadcastNameChange(value, lastName);
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value);
+    broadcastNameChange(firstName, value);
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -70,6 +86,9 @@ export default function AccountPage() {
 
       if (error) throw error;
 
+      // Notify other components (like ButtonAccount) to refresh
+      window.dispatchEvent(new CustomEvent("profile-updated"));
+
       toast.success("Profile updated!");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -123,7 +142,7 @@ export default function AccountPage() {
             <input
               type="text"
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              onChange={(e) => handleFirstNameChange(e.target.value)}
               placeholder="John"
               className="input input-bordered w-full"
             />
@@ -136,7 +155,7 @@ export default function AccountPage() {
             <input
               type="text"
               value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              onChange={(e) => handleLastNameChange(e.target.value)}
               placeholder="Doe"
               className="input input-bordered w-full"
             />

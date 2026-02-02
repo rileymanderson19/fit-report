@@ -51,6 +51,9 @@ export function ProfileStep({ onNext, onBack }: ProfileStepProps) {
 
       if (error) throw error;
 
+      // Notify other components (like ButtonAccount) to refresh
+      window.dispatchEvent(new CustomEvent("profile-updated"));
+
       toast.success("Profile saved!");
 
       setTimeout(() => {
