@@ -29,6 +29,8 @@ interface ClientListResponse {
   clients: Array<{
     id: string;
     displayName: string;
+    firstName: string;
+    lastName: string;
     email?: string;
     photoUrl?: string;
   }>;
@@ -99,6 +101,8 @@ export async function GET(req: NextRequest) {
     const clients = (data.users || []).map(user => ({
       id: user.id,
       displayName: `${user.firstName} ${user.lastName}`.trim(),
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
       photoUrl: user.photoUrl,
     }));

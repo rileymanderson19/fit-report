@@ -7,6 +7,8 @@ import { toast } from "sonner";
 interface Client {
   id: string;
   displayName: string;
+  firstName: string;
+  lastName: string;
   email?: string;
   photoUrl?: string;
 }
@@ -92,11 +94,16 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
     setIsImporting(true);
 
     try {
+      // Get the full client objects for selected IDs
+      const clientsToImport = availableClients.filter(client =>
+        selectedClients.has(client.id)
+      );
+
       const response = await fetch("/api/clients/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clientIds: Array.from(selectedClients),
+          clients: clientsToImport,
         }),
       });
 
@@ -106,7 +113,7 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
         throw new Error(data.error || "Failed to import clients");
       }
 
-      toast.success(`Successfully imported ${data.imported} clients!`);
+      toast.success(`Successfully imported ${clientsToImport.length} clients!`);
 
       // Update onboarding status
       const {
