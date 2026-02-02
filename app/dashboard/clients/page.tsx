@@ -95,11 +95,11 @@ export default function ClientsPage() {
         throw new Error(data.error || 'Failed to fetch clients');
       }
 
-      const mappedClients = data.users.map((user: any) => ({
-        id: user.id,
-        first_name: user.firstName,
-        last_name: user.lastName,
-        email: user.email
+      const mappedClients = (data.clients || []).map((client: any) => ({
+        id: client.id,
+        first_name: client.firstName,
+        last_name: client.lastName,
+        email: client.email
       }));
 
       setTrainerizeClients(mappedClients);
