@@ -60,10 +60,13 @@ export default function AccountPage() {
 
       const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
+      // Use upsert in case profile doesn't exist yet
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: fullName })
-        .eq("id", user.id);
+        .upsert({
+          id: user.id,
+          full_name: fullName,
+        });
 
       if (error) throw error;
 
