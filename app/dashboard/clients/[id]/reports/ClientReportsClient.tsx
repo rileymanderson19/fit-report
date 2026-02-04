@@ -43,6 +43,17 @@ interface Client {
   active: boolean;
 }
 
+interface ProgressPhoto {
+  id: string;
+  url: string;
+  takenAt: string;
+}
+
+interface ProgressPhotoSummary {
+  firstPhoto: ProgressPhoto | null;
+  latestPhoto: ProgressPhoto | null;
+}
+
 interface ClientReportsClientProps {
   clientId: string;
   initialClient?: Client | null;
@@ -108,6 +119,13 @@ export default function ClientReportsClient({
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Progress photos state
+  const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([]);
+  const [photoSummary, setPhotoSummary] = useState<ProgressPhotoSummary>({ firstPhoto: null, latestPhoto: null });
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+  const [photosError, setPhotosError] = useState<string | null>(null);
+  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
 
   // Set default date range: last 14 days ending yesterday
   useEffect(() => {
@@ -752,6 +770,49 @@ export default function ClientReportsClient({
     }
   }, [client, activeTab]);
 
+  // Fetch progress photos when live tab + date range active
+  useEffect(() => {
+    if (activeTab !== 'live' || !client || !startDate || !endDate || !client.trainerize_id) return;
+
+    const fetchPhotos = async () => {
+      setIsLoadingPhotos(true);
+      setPhotosError(null);
+      try {
+        const formatDate = (d: Date) => d.toISOString().split('T')[0];
+        const response = await fetch('/api/trainerize/photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId,
+            trainerizeUserId: client.trainerize_id,
+            startDate: formatDate(startDate),
+            endDate: formatDate(endDate),
+          }),
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({ error: 'Failed to load photos' }));
+          throw new Error(errData.error || 'Failed to load photos');
+        }
+
+        const data = await response.json();
+        setProgressPhotos(data.photos || []);
+        setPhotoSummary({
+          firstPhoto: data.firstPhoto || null,
+          latestPhoto: data.latestPhoto || null,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to load photos';
+        setPhotosError(message);
+        console.error('[photos] Error fetching progress photos:', error);
+      } finally {
+        setIsLoadingPhotos(false);
+      }
+    };
+
+    fetchPhotos();
+  }, [activeTab, client, startDate, endDate, clientId]);
+
   // Fetch all clients for navigation
   useEffect(() => {
     const fetchAllClients = async () => {
@@ -1092,6 +1153,132 @@ export default function ClientReportsClient({
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Progress Photos Section */}
+          <div className="card-elevated">
+            <div className="card-body p-6">
+              <div className="mb-4">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                  </svg>
+                  Progress Photos
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">Visual changes for this report period and all-time snapshots</p>
+              </div>
+
+              {isLoadingPhotos ? (
+                <div className="flex justify-center py-8">
+                  <span className="loading loading-spinner loading-lg text-accent-purple"></span>
+                </div>
+              ) : photosError ? (
+                <div className="glass border border-yellow-500/30 bg-yellow-500/10 p-4 rounded-lg flex items-start gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5 text-yellow-500 mt-0.5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                  <span className="text-gray-300 text-sm">{photosError}</span>
+                </div>
+              ) : progressPhotos.length === 0 && !photoSummary.firstPhoto && !photoSummary.latestPhoto ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">No progress photos available yet for this client.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Current Range Photos */}
+                  {progressPhotos.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">This Period</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {progressPhotos.map((photo) => (
+                          <button
+                            key={photo.id}
+                            className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-accent-purple/50 transition-all cursor-pointer"
+                            onClick={() => setSelectedPhotoUrl(photo.url)}
+                          >
+                            <img
+                              src={photo.url}
+                              alt={`Progress photo ${new Date(photo.takenAt).toLocaleDateString()}`}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                              <span className="text-xs text-white">{new Date(photo.takenAt).toLocaleDateString()}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* All-Time First vs Latest */}
+                  {(photoSummary.firstPhoto || photoSummary.latestPhoto) && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">All-Time Progress</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {photoSummary.firstPhoto && (
+                          <div className="glass border border-white/10 rounded-lg overflow-hidden">
+                            <button
+                              className="w-full aspect-[3/4] overflow-hidden cursor-pointer"
+                              onClick={() => setSelectedPhotoUrl(photoSummary.firstPhoto!.url)}
+                            >
+                              <img
+                                src={photoSummary.firstPhoto.url}
+                                alt="First progress photo"
+                                className="w-full h-full object-cover hover:scale-105 transition-transform"
+                              />
+                            </button>
+                            <div className="p-3">
+                              <span className="text-xs font-semibold text-accent-purple uppercase">First Photo</span>
+                              <p className="text-sm text-gray-300">{new Date(photoSummary.firstPhoto.takenAt).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                        )}
+                        {photoSummary.latestPhoto && (
+                          <div className="glass border border-white/10 rounded-lg overflow-hidden">
+                            <button
+                              className="w-full aspect-[3/4] overflow-hidden cursor-pointer"
+                              onClick={() => setSelectedPhotoUrl(photoSummary.latestPhoto!.url)}
+                            >
+                              <img
+                                src={photoSummary.latestPhoto.url}
+                                alt="Latest progress photo"
+                                className="w-full h-full object-cover hover:scale-105 transition-transform"
+                              />
+                            </button>
+                            <div className="p-3">
+                              <span className="text-xs font-semibold text-green-400 uppercase">Most Recent</span>
+                              <p className="text-sm text-gray-300">{new Date(photoSummary.latestPhoto.takenAt).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Photo Lightbox */}
+          {selectedPhotoUrl && (
+            <dialog className="modal modal-open" onClick={() => setSelectedPhotoUrl(null)}>
+              <div className="modal-box max-w-4xl bg-bg-secondary p-2" onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="absolute top-3 right-3 z-10 glass border border-white/20 text-white w-8 h-8 rounded-full flex items-center justify-center hover:border-accent-purple transition-all"
+                  onClick={() => setSelectedPhotoUrl(null)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                <img
+                  src={selectedPhotoUrl}
+                  alt="Progress photo full size"
+                  className="w-full h-auto rounded-lg"
+                />
+              </div>
+              <form method="dialog" className="modal-backdrop">
+                <button onClick={() => setSelectedPhotoUrl(null)}>close</button>
+              </form>
+            </dialog>
           )}
 
           {/* Action Plan Section */}
