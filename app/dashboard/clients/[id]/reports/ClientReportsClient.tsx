@@ -47,11 +47,20 @@ interface ProgressPhoto {
   id: string;
   url: string;
   takenAt: string;
+  pose?: string;
+  isManualBaseline?: boolean;
+}
+
+interface PoseComparison {
+  pose: string;
+  baselinePhoto: ProgressPhoto | null;
+  latestPhoto: ProgressPhoto | null;
 }
 
 interface ProgressPhotoSummary {
   firstPhoto: ProgressPhoto | null;
   latestPhoto: ProgressPhoto | null;
+  poseComparisons: Record<string, PoseComparison>;
 }
 
 interface ClientReportsClientProps {
@@ -122,10 +131,12 @@ export default function ClientReportsClient({
 
   // Progress photos state
   const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([]);
-  const [photoSummary, setPhotoSummary] = useState<ProgressPhotoSummary>({ firstPhoto: null, latestPhoto: null });
+  const [photoSummary, setPhotoSummary] = useState<ProgressPhotoSummary>({ firstPhoto: null, latestPhoto: null, poseComparisons: {} });
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [photosError, setPhotosError] = useState<string | null>(null);
   const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
+  const [isSettingBaseline, setIsSettingBaseline] = useState(false);
+  const [isSyncingAllPhotos, setIsSyncingAllPhotos] = useState(false);
 
   // Set default date range: last 14 days ending yesterday
   useEffect(() => {
@@ -800,6 +811,7 @@ export default function ClientReportsClient({
         setPhotoSummary({
           firstPhoto: data.firstPhoto || null,
           latestPhoto: data.latestPhoto || null,
+          poseComparisons: data.poseComparisons || {},
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to load photos';
@@ -812,6 +824,115 @@ export default function ClientReportsClient({
 
     fetchPhotos();
   }, [activeTab, client, startDate, endDate, clientId]);
+
+  // Baseline photo handlers
+  const handleSetBaseline = async (photo: ProgressPhoto) => {
+    if (!client || isSettingBaseline) return;
+    setIsSettingBaseline(true);
+    try {
+      const response = await fetch('/api/trainerize/photos/baseline', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          pose: photo.pose || 'unknown',
+          photoId: photo.id,
+          photoUrl: photo.url,
+          photoTakenAt: photo.takenAt,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to set baseline');
+      const data = await response.json();
+      // Update the specific pose comparison in state
+      if (data.poseComparison) {
+        setPhotoSummary(prev => ({
+          ...prev,
+          poseComparisons: {
+            ...prev.poseComparisons,
+            [photo.pose || 'unknown']: data.poseComparison,
+          },
+        }));
+      }
+      toast.success(`Baseline set for ${photo.pose || 'unknown'} pose`);
+    } catch (error) {
+      toast.error('Failed to set baseline photo');
+      console.error('[baseline] Error setting baseline:', error);
+    } finally {
+      setIsSettingBaseline(false);
+    }
+  };
+
+  const handleClearBaseline = async (pose: string) => {
+    if (!client || isSettingBaseline) return;
+    setIsSettingBaseline(true);
+    try {
+      const response = await fetch('/api/trainerize/photos/baseline', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          pose,
+          photoId: null,
+          photoUrl: null,
+          photoTakenAt: null,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to clear baseline');
+      const data = await response.json();
+      // Update the specific pose comparison in state
+      if (data.poseComparison) {
+        setPhotoSummary(prev => ({
+          ...prev,
+          poseComparisons: {
+            ...prev.poseComparisons,
+            [pose]: data.poseComparison,
+          },
+        }));
+      }
+      toast.success(`Baseline cleared for ${pose} pose`);
+    } catch (error) {
+      toast.error('Failed to clear baseline');
+      console.error('[baseline] Error clearing baseline:', error);
+    } finally {
+      setIsSettingBaseline(false);
+    }
+  };
+
+  // Sync all photos handler - fetches complete photo history
+  const handleSyncAllPhotos = async () => {
+    if (!client || isSyncingAllPhotos || !client.trainerize_id) return;
+    setIsSyncingAllPhotos(true);
+    try {
+      const response = await fetch('/api/trainerize/photos/sync-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          trainerizeUserId: client.trainerize_id,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to sync photos');
+      const data = await response.json();
+      // Update pose comparisons with synced data
+      if (data.poseComparisons) {
+        setPhotoSummary(prev => ({
+          ...prev,
+          poseComparisons: data.poseComparisons,
+        }));
+      }
+      const earliestYear = data.earliestDate ? new Date(data.earliestDate).getFullYear() : null;
+      toast.success(
+        earliestYear
+          ? `Synced ${data.totalPhotos} photos (first from ${earliestYear})`
+          : `Synced ${data.totalPhotos} photos`
+      );
+    } catch (error) {
+      toast.error('Failed to sync all photos');
+      console.error('[sync-all] Error syncing photos:', error);
+    } finally {
+      setIsSyncingAllPhotos(false);
+    }
+  };
 
   // Fetch all clients for navigation
   useEffect(() => {
@@ -1158,14 +1279,38 @@ export default function ClientReportsClient({
           {/* Progress Photos Section */}
           <div className="card-elevated">
             <div className="card-body p-6">
-              <div className="mb-4">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                  </svg>
-                  Progress Photos
-                </h2>
-                <p className="text-sm text-gray-400 mt-1">Visual changes for this report period and all-time snapshots</p>
+              <div className="mb-4 flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                    </svg>
+                    Progress Photos
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-1">Visual changes for this report period and all-time snapshots</p>
+                </div>
+                {client?.trainerize_id && (
+                  <button
+                    className="glass border border-white/20 hover:border-accent-purple/50 text-white text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all"
+                    onClick={handleSyncAllPhotos}
+                    disabled={isSyncingAllPhotos}
+                    title="Fetch all photos from Trainerize to find the true first photo"
+                  >
+                    {isSyncingAllPhotos ? (
+                      <>
+                        <span className="loading loading-spinner loading-xs" />
+                        <span>Syncing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                        </svg>
+                        <span>Sync All Photos</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
               {isLoadingPhotos ? (
@@ -1177,7 +1322,7 @@ export default function ClientReportsClient({
                   <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5 text-yellow-500 mt-0.5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
                   <span className="text-gray-300 text-sm">{photosError}</span>
                 </div>
-              ) : progressPhotos.length === 0 && !photoSummary.firstPhoto && !photoSummary.latestPhoto ? (
+              ) : progressPhotos.length === 0 && Object.keys(photoSummary.poseComparisons).length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-400">No progress photos available yet for this client.</p>
                 </div>
@@ -1189,66 +1334,124 @@ export default function ClientReportsClient({
                       <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">This Period</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {progressPhotos.map((photo) => (
-                          <button
+                          <div
                             key={photo.id}
-                            className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-accent-purple/50 transition-all cursor-pointer"
-                            onClick={() => setSelectedPhotoUrl(photo.url)}
+                            className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-accent-purple/50 transition-all"
                           >
-                            <img
-                              src={photo.url}
-                              alt={`Progress photo ${new Date(photo.takenAt).toLocaleDateString()}`}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                            <button
+                              className="w-full h-full cursor-pointer"
+                              onClick={() => setSelectedPhotoUrl(photo.url)}
+                            >
+                              <img
+                                src={photo.url}
+                                alt={`Progress photo ${new Date(photo.takenAt).toLocaleDateString()}`}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                            </button>
+                            {/* Pose label and date overlay */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 pointer-events-none">
+                              {photo.pose && photo.pose !== 'unknown' && (
+                                <span className="text-[10px] uppercase tracking-wide bg-accent-purple/60 rounded px-1.5 py-0.5 text-white mr-1">
+                                  {photo.pose}
+                                </span>
+                              )}
                               <span className="text-xs text-white">{new Date(photo.takenAt).toLocaleDateString()}</span>
                             </div>
-                          </button>
+                            {/* Set as Baseline button */}
+                            <button
+                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 hover:bg-accent-purple/80 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1"
+                              onClick={(e) => { e.stopPropagation(); handleSetBaseline(photo); }}
+                              title="Set as baseline"
+                              disabled={isSettingBaseline}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                              </svg>
+                              Baseline
+                            </button>
+                          </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* All-Time First vs Latest */}
-                  {(photoSummary.firstPhoto || photoSummary.latestPhoto) && (
+                  {/* Pose-Matched All-Time Progress */}
+                  {Object.keys(photoSummary.poseComparisons).length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">All-Time Progress</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {photoSummary.firstPhoto && (
-                          <div className="glass border border-white/10 rounded-lg overflow-hidden">
-                            <button
-                              className="w-full aspect-[3/4] overflow-hidden cursor-pointer"
-                              onClick={() => setSelectedPhotoUrl(photoSummary.firstPhoto!.url)}
-                            >
-                              <img
-                                src={photoSummary.firstPhoto.url}
-                                alt="First progress photo"
-                                className="w-full h-full object-cover hover:scale-105 transition-transform"
-                              />
-                            </button>
-                            <div className="p-3">
-                              <span className="text-xs font-semibold text-accent-purple uppercase">First Photo</span>
-                              <p className="text-sm text-gray-300">{new Date(photoSummary.firstPhoto.takenAt).toLocaleDateString()}</p>
+                      <div className="space-y-4">
+                        {Object.entries(photoSummary.poseComparisons)
+                          .filter(([, comp]) => comp.baselinePhoto || comp.latestPhoto)
+                          .sort(([a], [b]) => {
+                            // Sort: front, side, back, unknown
+                            const order = ['front', 'side', 'back', 'unknown'];
+                            return order.indexOf(a) - order.indexOf(b);
+                          })
+                          .map(([pose, comparison]) => (
+                            <div key={pose}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-xs font-semibold text-accent-purple uppercase tracking-wide">
+                                  {pose === 'unknown' ? 'Other' : pose}
+                                </span>
+                                {comparison.baselinePhoto?.isManualBaseline && (
+                                  <span className="text-[10px] bg-accent-purple/20 text-accent-purple rounded px-1.5 py-0.5">
+                                    Custom Baseline
+                                  </span>
+                                )}
+                                {comparison.baselinePhoto?.isManualBaseline && (
+                                  <button
+                                    className="text-[10px] text-gray-500 hover:text-red-400 underline"
+                                    onClick={() => handleClearBaseline(pose)}
+                                    disabled={isSettingBaseline}
+                                  >
+                                    Reset
+                                  </button>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                {comparison.baselinePhoto && (
+                                  <div className="glass border border-white/10 rounded-lg overflow-hidden">
+                                    <button
+                                      className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40"
+                                      onClick={() => setSelectedPhotoUrl(comparison.baselinePhoto!.url)}
+                                    >
+                                      <img
+                                        src={comparison.baselinePhoto.url}
+                                        alt={`${pose} baseline`}
+                                        className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                      />
+                                    </button>
+                                    <div className="p-3">
+                                      <span className="text-xs font-semibold text-accent-purple uppercase">Baseline</span>
+                                      <p className="text-sm text-gray-300">
+                                        {new Date(comparison.baselinePhoto.takenAt).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                                {comparison.latestPhoto && (
+                                  <div className="glass border border-white/10 rounded-lg overflow-hidden">
+                                    <button
+                                      className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40"
+                                      onClick={() => setSelectedPhotoUrl(comparison.latestPhoto!.url)}
+                                    >
+                                      <img
+                                        src={comparison.latestPhoto.url}
+                                        alt={`${pose} latest`}
+                                        className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                      />
+                                    </button>
+                                    <div className="p-3">
+                                      <span className="text-xs font-semibold text-green-400 uppercase">Most Recent</span>
+                                      <p className="text-sm text-gray-300">
+                                        {new Date(comparison.latestPhoto.takenAt).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        {photoSummary.latestPhoto && (
-                          <div className="glass border border-white/10 rounded-lg overflow-hidden">
-                            <button
-                              className="w-full aspect-[3/4] overflow-hidden cursor-pointer"
-                              onClick={() => setSelectedPhotoUrl(photoSummary.latestPhoto!.url)}
-                            >
-                              <img
-                                src={photoSummary.latestPhoto.url}
-                                alt="Latest progress photo"
-                                className="w-full h-full object-cover hover:scale-105 transition-transform"
-                              />
-                            </button>
-                            <div className="p-3">
-                              <span className="text-xs font-semibold text-green-400 uppercase">Most Recent</span>
-                              <p className="text-sm text-gray-300">{new Date(photoSummary.latestPhoto.takenAt).toLocaleDateString()}</p>
-                            </div>
-                          </div>
-                        )}
+                          ))}
                       </div>
                     </div>
                   )}

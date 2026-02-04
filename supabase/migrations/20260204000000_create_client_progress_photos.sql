@@ -1,21 +1,31 @@
--- Create client_progress_photos table for storing per-client first/latest progress photo metadata
+-- Create client_progress_photos table for storing per-client, per-pose progress photo metadata
+-- Stores auto-detected first/latest photos and optional trainer-set baseline photos
 create table if not exists public.client_progress_photos (
     id uuid default gen_random_uuid() primary key,
     trainer_id uuid not null references auth.users(id) on delete cascade,
     client_id uuid not null references public.clients(id) on delete cascade,
     trainerize_user_id bigint not null,
+    pose text not null default 'unknown',
+    -- Auto-detected: earliest photo ever seen for this pose
+    first_photo_id text,
     first_photo_url text,
     first_photo_taken_at timestamptz,
+    -- Auto-detected: most recent photo seen for this pose
+    latest_photo_id text,
     latest_photo_url text,
     latest_photo_taken_at timestamptz,
+    -- Manually set by trainer: overrides first_photo for comparisons
+    baseline_photo_id text,
+    baseline_photo_url text,
+    baseline_photo_taken_at timestamptz,
     last_synced_at timestamptz,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
 
--- Unique composite index for idempotent upserts
-create unique index if not exists client_progress_photos_trainer_client_idx
-    on public.client_progress_photos(trainer_id, client_id);
+-- Unique composite index for idempotent upserts (one row per trainer+client+pose)
+create unique index if not exists client_progress_photos_trainer_client_pose_idx
+    on public.client_progress_photos(trainer_id, client_id, pose);
 
 -- Indexes for lookups
 create index if not exists client_progress_photos_trainer_id_idx

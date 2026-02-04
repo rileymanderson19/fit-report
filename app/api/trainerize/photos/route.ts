@@ -28,6 +28,13 @@ interface ProgressPhoto {
   url: string;
   takenAt: string;
   pose?: string;
+  isManualBaseline?: boolean;
+}
+
+interface PoseComparison {
+  pose: string;
+  baselinePhoto: ProgressPhoto | null;
+  latestPhoto: ProgressPhoto | null;
 }
 
 export async function POST(request: Request) {
@@ -111,124 +118,167 @@ export async function POST(request: Request) {
     }
 
     // 6. Build proxy URLs for each photo
-    // Trainerize getByID returns raw JPEG binary, so we proxy through our own endpoint
     const photos: ProgressPhoto[] = photoList.map((photoMeta) => ({
       id: String(photoMeta.id),
       url: `/api/trainerize/photos/image?userID=${trainerizeUserId}&photoid=${photoMeta.id}&thumbnail=false`,
       takenAt: photoMeta.date || new Date().toISOString(),
-      pose: photoMeta.pose,
+      pose: (photoMeta.pose || "unknown").toLowerCase(),
     }));
 
     console.log(`[photos] Built ${photos.length} proxy URLs from photo list`);
 
-    // 7. Compute earliest and latest in range
-    let earliestInRange: ProgressPhoto | null = null;
-    let latestInRange: ProgressPhoto | null = null;
-
-    if (photos.length > 0) {
-      const sorted = [...photos].sort(
-        (a, b) => new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime()
-      );
-      earliestInRange = sorted[0];
-      latestInRange = sorted[sorted.length - 1];
+    // 7. Group photos by pose
+    const photosByPose = new Map<string, ProgressPhoto[]>();
+    for (const photo of photos) {
+      const poseKey = photo.pose || "unknown";
+      if (!photosByPose.has(poseKey)) {
+        photosByPose.set(poseKey, []);
+      }
+      photosByPose.get(poseKey)!.push(photo);
     }
 
-    // 8. Upsert client_progress_photos
-    let firstPhoto: ProgressPhoto | null = null;
-    let latestPhoto: ProgressPhoto | null = null;
+    // 8. Process each pose group: compute earliest/latest, upsert to DB
+    const poseComparisons: Record<string, PoseComparison> = {};
 
-    // Read existing record
-    const { data: existingRow } = await supabase
-      .from("client_progress_photos")
-      .select("*")
-      .eq("trainer_id", user.id)
-      .eq("client_id", clientId)
-      .single();
+    for (const [poseKey, posePhotos] of photosByPose.entries()) {
+      const sorted = [...posePhotos].sort(
+        (a, b) => new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime()
+      );
+      const earliestInRange = sorted[0];
+      const latestInRange = sorted[sorted.length - 1];
 
-    if (photos.length > 0) {
-      // Determine new first photo
-      let newFirstUrl = earliestInRange!.url;
-      let newFirstTakenAt = earliestInRange!.takenAt;
+      // Read existing row for this pose
+      const { data: existingRow } = await supabase
+        .from("client_progress_photos")
+        .select("*")
+        .eq("trainer_id", user.id)
+        .eq("client_id", clientId)
+        .eq("pose", poseKey)
+        .single();
+
+      // Compute new first photo (keep earlier if exists)
+      let newFirstId = earliestInRange.id;
+      let newFirstUrl = earliestInRange.url;
+      let newFirstTakenAt = earliestInRange.takenAt;
 
       if (
         existingRow?.first_photo_taken_at &&
-        new Date(existingRow.first_photo_taken_at).getTime() <
-          new Date(newFirstTakenAt).getTime()
+        new Date(existingRow.first_photo_taken_at).getTime() < new Date(newFirstTakenAt).getTime()
       ) {
+        newFirstId = existingRow.first_photo_id;
         newFirstUrl = existingRow.first_photo_url;
         newFirstTakenAt = existingRow.first_photo_taken_at;
       }
 
-      // Determine new latest photo
-      let newLatestUrl = latestInRange!.url;
-      let newLatestTakenAt = latestInRange!.takenAt;
+      // Compute new latest photo (keep later if exists)
+      let newLatestId = latestInRange.id;
+      let newLatestUrl = latestInRange.url;
+      let newLatestTakenAt = latestInRange.takenAt;
 
       if (
         existingRow?.latest_photo_taken_at &&
-        new Date(existingRow.latest_photo_taken_at).getTime() >
-          new Date(newLatestTakenAt).getTime()
+        new Date(existingRow.latest_photo_taken_at).getTime() > new Date(newLatestTakenAt).getTime()
       ) {
+        newLatestId = existingRow.latest_photo_id;
         newLatestUrl = existingRow.latest_photo_url;
         newLatestTakenAt = existingRow.latest_photo_taken_at;
       }
 
-      const upsertData = {
-        trainer_id: user.id,
-        client_id: clientId,
-        trainerize_user_id: trainerizeUserId,
-        first_photo_url: newFirstUrl,
-        first_photo_taken_at: newFirstTakenAt,
-        latest_photo_url: newLatestUrl,
-        latest_photo_taken_at: newLatestTakenAt,
-        last_synced_at: new Date().toISOString(),
-      };
-
+      // Upsert, preserving any manually-set baseline
       const { error: upsertError } = await supabase
         .from("client_progress_photos")
-        .upsert(upsertData, {
-          onConflict: "trainer_id,client_id",
-        });
+        .upsert(
+          {
+            trainer_id: user.id,
+            client_id: clientId,
+            trainerize_user_id: trainerizeUserId,
+            pose: poseKey,
+            first_photo_id: newFirstId,
+            first_photo_url: newFirstUrl,
+            first_photo_taken_at: newFirstTakenAt,
+            latest_photo_id: newLatestId,
+            latest_photo_url: newLatestUrl,
+            latest_photo_taken_at: newLatestTakenAt,
+            last_synced_at: new Date().toISOString(),
+          },
+          { onConflict: "trainer_id,client_id,pose" }
+        );
 
       if (upsertError) {
-        console.error("[photos] Upsert error:", upsertError);
+        console.error(`[photos] Upsert error for pose ${poseKey}:`, upsertError);
       }
 
-      firstPhoto = {
-        id: "first",
-        url: newFirstUrl,
-        takenAt: newFirstTakenAt,
-      };
-      latestPhoto = {
-        id: "latest",
-        url: newLatestUrl,
-        takenAt: newLatestTakenAt,
-      };
-    } else if (existingRow) {
-      if (existingRow.first_photo_url && existingRow.first_photo_taken_at) {
-        firstPhoto = {
-          id: "first",
-          url: existingRow.first_photo_url,
-          takenAt: existingRow.first_photo_taken_at,
-        };
-      }
-      if (existingRow.latest_photo_url && existingRow.latest_photo_taken_at) {
-        latestPhoto = {
-          id: "latest",
-          url: existingRow.latest_photo_url,
-          takenAt: existingRow.latest_photo_taken_at,
-        };
-      }
+      // Build comparison for response
+      // Use baseline if set, otherwise fall back to first photo
+      const hasManualBaseline = !!existingRow?.baseline_photo_url;
+      const baselineUrl = existingRow?.baseline_photo_url || newFirstUrl;
+      const baselineTakenAt = existingRow?.baseline_photo_taken_at || newFirstTakenAt;
+      const baselineId = existingRow?.baseline_photo_id || newFirstId;
 
-      await supabase
-        .from("client_progress_photos")
-        .update({ last_synced_at: new Date().toISOString() })
-        .eq("trainer_id", user.id)
-        .eq("client_id", clientId);
+      poseComparisons[poseKey] = {
+        pose: poseKey,
+        baselinePhoto: {
+          id: baselineId,
+          url: baselineUrl,
+          takenAt: baselineTakenAt,
+          pose: poseKey,
+          isManualBaseline: hasManualBaseline,
+        },
+        latestPhoto: {
+          id: newLatestId,
+          url: newLatestUrl,
+          takenAt: newLatestTakenAt,
+          pose: poseKey,
+        },
+      };
     }
 
-    // 9. Return response
+    // 9. Load comparisons for poses not in current range but stored in DB
+    const { data: allPoseRows } = await supabase
+      .from("client_progress_photos")
+      .select("*")
+      .eq("trainer_id", user.id)
+      .eq("client_id", clientId);
+
+    for (const row of allPoseRows || []) {
+      if (!poseComparisons[row.pose] && (row.first_photo_url || row.baseline_photo_url)) {
+        const hasManualBaseline = !!row.baseline_photo_url;
+        const baselineUrl = row.baseline_photo_url || row.first_photo_url;
+        const baselineTakenAt = row.baseline_photo_taken_at || row.first_photo_taken_at;
+        const baselineId = row.baseline_photo_id || row.first_photo_id;
+
+        poseComparisons[row.pose] = {
+          pose: row.pose,
+          baselinePhoto: baselineUrl
+            ? {
+                id: baselineId || "first",
+                url: baselineUrl,
+                takenAt: baselineTakenAt,
+                pose: row.pose,
+                isManualBaseline: hasManualBaseline,
+              }
+            : null,
+          latestPhoto: row.latest_photo_url
+            ? {
+                id: row.latest_photo_id || "latest",
+                url: row.latest_photo_url,
+                takenAt: row.latest_photo_taken_at,
+                pose: row.pose,
+              }
+            : null,
+        };
+      }
+    }
+
+    // 10. Build backward-compatible firstPhoto/latestPhoto (pick first available)
+    const firstComparison = Object.values(poseComparisons)[0];
+    const firstPhoto = firstComparison?.baselinePhoto || null;
+    const latestPhoto = firstComparison?.latestPhoto || null;
+
+    // 11. Return response
     return NextResponse.json({
       photos,
+      poseComparisons,
       firstPhoto,
       latestPhoto,
     });
