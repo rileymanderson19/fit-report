@@ -3,15 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { createClient } from '@/libs/supabase/client';
-import { SevenDayReference } from '@/components/SevenDayReference';
-import { DateRangePicker } from '@/components/DateRangePicker';
-import ClientSearchBar from '@/components/ClientSearchBar';
-import SendReportModal from '@/components/SendReportModal';
-import GenerateLinkModal from '@/components/GenerateLinkModal';
-import { ShareProgressModal } from '@/components/shareable';
-import { toast } from 'sonner';
 
-// Lazy-load ReportVisualization to reduce initial bundle size
+// Lazy-load ReportVisualization for Snapshots tab
 const ReportVisualization = dynamic(
   () => import('@/components/ReportVisualization').then(mod => ({ default: mod.ReportVisualization })),
   {
@@ -23,6 +16,14 @@ const ReportVisualization = dynamic(
     ssr: false
   }
 );
+import { SevenDayReference } from '@/components/SevenDayReference';
+import { DateRangePicker } from '@/components/DateRangePicker';
+import ClientSearchBar from '@/components/ClientSearchBar';
+import SendReportModal from '@/components/SendReportModal';
+import GenerateLinkModal from '@/components/GenerateLinkModal';
+import { ShareProgressModal } from '@/components/shareable';
+import { toast } from 'sonner';
+
 
 interface Report {
   id: string;
@@ -72,6 +73,59 @@ interface ClientReportsClientProps {
   initialLiveReportMetadata?: any;
 }
 
+// Trend calculation helper
+interface TrendData {
+  firstHalfAvg: number;
+  secondHalfAvg: number;
+  percentChange: number;
+  direction: 'up' | 'down' | 'stable';
+}
+
+function calculateTrend(
+  data: Array<{ date: string; value: number }>,
+  startDate: Date,
+  endDate: Date
+): TrendData | null {
+  if (!data || data.length === 0) return null;
+
+  const midpoint = new Date((startDate.getTime() + endDate.getTime()) / 2);
+
+  const firstHalf = data.filter(d => {
+    const date = new Date(d.date);
+    return date >= startDate && date < midpoint && d.value > 0;
+  });
+  const secondHalf = data.filter(d => {
+    const date = new Date(d.date);
+    return date >= midpoint && date <= endDate && d.value > 0;
+  });
+
+  if (firstHalf.length === 0 && secondHalf.length === 0) return null;
+
+  // If only one half has data, show that as the average with no trend
+  if (firstHalf.length === 0 || secondHalf.length === 0) {
+    const allValid = data.filter(d => d.value > 0);
+    if (allValid.length === 0) return null;
+    const avg = allValid.reduce((s, d) => s + d.value, 0) / allValid.length;
+    return {
+      firstHalfAvg: avg,
+      secondHalfAvg: avg,
+      percentChange: 0,
+      direction: 'stable'
+    };
+  }
+
+  const firstAvg = firstHalf.reduce((s, d) => s + d.value, 0) / firstHalf.length;
+  const secondAvg = secondHalf.reduce((s, d) => s + d.value, 0) / secondHalf.length;
+  const change = firstAvg !== 0 ? ((secondAvg - firstAvg) / firstAvg) * 100 : 0;
+
+  return {
+    firstHalfAvg: firstAvg,
+    secondHalfAvg: secondAvg,
+    percentChange: change,
+    direction: change > 2 ? 'up' : change < -2 ? 'down' : 'stable'
+  };
+}
+
 export default function ClientReportsClient({
   clientId,
   initialClient = null,
@@ -103,15 +157,6 @@ export default function ClientReportsClient({
   const [minReps, setMinReps] = useState<number>(6);
   const [maxReps, setMaxReps] = useState<number>(10);
   const [reportTemplate, setReportTemplate] = useState<'daily' | 'enhanced'>('enhanced');
-
-  // Last 7 days report state (for calendar view)
-  const [last7ReportData, setLast7ReportData] = useState<any>(null);
-  const [isLoadingLast7, setIsLoadingLast7] = useState(false);
-
-  // Action plan state
-  const [clientTasks, setClientTasks] = useState<any[]>([]);
-  const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
-  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
 
   // Client navigation state
   const [allClients, setAllClients] = useState<Client[]>([]);
@@ -622,165 +667,6 @@ export default function ClientReportsClient({
     }
   };
 
-  const fetchClientTasks = async () => {
-    setIsLoadingTasks(true);
-    try {
-      const { data, error } = await supabase
-        .from('client_tasks')
-        .select('*')
-        .eq('client_id', clientId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setClientTasks(data || []);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast.error('Failed to load tasks');
-    } finally {
-      setIsLoadingTasks(false);
-    }
-  };
-
-  const generateActionPlan = async () => {
-    if (!startDate || !endDate) {
-      toast.error('Please select a date range first');
-      return;
-    }
-
-    setIsGeneratingTasks(true);
-    try {
-      const response = await fetch('/api/automations/generate-tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId,
-          dateRange: {
-            from: startDate.toISOString(),
-            to: endDate.toISOString()
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate action plan');
-      }
-
-      const data = await response.json();
-      setClientTasks(data.tasks || []);
-      toast.success(`Generated ${data.tasks.length} action items`);
-    } catch (error) {
-      console.error('Error generating action plan:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to generate action plan');
-    } finally {
-      setIsGeneratingTasks(false);
-    }
-  };
-
-  const updateTaskStatus = async (taskId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('client_tasks')
-        .update({ status: newStatus })
-        .eq('id', taskId);
-
-      if (error) throw error;
-
-      // Update local state
-      setClientTasks(tasks =>
-        tasks.map(task =>
-          task.id === taskId ? { ...task, status: newStatus } : task
-        )
-      );
-
-      toast.success('Task updated');
-    } catch (error) {
-      console.error('Error updating task:', error);
-      toast.error('Failed to update task');
-    }
-  };
-
-  // Fetch last 7 days report for calendar view
-  const fetchLast7DaysReport = async () => {
-    if (!client) return;
-
-    setIsLoadingLast7(true);
-    try {
-      // Calculate last 7 days ending today
-      const today = new Date();
-      today.setHours(23, 59, 59, 999);
-      
-      const sevenDaysAgo = new Date(today);
-      sevenDaysAgo.setDate(today.getDate() - 6);
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-
-      // Try cache-only first for fast load
-      let response = await fetch('/api/reports/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId,
-          dateRange: {
-            from: sevenDaysAgo.toISOString(),
-            to: today.toISOString()
-          },
-          template: 'enhanced',
-          repRange: {
-            min: minReps,
-            max: maxReps
-          },
-          mode: 'cache-only'
-        })
-      });
-
-      // If no cache, generate
-      if (response.status === 202) {
-        response = await fetch('/api/reports/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            clientId,
-            dateRange: {
-              from: sevenDaysAgo.toISOString(),
-              to: today.toISOString()
-            },
-            template: 'enhanced',
-            repRange: {
-              min: minReps,
-              max: maxReps
-            }
-          })
-        });
-      }
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.reportData) {
-          setLast7ReportData(data.reportData);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching last 7 days report:', error);
-      // Silent failure - this is a nice-to-have feature
-    } finally {
-      setIsLoadingLast7(false);
-    }
-  };
-
-  // Load tasks when tab is active
-  useEffect(() => {
-    if (activeTab === 'live' && client) {
-      fetchClientTasks();
-    }
-  }, [activeTab, client]);
-
-  // Fetch last 7 days report when client is loaded
-  useEffect(() => {
-    if (client && activeTab === 'live') {
-      fetchLast7DaysReport();
-    }
-  }, [client, activeTab]);
-
   // Fetch progress photos when live tab + date range active
   useEffect(() => {
     if (activeTab !== 'live' || !client || !startDate || !endDate || !client.trainerize_id) return;
@@ -1222,57 +1108,12 @@ export default function ClientReportsClient({
             </div>
           )}
 
-          {/* Live Report Display */}
-          {liveReportData && (
-            <div className="card-elevated">
-              <div className="card-body p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Live Report for {client?.first_name} {client?.last_name}
-                    </h2>
-                    {liveReportMetadata?.cached && liveReportMetadata?.generatedAt && (
-                      <p className="text-sm text-gray-400 mt-1">
-                        Last refreshed: {new Date(liveReportMetadata.generatedAt).toLocaleString()}
-                        {liveReportMetadata.fromLocalStorage && ' (from local cache)'}
-                        {' · '}
-                        <button
-                          onClick={generateLiveReport}
-                          className="text-accent-purple hover:underline"
-                          disabled={isGeneratingLive || isRefreshing}
-                        >
-                          {isRefreshing ? 'Checking...' : 'Refresh now'}
-                        </button>
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div id="report-container" className="space-y-8">
-                  <ReportVisualization
-                    data={liveReportData}
-                    onDeleteWorkout={() => {}}
-                    onDeleteExercise={() => {}}
-                    isScreenshotMode={false}
-                    clientName={`${client?.first_name} ${client?.last_name}`}
-                    dateRangeStart={startDate?.toISOString() || ''}
-                    dateRangeEnd={endDate?.toISOString() || ''}
-                    last7ReportData={last7ReportData}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
+          {/* Status message when no data */}
           {!liveReportData && !isGeneratingLive && (
-            <div className="card-elevated">
-              <div className="card-body p-6">
-                <div className="text-center py-12">
-                  <p className="text-lg text-gray-400">
-                    Click &quot;Generate Report&quot; to create a live report
-                  </p>
-                </div>
-              </div>
+            <div className="glass border border-white/10 rounded-lg p-6 text-center">
+              <p className="text-gray-400">
+                Click &quot;Generate Report&quot; to load data for this period
+              </p>
             </div>
           )}
 
@@ -1322,139 +1163,72 @@ export default function ClientReportsClient({
                   <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5 text-yellow-500 mt-0.5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
                   <span className="text-gray-300 text-sm">{photosError}</span>
                 </div>
-              ) : progressPhotos.length === 0 && Object.keys(photoSummary.poseComparisons).length === 0 ? (
+              ) : Object.keys(photoSummary.poseComparisons).length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-400">No progress photos available yet for this client.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {/* Current Range Photos */}
-                  {progressPhotos.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">This Period</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {progressPhotos.map((photo) => (
-                          <div
-                            key={photo.id}
-                            className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 hover:border-accent-purple/50 transition-all"
-                          >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {Object.entries(photoSummary.poseComparisons)
+                    .filter(([, comp]) => comp.baselinePhoto || comp.latestPhoto)
+                    .sort(([a], [b]) => {
+                      const order = ['front', 'side', 'back', 'unknown'];
+                      return order.indexOf(a) - order.indexOf(b);
+                    })
+                    .map(([pose, comparison]) => (
+                      <div key={pose} className="glass border border-white/10 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-accent-purple uppercase tracking-wide">
+                            {pose === 'unknown' ? 'Other' : pose}
+                          </span>
+                          {comparison.baselinePhoto?.isManualBaseline && (
                             <button
-                              className="w-full h-full cursor-pointer"
-                              onClick={() => setSelectedPhotoUrl(photo.url)}
-                            >
-                              <img
-                                src={photo.url}
-                                alt={`Progress photo ${new Date(photo.takenAt).toLocaleDateString()}`}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                              />
-                            </button>
-                            {/* Pose label and date overlay */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 pointer-events-none">
-                              {photo.pose && photo.pose !== 'unknown' && (
-                                <span className="text-[10px] uppercase tracking-wide bg-accent-purple/60 rounded px-1.5 py-0.5 text-white mr-1">
-                                  {photo.pose}
-                                </span>
-                              )}
-                              <span className="text-xs text-white">{new Date(photo.takenAt).toLocaleDateString()}</span>
-                            </div>
-                            {/* Set as Baseline button */}
-                            <button
-                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 hover:bg-accent-purple/80 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1"
-                              onClick={(e) => { e.stopPropagation(); handleSetBaseline(photo); }}
-                              title="Set as baseline"
+                              className="text-[10px] text-gray-500 hover:text-red-400 underline"
+                              onClick={() => handleClearBaseline(pose)}
                               disabled={isSettingBaseline}
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-                              </svg>
-                              Baseline
+                              Reset
                             </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Pose-Matched All-Time Progress */}
-                  {Object.keys(photoSummary.poseComparisons).length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3">All-Time Progress</h3>
-                      <div className="space-y-4">
-                        {Object.entries(photoSummary.poseComparisons)
-                          .filter(([, comp]) => comp.baselinePhoto || comp.latestPhoto)
-                          .sort(([a], [b]) => {
-                            // Sort: front, side, back, unknown
-                            const order = ['front', 'side', 'back', 'unknown'];
-                            return order.indexOf(a) - order.indexOf(b);
-                          })
-                          .map(([pose, comparison]) => (
-                            <div key={pose}>
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs font-semibold text-accent-purple uppercase tracking-wide">
-                                  {pose === 'unknown' ? 'Other' : pose}
-                                </span>
-                                {comparison.baselinePhoto?.isManualBaseline && (
-                                  <span className="text-[10px] bg-accent-purple/20 text-accent-purple rounded px-1.5 py-0.5">
-                                    Custom Baseline
-                                  </span>
-                                )}
-                                {comparison.baselinePhoto?.isManualBaseline && (
-                                  <button
-                                    className="text-[10px] text-gray-500 hover:text-red-400 underline"
-                                    onClick={() => handleClearBaseline(pose)}
-                                    disabled={isSettingBaseline}
-                                  >
-                                    Reset
-                                  </button>
-                                )}
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                {comparison.baselinePhoto && (
-                                  <div className="glass border border-white/10 rounded-lg overflow-hidden">
-                                    <button
-                                      className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40"
-                                      onClick={() => setSelectedPhotoUrl(comparison.baselinePhoto!.url)}
-                                    >
-                                      <img
-                                        src={comparison.baselinePhoto.url}
-                                        alt={`${pose} baseline`}
-                                        className="w-full h-full object-contain hover:scale-105 transition-transform"
-                                      />
-                                    </button>
-                                    <div className="p-3">
-                                      <span className="text-xs font-semibold text-accent-purple uppercase">Baseline</span>
-                                      <p className="text-sm text-gray-300">
-                                        {new Date(comparison.baselinePhoto.takenAt).toLocaleDateString()}
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                                {comparison.latestPhoto && (
-                                  <div className="glass border border-white/10 rounded-lg overflow-hidden">
-                                    <button
-                                      className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40"
-                                      onClick={() => setSelectedPhotoUrl(comparison.latestPhoto!.url)}
-                                    >
-                                      <img
-                                        src={comparison.latestPhoto.url}
-                                        alt={`${pose} latest`}
-                                        className="w-full h-full object-contain hover:scale-105 transition-transform"
-                                      />
-                                    </button>
-                                    <div className="p-3">
-                                      <span className="text-xs font-semibold text-green-400 uppercase">Most Recent</span>
-                                      <p className="text-sm text-gray-300">
-                                        {new Date(comparison.latestPhoto.takenAt).toLocaleDateString()}
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {comparison.baselinePhoto && (
+                            <div>
+                              <button
+                                className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
+                                onClick={() => setSelectedPhotoUrl(comparison.baselinePhoto!.url)}
+                              >
+                                <img
+                                  src={comparison.baselinePhoto.url}
+                                  alt={`${pose} baseline`}
+                                  className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                />
+                              </button>
+                              <p className="text-[10px] text-gray-400 text-center mt-1">
+                                {new Date(comparison.baselinePhoto.takenAt).toLocaleDateString()}
+                              </p>
                             </div>
-                          ))}
+                          )}
+                          {comparison.latestPhoto && (
+                            <div>
+                              <button
+                                className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
+                                onClick={() => setSelectedPhotoUrl(comparison.latestPhoto!.url)}
+                              >
+                                <img
+                                  src={comparison.latestPhoto.url}
+                                  alt={`${pose} latest`}
+                                  className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                />
+                              </button>
+                              <p className="text-[10px] text-green-400 text-center mt-1">
+                                {new Date(comparison.latestPhoto.takenAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ))}
                 </div>
               )}
             </div>
@@ -1484,98 +1258,265 @@ export default function ClientReportsClient({
             </dialog>
           )}
 
-          {/* Action Plan Section */}
-          <div className="card-elevated">
-            <div className="card-body p-6">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Action Plan</h2>
-                  <p className="text-gray-400 mt-1">AI-generated tasks and recommendations</p>
-                </div>
-                <button
-                  className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center gap-2"
-                  onClick={generateActionPlan}
-                  disabled={isGeneratingTasks || !startDate || !endDate}
-                >
-                  {isGeneratingTasks ? (
-                    <>
-                      <span className="loading loading-spinner loading-sm" />
-                      <span>Generating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-                      </svg>
-                      <span>Generate Action Plan</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Tasks List */}
-              {isLoadingTasks ? (
-                <div className="flex justify-center py-8">
-                  <span className="loading loading-spinner loading-lg text-accent-purple"></span>
-                </div>
-              ) : clientTasks.length > 0 ? (
-                <div className="space-y-4">
-                  {clientTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="glass border border-white/10 rounded-lg p-4 hover:border-accent-purple/50 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-white">{task.title}</h3>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              task.priority === 'urgent' ? 'bg-red-500/20 text-red-400' :
-                              task.priority === 'high' ? 'bg-orange-500/20 text-orange-400' :
-                              task.priority === 'medium' ? 'bg-blue-500/20 text-blue-400' :
-                              'bg-gray-500/20 text-gray-400'
-                            }`}>
-                              {task.priority}
-                            </span>
-                            <span className="px-2 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-400">
-                              {task.category}
-                            </span>
-                          </div>
-                          {task.description && (
-                            <p className="text-gray-300 text-sm mb-2">{task.description}</p>
-                          )}
-                          {task.rationale && (
-                            <p className="text-gray-400 text-xs italic">
-                              <strong>Why:</strong> {task.rationale}
+          {/* Period Trends Section */}
+          {liveReportData && startDate && endDate && (
+            <div className="card-elevated">
+              <div className="card-body p-6">
+                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                  </svg>
+                  Period Trends
+                  <span className="text-sm font-normal text-gray-400 ml-2">
+                    ({startDate.toLocaleDateString()} - {endDate.toLocaleDateString()})
+                  </span>
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Weight Trend */}
+                  {(() => {
+                    const weights = (liveReportData?.bodyStats?.bodyStats || []).map((w: any) => ({
+                      date: w.date,
+                      value: w.weight || 0
+                    }));
+                    const trend = calculateTrend(weights, startDate, endDate);
+                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
+                    // For weight, down is often good (fat loss)
+                    const colorClass = trend?.direction === 'stable' ? 'text-gray-400' :
+                      trend?.direction === 'down' ? 'text-green-400' : 'text-orange-400';
+                    return (
+                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent-purple mx-auto mb-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">Weight</p>
+                        {trend ? (
+                          <>
+                            <p className="text-lg font-bold text-white">
+                              {trend.firstHalfAvg.toFixed(1)}→{trend.secondHalfAvg.toFixed(1)} lb
                             </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <select
-                            className="bg-bg-secondary border border-white/10 text-white px-3 py-1 rounded text-sm focus:outline-none focus:border-accent-purple"
-                            value={task.status}
-                            onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="dismissed">Dismissed</option>
-                          </select>
-                        </div>
+                            <p className={`text-sm font-medium ${colorClass}`}>
+                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-lg font-bold text-white">—</p>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })()}
+                  {/* Calories Trend */}
+                  {(() => {
+                    const nutrition = (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({
+                      date: n.date,
+                      value: n.calories || 0
+                    }));
+                    const trend = calculateTrend(nutrition, startDate, endDate);
+                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
+                    // Calories are context-dependent, show neutral
+                    const colorClass = 'text-gray-400';
+                    return (
+                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-400 mx-auto mb-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">Calories</p>
+                        {trend ? (
+                          <>
+                            <p className="text-lg font-bold text-white">
+                              {Math.round(trend.firstHalfAvg).toLocaleString()}→{Math.round(trend.secondHalfAvg).toLocaleString()}
+                            </p>
+                            <p className={`text-sm font-medium ${colorClass}`}>
+                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-lg font-bold text-white">—</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {/* Protein Trend */}
+                  {(() => {
+                    const nutrition = (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({
+                      date: n.date,
+                      value: n.proteinGrams || 0
+                    }));
+                    const trend = calculateTrend(nutrition, startDate, endDate);
+                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
+                    // For protein, up is good
+                    const colorClass = trend?.direction === 'stable' ? 'text-gray-400' :
+                      trend?.direction === 'up' ? 'text-green-400' : 'text-orange-400';
+                    return (
+                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400 mx-auto mb-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">Protein</p>
+                        {trend ? (
+                          <>
+                            <p className="text-lg font-bold text-white">
+                              {Math.round(trend.firstHalfAvg)}→{Math.round(trend.secondHalfAvg)}g
+                            </p>
+                            <p className={`text-sm font-medium ${colorClass}`}>
+                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-lg font-bold text-white">—</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {/* Steps Trend */}
+                  {(() => {
+                    const health = (liveReportData?.healthData?.healthData || []).map((h: any) => ({
+                      date: h.date,
+                      value: h.data?.steps || 0
+                    }));
+                    const trend = calculateTrend(health, startDate, endDate);
+                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
+                    // For steps, up is good
+                    const colorClass = trend?.direction === 'stable' ? 'text-gray-400' :
+                      trend?.direction === 'up' ? 'text-green-400' : 'text-orange-400';
+                    const formatSteps = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : Math.round(n).toString();
+                    return (
+                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400 mx-auto mb-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">Steps</p>
+                        {trend ? (
+                          <>
+                            <p className="text-lg font-bold text-white">
+                              {formatSteps(trend.firstHalfAvg)}→{formatSteps(trend.secondHalfAvg)}
+                            </p>
+                            <p className={`text-sm font-medium ${colorClass}`}>
+                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-lg font-bold text-white">—</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-400">
-                    No action items yet. Click &quot;Generate Action Plan&quot; to create AI-powered recommendations.
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Recent Workouts Section - Grouped by workout type */}
+          {liveReportData?.workoutData?.workouts?.length > 0 && (
+            <div className="card-elevated">
+              <div className="card-body p-6">
+                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Recent Workouts
+                </h2>
+                {(() => {
+                  // Group workouts by name and take last 2 sessions of each
+                  const workoutsByType = new Map<string, any[]>();
+                  for (const workout of liveReportData.workoutData.workouts) {
+                    const name = workout.workoutName || workout.title || workout.name || 'Workout';
+                    if (!workoutsByType.has(name)) {
+                      workoutsByType.set(name, []);
+                    }
+                    workoutsByType.get(name)!.push(workout);
+                  }
+
+                  // Sort each group by date (newest first) and take last 2
+                  const groupedWorkouts = Array.from(workoutsByType.entries()).map(([name, sessions]) => ({
+                    name,
+                    sessions: sessions
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .slice(0, 2)
+                  }));
+
+                  return (
+                    <div className="space-y-6">
+                      {groupedWorkouts.map(({ name, sessions }) => (
+                        <div key={name} className="glass border border-white/10 rounded-lg overflow-hidden">
+                          <div className="p-4 border-b border-white/10 bg-white/5">
+                            <h3 className="text-lg font-semibold text-white">{name}</h3>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Last {sessions.length} session{sessions.length > 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b border-white/10 text-xs text-gray-400 uppercase">
+                                  <th className="py-2 px-4 text-left font-medium">Exercise</th>
+                                  {sessions.map((session, sIdx) => (
+                                    <th key={sIdx} className="py-2 px-4 text-right font-medium whitespace-nowrap">
+                                      {new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {(() => {
+                                  // Get all unique exercises across sessions
+                                  const allExercises = new Map<string, any[]>();
+                                  sessions.forEach((session, sessionIdx) => {
+                                    (session.exercises || []).forEach((ex: any) => {
+                                      const exName = ex.name || ex.exerciseName;
+                                      if (!allExercises.has(exName)) {
+                                        allExercises.set(exName, new Array(sessions.length).fill(null));
+                                      }
+                                      allExercises.get(exName)![sessionIdx] = ex;
+                                    });
+                                  });
+
+                                  return Array.from(allExercises.entries()).map(([exName, exercisesBySessions]) => (
+                                    <tr key={exName} className="border-b border-white/5">
+                                      <td className="py-3 px-4 text-gray-300 font-medium">{exName}</td>
+                                      {exercisesBySessions.map((exercise, sIdx) => (
+                                        <td key={sIdx} className="py-3 px-4 text-right">
+                                          {exercise ? (
+                                            exercise.stats && exercise.stats.length > 0 ? (
+                                              <div className="space-y-1">
+                                                {exercise.stats.map((stat: any, statIdx: number) => (
+                                                  <div key={statIdx} className="text-gray-300 whitespace-nowrap text-sm">
+                                                    {stat.reps && <span>{stat.reps}</span>}
+                                                    {stat.weight && <span> × {stat.weight}</span>}
+                                                    {stat.time && !stat.reps && <span>{stat.time}s</span>}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ) : exercise.sets && exercise.sets.length > 0 ? (
+                                              <div className="space-y-1">
+                                                {exercise.sets.map((set: any, setIdx: number) => (
+                                                  <div key={setIdx} className="text-gray-300 whitespace-nowrap text-sm">
+                                                    {set.reps && <span>{set.reps}</span>}
+                                                    {set.weight && <span> × {set.weight}</span>}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ) : (
+                                              <span className="text-gray-500">—</span>
+                                            )
+                                          ) : (
+                                            <span className="text-gray-600">—</span>
+                                          )}
+                                        </td>
+                                      ))}
+                                    </tr>
+                                  ));
+                                })()}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
