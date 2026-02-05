@@ -165,7 +165,7 @@ export default function ClientReportsClient({
   const [photoSummary, setPhotoSummary] = useState<ProgressPhotoSummary>({ firstPhoto: null, latestPhoto: null, poseComparisons: {} });
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [photosError, setPhotosError] = useState<string | null>(null);
-  const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
+  const [selectedPoseComparison, setSelectedPoseComparison] = useState<PoseComparison | null>(null);
   const [isSettingBaseline, setIsSettingBaseline] = useState(false);
   const [isSyncingAllPhotos, setIsSyncingAllPhotos] = useState(false);
 
@@ -1147,19 +1147,23 @@ export default function ClientReportsClient({
                       return order.indexOf(a) - order.indexOf(b);
                     })
                     .map(([pose, comparison]) => (
-                        <div key={pose} className="glass border border-white/10 rounded-lg p-3">
+                        <button
+                          key={pose}
+                          className="glass border border-white/10 rounded-lg p-3 cursor-pointer hover:border-accent-purple/40 transition-all text-left"
+                          onClick={() => setSelectedPoseComparison(comparison)}
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-semibold text-accent-purple uppercase tracking-wide">
                               {pose}
                             </span>
                             {comparison.baselinePhoto?.isManualBaseline && (
-                              <button
+                              <span
                                 className="text-[10px] text-gray-500 hover:text-red-400 underline"
-                                onClick={() => handleClearBaseline(pose)}
-                                disabled={isSettingBaseline}
+                                onClick={(e) => { e.stopPropagation(); handleClearBaseline(pose); }}
+                                role="button"
                               >
                                 Reset
-                              </button>
+                              </span>
                             )}
                           </div>
 
@@ -1169,16 +1173,13 @@ export default function ClientReportsClient({
                             <div>
                               <p className="text-[10px] text-gray-400 text-center mb-1">Initial</p>
                               {comparison.baselinePhoto ? (
-                                <button
-                                  className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
-                                  onClick={() => setSelectedPhotoUrl(comparison.baselinePhoto!.url)}
-                                >
+                                <div className="w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-lg">
                                   <img
                                     src={comparison.baselinePhoto.url}
                                     alt={`${pose} initial`}
-                                    className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                    className="w-full h-full object-contain"
                                   />
-                                </button>
+                                </div>
                               ) : (
                                 <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
                                   <span className="text-[10px] text-gray-500">No photo</span>
@@ -1193,16 +1194,13 @@ export default function ClientReportsClient({
                             <div>
                               <p className="text-[10px] text-gray-400 text-center mb-1">Previous</p>
                               {comparison.secondLatestPhoto ? (
-                                <button
-                                  className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
-                                  onClick={() => setSelectedPhotoUrl(comparison.secondLatestPhoto!.url)}
-                                >
+                                <div className="w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-lg">
                                   <img
                                     src={comparison.secondLatestPhoto.url}
                                     alt={`${pose} previous`}
-                                    className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                    className="w-full h-full object-contain"
                                   />
-                                </button>
+                                </div>
                               ) : (
                                 <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
                                   <span className="text-[10px] text-gray-500">No photo</span>
@@ -1217,16 +1215,13 @@ export default function ClientReportsClient({
                             <div>
                               <p className="text-[10px] text-gray-400 text-center mb-1">Latest</p>
                               {comparison.latestPhoto ? (
-                                <button
-                                  className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
-                                  onClick={() => setSelectedPhotoUrl(comparison.latestPhoto!.url)}
-                                >
+                                <div className="w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-lg">
                                   <img
                                     src={comparison.latestPhoto.url}
                                     alt={`${pose} latest`}
-                                    className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                    className="w-full h-full object-contain"
                                   />
-                                </button>
+                                </div>
                               ) : (
                                 <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
                                   <span className="text-[10px] text-gray-500">No photo</span>
@@ -1237,33 +1232,95 @@ export default function ClientReportsClient({
                               </p>
                             </div>
                           </div>
-                        </div>
+                        </button>
                     ))}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Photo Lightbox */}
-          {selectedPhotoUrl && (
-            <dialog className="modal modal-open" onClick={() => setSelectedPhotoUrl(null)}>
-              <div className="modal-box max-w-4xl bg-bg-secondary p-2" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="absolute top-3 right-3 z-10 glass border border-white/20 text-white w-8 h-8 rounded-full flex items-center justify-center hover:border-accent-purple transition-all"
-                  onClick={() => setSelectedPhotoUrl(null)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                <img
-                  src={selectedPhotoUrl}
-                  alt="Progress photo full size"
-                  className="w-full h-auto rounded-lg"
-                />
+          {/* Photo Comparison Lightbox */}
+          {selectedPoseComparison && (
+            <dialog className="modal modal-open" onClick={() => setSelectedPoseComparison(null)}>
+              <div className="modal-box max-w-6xl bg-bg-secondary p-4" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white uppercase tracking-wide">
+                    {selectedPoseComparison.pose}
+                  </h3>
+                  <button
+                    className="glass border border-white/20 text-white w-8 h-8 rounded-full flex items-center justify-center hover:border-accent-purple transition-all"
+                    onClick={() => setSelectedPoseComparison(null)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Initial */}
+                  <div>
+                    <p className="text-xs text-gray-400 text-center mb-2">Initial</p>
+                    {selectedPoseComparison.baselinePhoto ? (
+                      <div className="aspect-[3/4] overflow-hidden rounded-lg bg-black/40">
+                        <img
+                          src={selectedPoseComparison.baselinePhoto.url}
+                          alt={`${selectedPoseComparison.pose} initial`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
+                        <span className="text-sm text-gray-500">No photo</span>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-400 text-center mt-2">
+                      {selectedPoseComparison.baselinePhoto ? new Date(selectedPoseComparison.baselinePhoto.takenAt).toLocaleDateString() : '—'}
+                    </p>
+                  </div>
+                  {/* Previous */}
+                  <div>
+                    <p className="text-xs text-gray-400 text-center mb-2">Previous</p>
+                    {selectedPoseComparison.secondLatestPhoto ? (
+                      <div className="aspect-[3/4] overflow-hidden rounded-lg bg-black/40">
+                        <img
+                          src={selectedPoseComparison.secondLatestPhoto.url}
+                          alt={`${selectedPoseComparison.pose} previous`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
+                        <span className="text-sm text-gray-500">No photo</span>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-400 text-center mt-2">
+                      {selectedPoseComparison.secondLatestPhoto ? new Date(selectedPoseComparison.secondLatestPhoto.takenAt).toLocaleDateString() : '—'}
+                    </p>
+                  </div>
+                  {/* Latest */}
+                  <div>
+                    <p className="text-xs text-gray-400 text-center mb-2">Latest</p>
+                    {selectedPoseComparison.latestPhoto ? (
+                      <div className="aspect-[3/4] overflow-hidden rounded-lg bg-black/40">
+                        <img
+                          src={selectedPoseComparison.latestPhoto.url}
+                          alt={`${selectedPoseComparison.pose} latest`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
+                        <span className="text-sm text-gray-500">No photo</span>
+                      </div>
+                    )}
+                    <p className="text-xs text-green-400 text-center mt-2">
+                      {selectedPoseComparison.latestPhoto ? new Date(selectedPoseComparison.latestPhoto.takenAt).toLocaleDateString() : '—'}
+                    </p>
+                  </div>
+                </div>
               </div>
               <form method="dialog" className="modal-backdrop">
-                <button onClick={() => setSelectedPhotoUrl(null)}>close</button>
+                <button onClick={() => setSelectedPoseComparison(null)}>close</button>
               </form>
             </dialog>
           )}
