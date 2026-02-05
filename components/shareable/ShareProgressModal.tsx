@@ -58,7 +58,7 @@ export default function ShareProgressModal({
       const day = dailyMap.get(date)!;
       day.calories = item.calories || 0;
       day.protein = item.proteinGrams || 0;
-      day.carbs = item.carbGrams || 0;
+      day.carbs = item.carbsGrams || 0;
       day.fats = item.fatGrams || 0;
     });
 

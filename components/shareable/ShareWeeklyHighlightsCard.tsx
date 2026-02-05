@@ -12,6 +12,8 @@ interface WeeklyData {
   caloriesGoal?: number;
   avgProtein: number;
   proteinGoal?: number;
+  avgCarbs?: number;
+  avgFats?: number;
 }
 
 interface ShareWeeklyHighlightsCardProps {
@@ -101,7 +103,7 @@ export default function ShareWeeklyHighlightsCard({
           </div>
         )}
 
-        {/* Nutrition Row - Calories & Protein */}
+        {/* Metrics Grid - Calories, Protein, Carbs, Fats, Steps, Workouts */}
         <div className="grid grid-cols-2 gap-3">
           {/* Calories */}
           {weeklyData.avgCalories > 0 && (
@@ -132,55 +134,63 @@ export default function ShareWeeklyHighlightsCard({
               <div className="text-xs text-gray-500">daily avg</div>
             </div>
           )}
-        </div>
 
-        {/* Steps */}
-        {weeklyData.avgDailySteps > 0 && (
-          <div className="bg-gray-50 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+          {/* Carbs */}
+          {weeklyData.avgCarbs && weeklyData.avgCarbs > 0 && (
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-4 h-4 rounded bg-yellow-500 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-white">C</span>
+                </div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Carbs</span>
+              </div>
+              <div className="text-xl font-bold text-gray-900">
+                {Math.round(weeklyData.avgCarbs)}g
+              </div>
+              <div className="text-xs text-gray-500">daily avg</div>
+            </div>
+          )}
+
+          {/* Fats */}
+          {weeklyData.avgFats && weeklyData.avgFats > 0 && (
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-4 h-4 rounded bg-amber-500 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-white">F</span>
+                </div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Fats</span>
+              </div>
+              <div className="text-xl font-bold text-gray-900">
+                {Math.round(weeklyData.avgFats)}g
+              </div>
+              <div className="text-xs text-gray-500">daily avg</div>
+            </div>
+          )}
+
+          {/* Steps */}
+          {weeklyData.avgDailySteps > 0 && (
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
                 <Footprints className="w-4 h-4 text-purple-500" />
-                <span className="text-sm font-medium text-gray-700">Daily Steps</span>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Steps</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-900">
-                  {weeklyData.avgDailySteps.toLocaleString()} avg
-                </span>
-                {getStatusIcon(stepsPercent)}
+              <div className="text-xl font-bold text-gray-900">
+                {weeklyData.avgDailySteps.toLocaleString()}
               </div>
+              <div className="text-xs text-gray-500">daily avg</div>
             </div>
-            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className={`h-full ${getProgressColor(stepsPercent)} transition-all duration-300`}
-                style={{ width: `${stepsPercent}%` }}
-              />
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Goal: {weeklyData.stepsGoal.toLocaleString()} steps
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Workouts */}
-        <div className="bg-gray-50 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
+          {/* Workouts */}
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
               <Dumbbell className="w-4 h-4 text-purple-500" />
-              <span className="text-sm font-medium text-gray-700">Workouts</span>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Workouts</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-gray-900">
-                {weeklyData.workoutsCompleted}
-                {weeklyData.workoutsScheduled > 0 && ` / ${weeklyData.workoutsScheduled}`}
-              </span>
-              {getStatusIcon(workoutPercent)}
+            <div className="text-xl font-bold text-gray-900">
+              {weeklyData.workoutsCompleted}
             </div>
-          </div>
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${getProgressColor(workoutPercent)} transition-all duration-300`}
-              style={{ width: `${Math.min(workoutPercent, 100)}%` }}
-            />
+            <div className="text-xs text-gray-500">completed</div>
           </div>
         </div>
       </div>

@@ -212,7 +212,7 @@ export default function ClientReportsClient({
       const day = dailyMap.get(date)!;
       day.calories = item.calories || 0;
       day.protein = item.proteinGrams || 0;
-      day.carbs = item.carbGrams || 0;
+      day.carbs = item.carbsGrams || 0;
       day.fats = item.fatGrams || 0;
     });
 
@@ -407,6 +407,15 @@ export default function ClientReportsClient({
   }, [consistencyAnalysis, processedData.dailyData]);
 
   const fullReportWeeklyData = React.useMemo(() => {
+    // Calculate average carbs and fats from weekly averages
+    const weeklyAvgs = processedData.weeklyAverages;
+    const avgCarbs = weeklyAvgs.length > 0
+      ? weeklyAvgs.reduce((sum, w) => sum + w.avgCarbs, 0) / weeklyAvgs.length
+      : 0;
+    const avgFats = weeklyAvgs.length > 0
+      ? weeklyAvgs.reduce((sum, w) => sum + w.avgFats, 0) / weeklyAvgs.length
+      : 0;
+
     if (!consistencyAnalysis) {
       return {
         workoutsCompleted: 0,
@@ -414,7 +423,9 @@ export default function ClientReportsClient({
         avgDailySteps: 0,
         stepsGoal: 10000,
         avgCalories: 0,
-        avgProtein: 0
+        avgProtein: 0,
+        avgCarbs,
+        avgFats
       };
     }
 
@@ -424,9 +435,11 @@ export default function ClientReportsClient({
       avgDailySteps: Math.round(consistencyAnalysis.steps.avg),
       stepsGoal: 10000,
       avgCalories: consistencyAnalysis.calories.avg,
-      avgProtein: consistencyAnalysis.protein.avg
+      avgProtein: consistencyAnalysis.protein.avg,
+      avgCarbs,
+      avgFats
     };
-  }, [consistencyAnalysis]);
+  }, [consistencyAnalysis, processedData.weeklyAverages]);
 
   // Set default date range: last 14 days ending yesterday
   useEffect(() => {
@@ -1394,12 +1407,7 @@ export default function ClientReportsClient({
             <div className="card-elevated">
               <div className="card-body p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                    </svg>
-                    Full Report
-                  </h2>
+                  <h2 className="text-xl font-bold text-white">Full Report</h2>
                   <button
                     onClick={handleCopyFullReport}
                     className="glass border border-white/20 hover:border-accent-purple/50 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
@@ -1476,10 +1484,6 @@ export default function ClientReportsClient({
                     </div>
                   </div>
 
-                  {/* Branding Footer */}
-                  <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-center">
-                    <span className="text-xs text-gray-400">Powered by FitReport</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1490,12 +1494,7 @@ export default function ClientReportsClient({
             <div className="card-body p-6">
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                    </svg>
-                    Progress Photos
-                  </h2>
+                  <h2 className="text-2xl font-bold text-white">Progress Photos</h2>
                   <p className="text-sm text-gray-400 mt-1">Visual changes for this report period and all-time snapshots</p>
                 </div>
                 {client?.trainerize_id && (
@@ -1630,16 +1629,13 @@ export default function ClientReportsClient({
           {liveReportData && startDate && endDate && (
             <div className="card-elevated">
               <div className="card-body p-6">
-                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-                  </svg>
+                <h2 className="text-xl font-bold text-white mb-4">
                   Period Trends
                   <span className="text-sm font-normal text-gray-400 ml-2">
                     ({startDate.toLocaleDateString()} - {endDate.toLocaleDateString()})
                   </span>
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {/* Weight Trend */}
                   {(() => {
                     const weights = (liveReportData?.bodyStats?.bodyStats || []).map((w: any) => ({
@@ -1653,9 +1649,6 @@ export default function ClientReportsClient({
                       trend?.direction === 'down' ? 'text-green-400' : 'text-orange-400';
                     return (
                       <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent-purple mx-auto mb-2" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clipRule="evenodd" />
-                        </svg>
                         <p className="text-xs text-gray-400 uppercase tracking-wide">Weight</p>
                         {trend ? (
                           <>
@@ -1684,9 +1677,6 @@ export default function ClientReportsClient({
                     const colorClass = 'text-gray-400';
                     return (
                       <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-400 mx-auto mb-2" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
-                        </svg>
                         <p className="text-xs text-gray-400 uppercase tracking-wide">Calories</p>
                         {trend ? (
                           <>
@@ -1716,10 +1706,63 @@ export default function ClientReportsClient({
                       trend?.direction === 'up' ? 'text-green-400' : 'text-orange-400';
                     return (
                       <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400 mx-auto mb-2" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
                         <p className="text-xs text-gray-400 uppercase tracking-wide">Protein</p>
+                        {trend ? (
+                          <>
+                            <p className="text-lg font-bold text-white">
+                              {Math.round(trend.firstHalfAvg)}→{Math.round(trend.secondHalfAvg)}g
+                            </p>
+                            <p className={`text-sm font-medium ${colorClass}`}>
+                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-lg font-bold text-white">—</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {/* Carbs Trend */}
+                  {(() => {
+                    const nutrition = (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({
+                      date: n.date,
+                      value: n.carbsGrams || 0
+                    }));
+                    const trend = calculateTrend(nutrition, startDate, endDate);
+                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
+                    // Carbs are context-dependent, show neutral
+                    const colorClass = 'text-gray-400';
+                    return (
+                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">Carbs</p>
+                        {trend ? (
+                          <>
+                            <p className="text-lg font-bold text-white">
+                              {Math.round(trend.firstHalfAvg)}→{Math.round(trend.secondHalfAvg)}g
+                            </p>
+                            <p className={`text-sm font-medium ${colorClass}`}>
+                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-lg font-bold text-white">—</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {/* Fats Trend */}
+                  {(() => {
+                    const nutrition = (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({
+                      date: n.date,
+                      value: n.fatGrams || 0
+                    }));
+                    const trend = calculateTrend(nutrition, startDate, endDate);
+                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
+                    // Fats are context-dependent, show neutral
+                    const colorClass = 'text-gray-400';
+                    return (
+                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">Fats</p>
                         {trend ? (
                           <>
                             <p className="text-lg font-bold text-white">
@@ -1749,9 +1792,6 @@ export default function ClientReportsClient({
                     const formatSteps = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : Math.round(n).toString();
                     return (
                       <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400 mx-auto mb-2" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clipRule="evenodd" />
-                        </svg>
                         <p className="text-xs text-gray-400 uppercase tracking-wide">Steps</p>
                         {trend ? (
                           <>
@@ -1777,12 +1817,7 @@ export default function ClientReportsClient({
           {liveReportData?.workoutData?.workouts?.length > 0 && (
             <div className="card-elevated">
               <div className="card-body p-6">
-                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
-                  </svg>
-                  Recent Workouts
-                </h2>
+                <h2 className="text-xl font-bold text-white mb-4">Recent Workouts</h2>
                 {(() => {
                   // Group workouts by name and take last 2 sessions of each
                   const workoutsByType = new Map<string, any[]>();
@@ -1808,9 +1843,6 @@ export default function ClientReportsClient({
                         <div key={name} className="glass border border-white/10 rounded-lg overflow-hidden">
                           <div className="p-4 border-b border-white/10 bg-white/5">
                             <h3 className="text-lg font-semibold text-white">{name}</h3>
-                            <p className="text-xs text-gray-400 mt-1">
-                              Last {sessions.length} session{sessions.length > 1 ? 's' : ''}
-                            </p>
                           </div>
                           <div className="overflow-x-auto">
                             <table className="w-full">
