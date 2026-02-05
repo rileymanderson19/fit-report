@@ -1346,60 +1346,70 @@ export default function ClientReportsClient({
                       goodDirection: 'up', format: formatSteps },
                   ];
 
+                  // Pre-compute week averages for each metric
+                  const metricWeekData = metrics.map(m => ({
+                    ...m,
+                    weekAvgs: weeks.map(w => calculateWeekAvg(m.data, w.start, w.end)),
+                  }));
+
+                  const formatVal = (m: typeof metrics[0], v: number | null) => {
+                    if (v === null) return '—';
+                    if (m.format) return m.format(v);
+                    if (m.decimals > 0) return v.toFixed(m.decimals) + m.unit;
+                    return Math.round(v).toLocaleString() + m.unit;
+                  };
+
                   return (
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-white/10">
-                            <th className="text-left py-2 pr-4 text-xs text-gray-500 uppercase tracking-wide font-medium w-20"></th>
-                            {weeks.map((week, i) => (
-                              <th key={i} className="text-center py-2 px-2">
-                                <p className="text-xs text-gray-400 font-semibold">
-                                  {weeks.length <= 3 ? `Week ${i + 1}` : `Wk ${i + 1}`}
-                                </p>
-                                <p className="text-[10px] text-gray-500 font-normal">{week.label}</p>
+                            <th className="text-left py-2 pr-4 text-xs text-gray-500 uppercase tracking-wide font-medium"></th>
+                            {metrics.map(m => (
+                              <th key={m.key} className="text-center py-2 px-2 text-xs text-gray-500 uppercase tracking-wide font-medium">
+                                {m.label}
                               </th>
                             ))}
-                            <th className="text-center py-2 pl-2 text-xs text-gray-500 uppercase tracking-wide font-medium w-20">Δ</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {metrics.map((metric) => {
-                            const weekAvgs = weeks.map(w => calculateWeekAvg(metric.data, w.start, w.end));
-                            const firstVal = weekAvgs.find(v => v !== null);
-                            const lastVal = [...weekAvgs].reverse().find(v => v !== null);
-                            const change = firstVal && lastVal && firstVal !== 0
-                              ? ((lastVal - firstVal) / firstVal) * 100
-                              : 0;
-                            const direction = change > 2 ? 'up' : change < -2 ? 'down' : 'stable';
-                            const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
-
-                            let colorClass = 'text-gray-400';
-                            if (metric.goodDirection && direction !== 'stable') {
-                              colorClass = direction === metric.goodDirection ? 'text-green-400' : 'text-orange-400';
-                            }
-
-                            const formatVal = (v: number | null) => {
-                              if (v === null) return '—';
-                              if (metric.format) return metric.format(v);
-                              if (metric.decimals > 0) return v.toFixed(metric.decimals) + metric.unit;
-                              return Math.round(v).toLocaleString() + metric.unit;
-                            };
-
-                            return (
-                              <tr key={metric.key} className="border-b border-white/5">
-                                <td className="py-2.5 pr-4 text-xs text-gray-400 uppercase tracking-wide font-medium">{metric.label}</td>
-                                {weekAvgs.map((avg, i) => (
-                                  <td key={i} className="py-2.5 px-2 text-center text-sm text-white font-medium">
-                                    {formatVal(avg)}
-                                  </td>
-                                ))}
-                                <td className={`py-2.5 pl-2 text-center text-sm font-medium ${colorClass}`}>
+                          {weeks.map((week, wi) => (
+                            <tr key={wi} className="border-b border-white/5">
+                              <td className="py-2.5 pr-4">
+                                <p className="text-xs text-gray-400 font-semibold">
+                                  {weeks.length <= 3 ? `Week ${wi + 1}` : `Wk ${wi + 1}`}
+                                </p>
+                                <p className="text-[10px] text-gray-500">{week.label}</p>
+                              </td>
+                              {metricWeekData.map(m => (
+                                <td key={m.key} className="py-2.5 px-2 text-center text-sm text-white font-medium">
+                                  {formatVal(m, m.weekAvgs[wi])}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                          {/* Δ summary row */}
+                          <tr className="border-t border-white/10">
+                            <td className="py-2.5 pr-4 text-xs text-gray-400 uppercase tracking-wide font-semibold">Δ</td>
+                            {metricWeekData.map(m => {
+                              const firstVal = m.weekAvgs.find(v => v !== null);
+                              const lastVal = [...m.weekAvgs].reverse().find(v => v !== null);
+                              const change = firstVal && lastVal && firstVal !== 0
+                                ? ((lastVal - firstVal) / firstVal) * 100
+                                : 0;
+                              const direction = change > 2 ? 'up' : change < -2 ? 'down' : 'stable';
+                              const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
+                              let colorClass = 'text-gray-400';
+                              if (m.goodDirection && direction !== 'stable') {
+                                colorClass = direction === m.goodDirection ? 'text-green-400' : 'text-orange-400';
+                              }
+                              return (
+                                <td key={m.key} className={`py-2.5 px-2 text-center text-sm font-medium ${colorClass}`}>
                                   {firstVal != null && lastVal != null ? `${arrow} ${Math.abs(change).toFixed(1)}%` : '—'}
                                 </td>
-                              </tr>
-                            );
-                          })}
+                              );
+                            })}
+                          </tr>
                         </tbody>
                       </table>
                     </div>

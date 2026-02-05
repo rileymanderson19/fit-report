@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, subDays } from 'date-fns';
 
 interface DateRangePickerProps {
   from: Date | undefined;
@@ -38,44 +38,41 @@ export function DateRangePicker({
       label: 'Last 7 days',
       value: 'last7',
       getRange: () => ({
-        from: subDays(today, 7), // 7 days ago to yesterday = 7 complete days
+        from: subDays(today, 7),
         to: yesterday
       })
     },
     {
-      label: 'Last 14 days',
-      value: 'last14',
+      label: 'Last 2 weeks',
+      value: 'last2w',
       getRange: () => ({
         from: subDays(today, 14),
         to: yesterday
       })
     },
     {
-      label: 'Last 30 days',
-      value: 'last30',
+      label: 'Last 4 weeks',
+      value: 'last4w',
       getRange: () => ({
-        from: subDays(today, 30),
+        from: subDays(today, 28),
         to: yesterday
       })
     },
     {
-      label: 'This month',
-      value: 'thisMonth',
+      label: 'Last 8 weeks',
+      value: 'last8w',
       getRange: () => ({
-        from: startOfMonth(today),
-        to: today
+        from: subDays(today, 56),
+        to: yesterday
       })
     },
     {
-      label: 'Last month',
-      value: 'lastMonth',
-      getRange: () => {
-        const lastMonth = subMonths(today, 1);
-        return {
-          from: startOfMonth(lastMonth),
-          to: endOfMonth(lastMonth)
-        };
-      }
+      label: 'Last 12 weeks',
+      value: 'last12w',
+      getRange: () => ({
+        from: subDays(today, 84),
+        to: yesterday
+      })
     }
   ];
 
@@ -113,7 +110,7 @@ export function DateRangePicker({
           <label className="label">
             <span className="label-text font-semibold text-white">Quick Select</span>
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {presetOptions.map((preset) => (
               <button
                 key={preset.value}
