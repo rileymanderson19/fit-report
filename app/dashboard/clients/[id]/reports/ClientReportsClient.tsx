@@ -1849,7 +1849,7 @@ export default function ClientReportsClient({
                                                 {exercise.stats.map((stat: any, statIdx: number) => (
                                                   <div key={statIdx} className="text-gray-300 whitespace-nowrap text-sm">
                                                     {stat.reps && <span>{stat.reps}</span>}
-                                                    {stat.weight && <span> × {stat.weight}</span>}
+                                                    {stat.weight && <span> × {stat.weight} lbs</span>}
                                                     {stat.time && !stat.reps && <span>{stat.time}s</span>}
                                                   </div>
                                                 ))}
@@ -1859,7 +1859,7 @@ export default function ClientReportsClient({
                                                 {exercise.sets.map((set: any, setIdx: number) => (
                                                   <div key={setIdx} className="text-gray-300 whitespace-nowrap text-sm">
                                                     {set.reps && <span>{set.reps}</span>}
-                                                    {set.weight && <span> × {set.weight}</span>}
+                                                    {set.weight && <span> × {set.weight} lbs</span>}
                                                   </div>
                                                 ))}
                                               </div>
