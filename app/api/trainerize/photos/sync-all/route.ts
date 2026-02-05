@@ -30,6 +30,7 @@ interface ProgressPhoto {
 interface PoseComparison {
   pose: string;
   baselinePhoto: ProgressPhoto | null;
+  secondLatestPhoto: ProgressPhoto | null;
   latestPhoto: ProgressPhoto | null;
 }
 
@@ -142,6 +143,8 @@ export async function POST(request: Request) {
       );
       const firstPhoto = sorted[0];
       const latestPhoto = sorted[sorted.length - 1];
+      // Second latest is the one before the latest (if we have at least 2 photos)
+      const secondLatestPhoto = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
 
       // Track overall earliest date for success message
       if (!earliestDate || new Date(firstPhoto.date).getTime() < new Date(earliestDate).getTime()) {
@@ -151,6 +154,9 @@ export async function POST(request: Request) {
       // Build URLs
       const firstUrl = `/api/trainerize/photos/image?userID=${trainerizeUserId}&photoid=${firstPhoto.id}&thumbnail=false`;
       const latestUrl = `/api/trainerize/photos/image?userID=${trainerizeUserId}&photoid=${latestPhoto.id}&thumbnail=false`;
+      const secondLatestUrl = secondLatestPhoto
+        ? `/api/trainerize/photos/image?userID=${trainerizeUserId}&photoid=${secondLatestPhoto.id}&thumbnail=false`
+        : null;
 
       // Read existing row to preserve baseline
       const { data: existingRow } = await supabase
@@ -161,7 +167,7 @@ export async function POST(request: Request) {
         .eq("pose", poseKey)
         .single();
 
-      // Upsert with new first/latest
+      // Upsert with new first/second_latest/latest
       const { error: upsertError } = await supabase
         .from("client_progress_photos")
         .upsert(
@@ -173,6 +179,9 @@ export async function POST(request: Request) {
             first_photo_id: String(firstPhoto.id),
             first_photo_url: firstUrl,
             first_photo_taken_at: firstPhoto.date,
+            second_latest_photo_id: secondLatestPhoto ? String(secondLatestPhoto.id) : null,
+            second_latest_photo_url: secondLatestUrl,
+            second_latest_photo_taken_at: secondLatestPhoto ? secondLatestPhoto.date : null,
             latest_photo_id: String(latestPhoto.id),
             latest_photo_url: latestUrl,
             latest_photo_taken_at: latestPhoto.date,
@@ -200,6 +209,14 @@ export async function POST(request: Request) {
           pose: poseKey,
           isManualBaseline: hasManualBaseline,
         },
+        secondLatestPhoto: secondLatestPhoto
+          ? {
+              id: String(secondLatestPhoto.id),
+              url: secondLatestUrl!,
+              takenAt: secondLatestPhoto.date,
+              pose: poseKey,
+            }
+          : null,
         latestPhoto: {
           id: String(latestPhoto.id),
           url: latestUrl,

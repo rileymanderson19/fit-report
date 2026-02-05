@@ -34,6 +34,7 @@ interface ProgressPhoto {
 interface PoseComparison {
   pose: string;
   baselinePhoto: ProgressPhoto | null;
+  secondLatestPhoto: ProgressPhoto | null;
   latestPhoto: ProgressPhoto | null;
 }
 
@@ -170,18 +171,54 @@ export async function POST(request: Request) {
         newFirstTakenAt = existingRow.first_photo_taken_at;
       }
 
-      // Compute new latest photo (keep later if exists)
+      // Compute new latest and second-latest photos
       let newLatestId = latestInRange.id;
       let newLatestUrl = latestInRange.url;
       let newLatestTakenAt = latestInRange.takenAt;
 
-      if (
-        existingRow?.latest_photo_taken_at &&
-        new Date(existingRow.latest_photo_taken_at).getTime() > new Date(newLatestTakenAt).getTime()
-      ) {
-        newLatestId = existingRow.latest_photo_id;
-        newLatestUrl = existingRow.latest_photo_url;
-        newLatestTakenAt = existingRow.latest_photo_taken_at;
+      // Track second latest - start with second in range if available
+      let newSecondLatestId = sorted.length > 1 ? sorted[sorted.length - 2].id : null;
+      let newSecondLatestUrl = sorted.length > 1 ? sorted[sorted.length - 2].url : null;
+      let newSecondLatestTakenAt = sorted.length > 1 ? sorted[sorted.length - 2].takenAt : null;
+
+      if (existingRow?.latest_photo_taken_at) {
+        const existingLatestTime = new Date(existingRow.latest_photo_taken_at).getTime();
+        const newLatestTime = new Date(newLatestTakenAt).getTime();
+
+        if (existingLatestTime > newLatestTime) {
+          // Existing latest is newer - keep it, our latest becomes second latest
+          newSecondLatestId = newLatestId;
+          newSecondLatestUrl = newLatestUrl;
+          newSecondLatestTakenAt = newLatestTakenAt;
+          newLatestId = existingRow.latest_photo_id;
+          newLatestUrl = existingRow.latest_photo_url;
+          newLatestTakenAt = existingRow.latest_photo_taken_at;
+          // Keep existing second latest if it's older than our new second latest
+          if (existingRow.second_latest_photo_taken_at) {
+            const existingSecondTime = new Date(existingRow.second_latest_photo_taken_at).getTime();
+            if (existingSecondTime > new Date(newSecondLatestTakenAt!).getTime()) {
+              newSecondLatestId = existingRow.second_latest_photo_id;
+              newSecondLatestUrl = existingRow.second_latest_photo_url;
+              newSecondLatestTakenAt = existingRow.second_latest_photo_taken_at;
+            }
+          }
+        } else if (existingLatestTime < newLatestTime) {
+          // Our latest is newer - existing latest becomes candidate for second latest
+          const existingLatestAsSecondTime = existingLatestTime;
+          const currentSecondLatestTime = newSecondLatestTakenAt ? new Date(newSecondLatestTakenAt).getTime() : 0;
+          if (existingLatestAsSecondTime > currentSecondLatestTime) {
+            newSecondLatestId = existingRow.latest_photo_id;
+            newSecondLatestUrl = existingRow.latest_photo_url;
+            newSecondLatestTakenAt = existingRow.latest_photo_taken_at;
+          }
+        } else {
+          // Same latest - keep existing second latest if we don't have one
+          if (!newSecondLatestId && existingRow.second_latest_photo_id) {
+            newSecondLatestId = existingRow.second_latest_photo_id;
+            newSecondLatestUrl = existingRow.second_latest_photo_url;
+            newSecondLatestTakenAt = existingRow.second_latest_photo_taken_at;
+          }
+        }
       }
 
       // Upsert, preserving any manually-set baseline
@@ -196,6 +233,9 @@ export async function POST(request: Request) {
             first_photo_id: newFirstId,
             first_photo_url: newFirstUrl,
             first_photo_taken_at: newFirstTakenAt,
+            second_latest_photo_id: newSecondLatestId,
+            second_latest_photo_url: newSecondLatestUrl,
+            second_latest_photo_taken_at: newSecondLatestTakenAt,
             latest_photo_id: newLatestId,
             latest_photo_url: newLatestUrl,
             latest_photo_taken_at: newLatestTakenAt,
@@ -224,6 +264,14 @@ export async function POST(request: Request) {
           pose: poseKey,
           isManualBaseline: hasManualBaseline,
         },
+        secondLatestPhoto: newSecondLatestUrl
+          ? {
+              id: newSecondLatestId!,
+              url: newSecondLatestUrl,
+              takenAt: newSecondLatestTakenAt!,
+              pose: poseKey,
+            }
+          : null,
         latestPhoto: {
           id: newLatestId,
           url: newLatestUrl,
@@ -256,6 +304,14 @@ export async function POST(request: Request) {
                 takenAt: baselineTakenAt,
                 pose: row.pose,
                 isManualBaseline: hasManualBaseline,
+              }
+            : null,
+          secondLatestPhoto: row.second_latest_photo_url
+            ? {
+                id: row.second_latest_photo_id || "second_latest",
+                url: row.second_latest_photo_url,
+                takenAt: row.second_latest_photo_taken_at,
+                pose: row.pose,
               }
             : null,
           latestPhoto: row.latest_photo_url

@@ -56,6 +56,7 @@ interface ProgressPhoto {
 interface PoseComparison {
   pose: string;
   baselinePhoto: ProgressPhoto | null;
+  secondLatestPhoto: ProgressPhoto | null;
   latestPhoto: ProgressPhoto | null;
 }
 
@@ -1140,64 +1141,103 @@ export default function ClientReportsClient({
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {Object.entries(photoSummary.poseComparisons)
-                    .filter(([, comp]) => comp.baselinePhoto || comp.latestPhoto)
+                    .filter(([pose, comp]) => pose !== 'unknown' && (comp.baselinePhoto || comp.latestPhoto))
                     .sort(([a], [b]) => {
-                      const order = ['front', 'side', 'back', 'unknown'];
+                      const order = ['front', 'side', 'back'];
                       return order.indexOf(a) - order.indexOf(b);
                     })
                     .map(([pose, comparison]) => (
-                      <div key={pose} className="glass border border-white/10 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-accent-purple uppercase tracking-wide">
-                            {pose === 'unknown' ? 'Other' : pose}
-                          </span>
-                          {comparison.baselinePhoto?.isManualBaseline && (
-                            <button
-                              className="text-[10px] text-gray-500 hover:text-red-400 underline"
-                              onClick={() => handleClearBaseline(pose)}
-                              disabled={isSettingBaseline}
-                            >
-                              Reset
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          {comparison.baselinePhoto && (
-                            <div>
+                        <div key={pose} className="glass border border-white/10 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-accent-purple uppercase tracking-wide">
+                              {pose}
+                            </span>
+                            {comparison.baselinePhoto?.isManualBaseline && (
                               <button
-                                className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
-                                onClick={() => setSelectedPhotoUrl(comparison.baselinePhoto!.url)}
+                                className="text-[10px] text-gray-500 hover:text-red-400 underline"
+                                onClick={() => handleClearBaseline(pose)}
+                                disabled={isSettingBaseline}
                               >
-                                <img
-                                  src={comparison.baselinePhoto.url}
-                                  alt={`${pose} baseline`}
-                                  className="w-full h-full object-contain hover:scale-105 transition-transform"
-                                />
+                                Reset
                               </button>
+                            )}
+                          </div>
+
+                          {/* 3-column grid */}
+                          <div className="grid grid-cols-3 gap-2">
+                            {/* Initial (baseline) */}
+                            <div>
+                              <p className="text-[10px] text-gray-400 text-center mb-1">Initial</p>
+                              {comparison.baselinePhoto ? (
+                                <button
+                                  className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
+                                  onClick={() => setSelectedPhotoUrl(comparison.baselinePhoto!.url)}
+                                >
+                                  <img
+                                    src={comparison.baselinePhoto.url}
+                                    alt={`${pose} initial`}
+                                    className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                  />
+                                </button>
+                              ) : (
+                                <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
+                                  <span className="text-[10px] text-gray-500">No photo</span>
+                                </div>
+                              )}
                               <p className="text-[10px] text-gray-400 text-center mt-1">
-                                {new Date(comparison.baselinePhoto.takenAt).toLocaleDateString()}
+                                {comparison.baselinePhoto ? new Date(comparison.baselinePhoto.takenAt).toLocaleDateString() : '—'}
                               </p>
                             </div>
-                          )}
-                          {comparison.latestPhoto && (
+
+                            {/* Second Latest */}
                             <div>
-                              <button
-                                className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
-                                onClick={() => setSelectedPhotoUrl(comparison.latestPhoto!.url)}
-                              >
-                                <img
-                                  src={comparison.latestPhoto.url}
-                                  alt={`${pose} latest`}
-                                  className="w-full h-full object-contain hover:scale-105 transition-transform"
-                                />
-                              </button>
-                              <p className="text-[10px] text-green-400 text-center mt-1">
-                                {new Date(comparison.latestPhoto.takenAt).toLocaleDateString()}
+                              <p className="text-[10px] text-gray-400 text-center mb-1">Previous</p>
+                              {comparison.secondLatestPhoto ? (
+                                <button
+                                  className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
+                                  onClick={() => setSelectedPhotoUrl(comparison.secondLatestPhoto!.url)}
+                                >
+                                  <img
+                                    src={comparison.secondLatestPhoto.url}
+                                    alt={`${pose} previous`}
+                                    className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                  />
+                                </button>
+                              ) : (
+                                <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
+                                  <span className="text-[10px] text-gray-500">No photo</span>
+                                </div>
+                              )}
+                              <p className="text-[10px] text-gray-400 text-center mt-1">
+                                {comparison.secondLatestPhoto ? new Date(comparison.secondLatestPhoto.takenAt).toLocaleDateString() : '—'}
                               </p>
                             </div>
-                          )}
+
+                            {/* Latest */}
+                            <div>
+                              <p className="text-[10px] text-gray-400 text-center mb-1">Latest</p>
+                              {comparison.latestPhoto ? (
+                                <button
+                                  className="w-full aspect-[3/4] overflow-hidden cursor-pointer bg-black/40 rounded-lg"
+                                  onClick={() => setSelectedPhotoUrl(comparison.latestPhoto!.url)}
+                                >
+                                  <img
+                                    src={comparison.latestPhoto.url}
+                                    alt={`${pose} latest`}
+                                    className="w-full h-full object-contain hover:scale-105 transition-transform"
+                                  />
+                                </button>
+                              ) : (
+                                <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
+                                  <span className="text-[10px] text-gray-500">No photo</span>
+                                </div>
+                              )}
+                              <p className="text-[10px] text-green-400 text-center mt-1">
+                                {comparison.latestPhoto ? new Date(comparison.latestPhoto.takenAt).toLocaleDateString() : '—'}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
                     ))}
                 </div>
               )}
