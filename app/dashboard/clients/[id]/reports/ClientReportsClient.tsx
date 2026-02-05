@@ -21,7 +21,8 @@ import { DateRangePicker } from '@/components/DateRangePicker';
 import ClientSearchBar from '@/components/ClientSearchBar';
 import SendReportModal from '@/components/SendReportModal';
 import GenerateLinkModal from '@/components/GenerateLinkModal';
-import { ShareProgressModal } from '@/components/shareable';
+import { ShareProgressModal, ShareWeeklyHighlightsCard, ShareWeightProgressChart } from '@/components/shareable';
+import { useReportAnalytics, DailyData, WeeklyAverage } from '@/hooks/useReportAnalytics';
 import { toast } from 'sonner';
 
 
@@ -182,6 +183,250 @@ export default function ClientReportsClient({
   const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
   const [isSettingBaseline, setIsSettingBaseline] = useState(false);
   const [isSyncingAllPhotos, setIsSyncingAllPhotos] = useState(false);
+
+  // Full Report copy state
+  const [isFullReportCopied, setIsFullReportCopied] = useState(false);
+
+  // Process report data for Full Report card
+  const processedData = React.useMemo(() => {
+    if (!liveReportData) return { dailyData: [], weeklyAverages: [] };
+
+    const dailyMap = new Map<string, DailyData>();
+
+    // Process nutrition data
+    liveReportData.nutritionData?.nutrition?.forEach((item: any) => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dailyMap.has(date)) {
+        dailyMap.set(date, {
+          date,
+          weight: 0,
+          steps: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          sleepHours: 0,
+          workouts: []
+        });
+      }
+      const day = dailyMap.get(date)!;
+      day.calories = item.calories || 0;
+      day.protein = item.proteinGrams || 0;
+      day.carbs = item.carbGrams || 0;
+      day.fats = item.fatGrams || 0;
+    });
+
+    // Process health data (steps)
+    liveReportData.healthData?.healthData?.forEach((item: any) => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dailyMap.has(date)) {
+        dailyMap.set(date, {
+          date,
+          weight: 0,
+          steps: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          sleepHours: 0,
+          workouts: []
+        });
+      }
+      const day = dailyMap.get(date)!;
+      day.steps = item.data?.steps || 0;
+    });
+
+    // Process body stats (weight)
+    liveReportData.bodyStats?.bodyStats?.forEach((item: any) => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dailyMap.has(date)) {
+        dailyMap.set(date, {
+          date,
+          weight: 0,
+          steps: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          sleepHours: 0,
+          workouts: []
+        });
+      }
+      const day = dailyMap.get(date)!;
+      day.weight = item.weight || 0;
+    });
+
+    // Process sleep data
+    liveReportData.sleepData?.sleepData?.forEach((item: any) => {
+      const date = new Date(item.date).toISOString().split('T')[0];
+      if (!dailyMap.has(date)) {
+        dailyMap.set(date, {
+          date,
+          weight: 0,
+          steps: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          sleepHours: 0,
+          workouts: []
+        });
+      }
+      const day = dailyMap.get(date)!;
+      day.sleepHours = item.duration || 0;
+    });
+
+    // Process workout data
+    liveReportData.workoutData?.workoutCalendar?.forEach((item: any) => {
+      if (item.status === 'tracked') {
+        const date = new Date(item.date).toISOString().split('T')[0];
+        if (!dailyMap.has(date)) {
+          dailyMap.set(date, {
+            date,
+            weight: 0,
+            steps: 0,
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fats: 0,
+            sleepHours: 0,
+            workouts: []
+          });
+        }
+        const day = dailyMap.get(date)!;
+        day.workouts = [...(day.workouts || []), item];
+      }
+    });
+
+    // Convert to sorted array
+    const dailyData = Array.from(dailyMap.values()).sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    // Calculate weekly averages
+    const weeklyAverages: WeeklyAverage[] = [];
+    if (dailyData.length > 0) {
+      let weekStart = new Date(dailyData[0].date);
+      let weekData: DailyData[] = [];
+
+      for (const day of dailyData) {
+        const dayDate = new Date(day.date);
+        const daysSinceStart = Math.floor(
+          (dayDate.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysSinceStart >= 7) {
+          if (weekData.length > 0) {
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            weeklyAverages.push({
+              weekStart: weekStart.toISOString().split('T')[0],
+              weekEnd: weekEnd.toISOString().split('T')[0],
+              avgWeight: weekData.filter(d => d.weight > 0).reduce((s, d) => s + d.weight, 0) /
+                (weekData.filter(d => d.weight > 0).length || 1),
+              avgSteps: weekData.reduce((s, d) => s + d.steps, 0) / weekData.length,
+              avgCalories: weekData.reduce((s, d) => s + d.calories, 0) / weekData.length,
+              avgProtein: weekData.reduce((s, d) => s + d.protein, 0) / weekData.length,
+              avgCarbs: weekData.reduce((s, d) => s + d.carbs, 0) / weekData.length,
+              avgFats: weekData.reduce((s, d) => s + d.fats, 0) / weekData.length,
+              avgSleepHours: weekData.filter(d => d.sleepHours > 0).reduce((s, d) => s + d.sleepHours, 0) /
+                (weekData.filter(d => d.sleepHours > 0).length || 1)
+            });
+          }
+          weekStart = dayDate;
+          weekData = [];
+        }
+        weekData.push(day);
+      }
+
+      // Handle last partial week
+      if (weekData.length > 0) {
+        const weekEnd = new Date(weekData[weekData.length - 1].date);
+        weeklyAverages.push({
+          weekStart: weekStart.toISOString().split('T')[0],
+          weekEnd: weekEnd.toISOString().split('T')[0],
+          avgWeight: weekData.filter(d => d.weight > 0).reduce((s, d) => s + d.weight, 0) /
+            (weekData.filter(d => d.weight > 0).length || 1),
+          avgSteps: weekData.reduce((s, d) => s + d.steps, 0) / weekData.length,
+          avgCalories: weekData.reduce((s, d) => s + d.calories, 0) / weekData.length,
+          avgProtein: weekData.reduce((s, d) => s + d.protein, 0) / weekData.length,
+          avgCarbs: weekData.reduce((s, d) => s + d.carbs, 0) / weekData.length,
+          avgFats: weekData.reduce((s, d) => s + d.fats, 0) / weekData.length,
+          avgSleepHours: weekData.filter(d => d.sleepHours > 0).reduce((s, d) => s + d.sleepHours, 0) /
+            (weekData.filter(d => d.sleepHours > 0).length || 1)
+        });
+      }
+    }
+
+    return { dailyData, weeklyAverages };
+  }, [liveReportData]);
+
+  // Use the analytics hook for Full Report
+  const { consistencyAnalysis } = useReportAnalytics(
+    processedData.dailyData,
+    processedData.weeklyAverages
+  );
+
+  // Prepare data for Full Report components
+  const fullReportWeightData = React.useMemo(() => {
+    if (!consistencyAnalysis) {
+      return {
+        startWeight: 0,
+        currentWeight: 0,
+        lowestWeight: 0,
+        trend: 'stable' as const,
+        weeklyChange: 0
+      };
+    }
+
+    let weeklyChange = 0;
+    const weightsWithData = processedData.dailyData.filter(d => d.weight > 0);
+    if (weightsWithData.length >= 2) {
+      const firstWeight = weightsWithData[0].weight;
+      const lastWeight = weightsWithData[weightsWithData.length - 1].weight;
+      const firstDate = new Date(weightsWithData[0].date);
+      const lastDate = new Date(weightsWithData[weightsWithData.length - 1].date);
+      const daysBetween = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
+      const weeksBetween = daysBetween / 7;
+
+      if (weeksBetween > 0) {
+        weeklyChange = (lastWeight - firstWeight) / weeksBetween;
+      }
+    }
+
+    const trend: 'up' | 'down' | 'stable' = weeklyChange < -0.1 ? 'down' :
+      weeklyChange > 0.1 ? 'up' : 'stable';
+
+    return {
+      startWeight: consistencyAnalysis.weight.start,
+      currentWeight: consistencyAnalysis.weight.latest,
+      lowestWeight: consistencyAnalysis.weight.min,
+      trend,
+      weeklyChange
+    };
+  }, [consistencyAnalysis, processedData.dailyData]);
+
+  const fullReportWeeklyData = React.useMemo(() => {
+    if (!consistencyAnalysis) {
+      return {
+        workoutsCompleted: 0,
+        workoutsScheduled: 0,
+        avgDailySteps: 0,
+        stepsGoal: 10000,
+        avgCalories: 0,
+        avgProtein: 0
+      };
+    }
+
+    return {
+      workoutsCompleted: consistencyAnalysis.workouts.totalWorkouts,
+      workoutsScheduled: consistencyAnalysis.workouts.scheduledWorkouts,
+      avgDailySteps: Math.round(consistencyAnalysis.steps.avg),
+      stepsGoal: 10000,
+      avgCalories: consistencyAnalysis.calories.avg,
+      avgProtein: consistencyAnalysis.protein.avg
+    };
+  }, [consistencyAnalysis]);
 
   // Set default date range: last 14 days ending yesterday
   useEffect(() => {
@@ -820,6 +1065,33 @@ export default function ClientReportsClient({
     }
   };
 
+  // Copy Full Report to clipboard
+  const handleCopyFullReport = async () => {
+    try {
+      const element = document.getElementById('full-report-card');
+      if (!element) throw new Error('Element not found');
+
+      const canvas = await import('html-to-image');
+      const blob = await canvas.toBlob(element, {
+        quality: 1,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
+      });
+
+      if (blob) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        setIsFullReportCopied(true);
+        toast.success('Copied to clipboard!');
+        setTimeout(() => setIsFullReportCopied(false), 2000);
+      }
+    } catch (error) {
+      console.error('Copy failed:', error);
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
   // Fetch all clients for navigation
   useEffect(() => {
     const fetchAllClients = async () => {
@@ -1114,6 +1386,102 @@ export default function ClientReportsClient({
               <p className="text-gray-400">
                 Click &quot;Generate Report&quot; to load data for this period
               </p>
+            </div>
+          )}
+
+          {/* Full Report Card Section */}
+          {liveReportData && startDate && endDate && client && (
+            <div className="card-elevated">
+              <div className="card-body p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                    </svg>
+                    Full Report
+                  </h2>
+                  <button
+                    onClick={handleCopyFullReport}
+                    className="glass border border-white/20 hover:border-accent-purple/50 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                  >
+                    {isFullReportCopied ? (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-green-400">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                          <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                        </svg>
+                        <span>Copy to Clipboard</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div
+                  id="full-report-card"
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden p-8"
+                >
+                  {/* Header */}
+                  <div className="mb-6">
+                    <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-900">{client.first_name} {client.last_name}</h3>
+                        <p className="text-sm text-gray-500">
+                          Progress Report: {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Side-by-side layout */}
+                  <div className="flex flex-col lg:flex-row gap-6 items-start">
+                    {/* Left column: Weekly Highlights */}
+                    <div className="w-full lg:w-[400px] flex-shrink-0">
+                      <ShareWeeklyHighlightsCard
+                        clientName={`${client.first_name} ${client.last_name}`}
+                        dateRangeStart={startDate.toISOString()}
+                        dateRangeEnd={endDate.toISOString()}
+                        weeklyData={fullReportWeeklyData}
+                        weightChange={fullReportWeightData.weeklyChange}
+                        isScreenshotMode={true}
+                        hideFooter={true}
+                        hideHeader={true}
+                        unitPreference="lbs"
+                      />
+                    </div>
+
+                    {/* Right column: Weight Chart */}
+                    <div className="flex-1 min-w-0 w-full">
+                      <ShareWeightProgressChart
+                        dailyData={processedData.dailyData.map(d => ({ date: d.date, weight: d.weight }))}
+                        weeklyAverages={processedData.weeklyAverages.map(w => ({
+                          weekStart: w.weekStart,
+                          avgWeight: w.avgWeight
+                        }))}
+                        clientName={`${client.first_name} ${client.last_name}`}
+                        dateRangeStart={startDate.toISOString()}
+                        dateRangeEnd={endDate.toISOString()}
+                        isScreenshotMode={true}
+                        hideFooter={true}
+                        hideHeader={true}
+                        hideWeightChange={true}
+                        unitPreference="lbs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Branding Footer */}
+                  <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-center">
+                    <span className="text-xs text-gray-400">Powered by FitReport</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
