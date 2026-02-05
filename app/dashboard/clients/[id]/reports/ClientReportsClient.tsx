@@ -75,57 +75,35 @@ interface ClientReportsClientProps {
   initialLiveReportMetadata?: any;
 }
 
-// Trend calculation helper
-interface TrendData {
-  firstHalfAvg: number;
-  secondHalfAvg: number;
-  percentChange: number;
-  direction: 'up' | 'down' | 'stable';
+// Week-over-week trend helpers
+function splitIntoWeeks(startDate: Date, endDate: Date): Array<{ start: Date; end: Date; label: string }> {
+  const weeks: Array<{ start: Date; end: Date; label: string }> = [];
+  const current = new Date(startDate);
+  while (current < endDate) {
+    const weekEnd = new Date(current);
+    weekEnd.setDate(current.getDate() + 6);
+    const actualEnd = weekEnd > endDate ? new Date(endDate) : weekEnd;
+    weeks.push({
+      start: new Date(current),
+      end: actualEnd,
+      label: `${current.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${actualEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+    });
+    current.setDate(current.getDate() + 7);
+  }
+  return weeks;
 }
 
-function calculateTrend(
+function calculateWeekAvg(
   data: Array<{ date: string; value: number }>,
-  startDate: Date,
-  endDate: Date
-): TrendData | null {
-  if (!data || data.length === 0) return null;
-
-  const midpoint = new Date((startDate.getTime() + endDate.getTime()) / 2);
-
-  const firstHalf = data.filter(d => {
+  weekStart: Date,
+  weekEnd: Date
+): number | null {
+  const values = data.filter(d => {
     const date = new Date(d.date);
-    return date >= startDate && date < midpoint && d.value > 0;
+    return date >= weekStart && date <= weekEnd && d.value > 0;
   });
-  const secondHalf = data.filter(d => {
-    const date = new Date(d.date);
-    return date >= midpoint && date <= endDate && d.value > 0;
-  });
-
-  if (firstHalf.length === 0 && secondHalf.length === 0) return null;
-
-  // If only one half has data, show that as the average with no trend
-  if (firstHalf.length === 0 || secondHalf.length === 0) {
-    const allValid = data.filter(d => d.value > 0);
-    if (allValid.length === 0) return null;
-    const avg = allValid.reduce((s, d) => s + d.value, 0) / allValid.length;
-    return {
-      firstHalfAvg: avg,
-      secondHalfAvg: avg,
-      percentChange: 0,
-      direction: 'stable'
-    };
-  }
-
-  const firstAvg = firstHalf.reduce((s, d) => s + d.value, 0) / firstHalf.length;
-  const secondAvg = secondHalf.reduce((s, d) => s + d.value, 0) / secondHalf.length;
-  const change = firstAvg !== 0 ? ((secondAvg - firstAvg) / firstAvg) * 100 : 0;
-
-  return {
-    firstHalfAvg: firstAvg,
-    secondHalfAvg: secondAvg,
-    percentChange: change,
-    direction: change > 2 ? 'up' : change < -2 ? 'down' : 'stable'
-  };
+  if (values.length === 0) return null;
+  return values.reduce((s, d) => s + d.value, 0) / values.length;
 }
 
 export default function ClientReportsClient({
@@ -1332,183 +1310,101 @@ export default function ClientReportsClient({
                 <h2 className="text-xl font-bold text-white mb-4">
                   Period Trends
                   <span className="text-sm font-normal text-gray-400 ml-2">
-                    ({startDate.toLocaleDateString()} - {endDate.toLocaleDateString()})
+                    ({startDate.toLocaleDateString()} – {endDate.toLocaleDateString()})
                   </span>
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  {/* Weight Trend */}
-                  {(() => {
-                    const weights = (liveReportData?.bodyStats?.bodyStats || []).map((w: any) => ({
-                      date: w.date,
-                      value: w.weight || 0
-                    }));
-                    const trend = calculateTrend(weights, startDate, endDate);
-                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
-                    // For weight, down is often good (fat loss)
-                    const colorClass = trend?.direction === 'stable' ? 'text-gray-400' :
-                      trend?.direction === 'down' ? 'text-green-400' : 'text-orange-400';
-                    return (
-                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <p className="text-xs text-gray-400 uppercase tracking-wide">Weight</p>
-                        {trend ? (
-                          <>
-                            <p className="text-lg font-bold text-white">
-                              {trend.firstHalfAvg.toFixed(1)}→{trend.secondHalfAvg.toFixed(1)} lb
-                            </p>
-                            <p className={`text-sm font-medium ${colorClass}`}>
-                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-lg font-bold text-white">—</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  {/* Calories Trend */}
-                  {(() => {
-                    const nutrition = (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({
-                      date: n.date,
-                      value: n.calories || 0
-                    }));
-                    const trend = calculateTrend(nutrition, startDate, endDate);
-                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
-                    // Calories are context-dependent, show neutral
-                    const colorClass = 'text-gray-400';
-                    return (
-                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <p className="text-xs text-gray-400 uppercase tracking-wide">Calories</p>
-                        {trend ? (
-                          <>
-                            <p className="text-lg font-bold text-white">
-                              {Math.round(trend.firstHalfAvg).toLocaleString()}→{Math.round(trend.secondHalfAvg).toLocaleString()}
-                            </p>
-                            <p className={`text-sm font-medium ${colorClass}`}>
-                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-lg font-bold text-white">—</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  {/* Protein Trend */}
-                  {(() => {
-                    const nutrition = (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({
-                      date: n.date,
-                      value: n.proteinGrams || 0
-                    }));
-                    const trend = calculateTrend(nutrition, startDate, endDate);
-                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
-                    // For protein, up is good
-                    const colorClass = trend?.direction === 'stable' ? 'text-gray-400' :
-                      trend?.direction === 'up' ? 'text-green-400' : 'text-orange-400';
-                    return (
-                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <p className="text-xs text-gray-400 uppercase tracking-wide">Protein</p>
-                        {trend ? (
-                          <>
-                            <p className="text-lg font-bold text-white">
-                              {Math.round(trend.firstHalfAvg)}→{Math.round(trend.secondHalfAvg)}g
-                            </p>
-                            <p className={`text-sm font-medium ${colorClass}`}>
-                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-lg font-bold text-white">—</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  {/* Carbs Trend */}
-                  {(() => {
-                    const nutrition = (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({
-                      date: n.date,
-                      value: n.carbsGrams || 0
-                    }));
-                    const trend = calculateTrend(nutrition, startDate, endDate);
-                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
-                    // Carbs are context-dependent, show neutral
-                    const colorClass = 'text-gray-400';
-                    return (
-                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <p className="text-xs text-gray-400 uppercase tracking-wide">Carbs</p>
-                        {trend ? (
-                          <>
-                            <p className="text-lg font-bold text-white">
-                              {Math.round(trend.firstHalfAvg)}→{Math.round(trend.secondHalfAvg)}g
-                            </p>
-                            <p className={`text-sm font-medium ${colorClass}`}>
-                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-lg font-bold text-white">—</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  {/* Fats Trend */}
-                  {(() => {
-                    const nutrition = (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({
-                      date: n.date,
-                      value: n.fatGrams || 0
-                    }));
-                    const trend = calculateTrend(nutrition, startDate, endDate);
-                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
-                    // Fats are context-dependent, show neutral
-                    const colorClass = 'text-gray-400';
-                    return (
-                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <p className="text-xs text-gray-400 uppercase tracking-wide">Fats</p>
-                        {trend ? (
-                          <>
-                            <p className="text-lg font-bold text-white">
-                              {Math.round(trend.firstHalfAvg)}→{Math.round(trend.secondHalfAvg)}g
-                            </p>
-                            <p className={`text-sm font-medium ${colorClass}`}>
-                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-lg font-bold text-white">—</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  {/* Steps Trend */}
-                  {(() => {
-                    const health = (liveReportData?.healthData?.healthData || []).map((h: any) => ({
-                      date: h.date,
-                      value: h.data?.steps || 0
-                    }));
-                    const trend = calculateTrend(health, startDate, endDate);
-                    const arrow = trend?.direction === 'up' ? '↑' : trend?.direction === 'down' ? '↓' : '→';
-                    // For steps, up is good
-                    const colorClass = trend?.direction === 'stable' ? 'text-gray-400' :
-                      trend?.direction === 'up' ? 'text-green-400' : 'text-orange-400';
-                    const formatSteps = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : Math.round(n).toString();
-                    return (
-                      <div className="glass border border-white/10 rounded-lg p-4 text-center">
-                        <p className="text-xs text-gray-400 uppercase tracking-wide">Steps</p>
-                        {trend ? (
-                          <>
-                            <p className="text-lg font-bold text-white">
-                              {formatSteps(trend.firstHalfAvg)}→{formatSteps(trend.secondHalfAvg)}
-                            </p>
-                            <p className={`text-sm font-medium ${colorClass}`}>
-                              {arrow} {Math.abs(trend.percentChange).toFixed(1)}%
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-lg font-bold text-white">—</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
+                {(() => {
+                  const weeks = splitIntoWeeks(startDate, endDate);
+                  const formatSteps = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : Math.round(n).toString();
+
+                  const metrics: Array<{
+                    key: string;
+                    label: string;
+                    unit: string;
+                    decimals: number;
+                    data: Array<{ date: string; value: number }>;
+                    goodDirection: 'up' | 'down' | null;
+                    format?: (n: number) => string;
+                  }> = [
+                    { key: 'weight', label: 'Weight', unit: ' lb', decimals: 1,
+                      data: (liveReportData?.bodyStats?.bodyStats || []).map((w: any) => ({ date: w.date, value: w.weight || 0 })),
+                      goodDirection: 'down' },
+                    { key: 'calories', label: 'Calories', unit: '', decimals: 0,
+                      data: (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({ date: n.date, value: n.calories || 0 })),
+                      goodDirection: null },
+                    { key: 'protein', label: 'Protein', unit: 'g', decimals: 0,
+                      data: (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({ date: n.date, value: n.proteinGrams || 0 })),
+                      goodDirection: 'up' },
+                    { key: 'carbs', label: 'Carbs', unit: 'g', decimals: 0,
+                      data: (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({ date: n.date, value: n.carbsGrams || 0 })),
+                      goodDirection: null },
+                    { key: 'fats', label: 'Fats', unit: 'g', decimals: 0,
+                      data: (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({ date: n.date, value: n.fatGrams || 0 })),
+                      goodDirection: null },
+                    { key: 'steps', label: 'Steps', unit: '', decimals: 0,
+                      data: (liveReportData?.healthData?.healthData || []).map((h: any) => ({ date: h.date, value: h.data?.steps || 0 })),
+                      goodDirection: 'up', format: formatSteps },
+                  ];
+
+                  return (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-white/10">
+                            <th className="text-left py-2 pr-4 text-xs text-gray-500 uppercase tracking-wide font-medium w-20"></th>
+                            {weeks.map((week, i) => (
+                              <th key={i} className="text-center py-2 px-2">
+                                <p className="text-xs text-gray-400 font-semibold">
+                                  {weeks.length <= 3 ? `Week ${i + 1}` : `Wk ${i + 1}`}
+                                </p>
+                                <p className="text-[10px] text-gray-500 font-normal">{week.label}</p>
+                              </th>
+                            ))}
+                            <th className="text-center py-2 pl-2 text-xs text-gray-500 uppercase tracking-wide font-medium w-20">Δ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {metrics.map((metric) => {
+                            const weekAvgs = weeks.map(w => calculateWeekAvg(metric.data, w.start, w.end));
+                            const firstVal = weekAvgs.find(v => v !== null);
+                            const lastVal = [...weekAvgs].reverse().find(v => v !== null);
+                            const change = firstVal && lastVal && firstVal !== 0
+                              ? ((lastVal - firstVal) / firstVal) * 100
+                              : 0;
+                            const direction = change > 2 ? 'up' : change < -2 ? 'down' : 'stable';
+                            const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
+
+                            let colorClass = 'text-gray-400';
+                            if (metric.goodDirection && direction !== 'stable') {
+                              colorClass = direction === metric.goodDirection ? 'text-green-400' : 'text-orange-400';
+                            }
+
+                            const formatVal = (v: number | null) => {
+                              if (v === null) return '—';
+                              if (metric.format) return metric.format(v);
+                              if (metric.decimals > 0) return v.toFixed(metric.decimals) + metric.unit;
+                              return Math.round(v).toLocaleString() + metric.unit;
+                            };
+
+                            return (
+                              <tr key={metric.key} className="border-b border-white/5">
+                                <td className="py-2.5 pr-4 text-xs text-gray-400 uppercase tracking-wide font-medium">{metric.label}</td>
+                                {weekAvgs.map((avg, i) => (
+                                  <td key={i} className="py-2.5 px-2 text-center text-sm text-white font-medium">
+                                    {formatVal(avg)}
+                                  </td>
+                                ))}
+                                <td className={`py-2.5 pl-2 text-center text-sm font-medium ${colorClass}`}>
+                                  {firstVal != null && lastVal != null ? `${arrow} ${Math.abs(change).toFixed(1)}%` : '—'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
