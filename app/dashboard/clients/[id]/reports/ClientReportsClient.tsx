@@ -1472,12 +1472,13 @@ export default function ClientReportsClient({
                     workoutsByType.get(name)!.push(workout);
                   }
 
-                  // Sort each group by date (newest first) and take last 2
+                  // Sort each group by date (newest first), take last 2, then reverse so most recent is on right
                   const groupedWorkouts = Array.from(workoutsByType.entries()).map(([name, sessions]) => ({
                     name,
                     sessions: sessions
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                       .slice(0, 2)
+                      .reverse()
                   }));
 
                   return (
