@@ -1388,24 +1388,43 @@ export default function ClientReportsClient({
                               ))}
                             </tr>
                           ))}
-                          {/* Δ summary row */}
+                          {/* Avg summary row */}
                           <tr className="border-t border-white/10">
+                            <td className="py-2.5 pr-4 text-xs text-gray-400 uppercase tracking-wide font-semibold">Avg</td>
+                            {metricWeekData.map(m => {
+                              const nonNull = m.weekAvgs.filter((v): v is number => v !== null);
+                              const avg = nonNull.length > 0 ? nonNull.reduce((s, v) => s + v, 0) / nonNull.length : null;
+                              return (
+                                <td key={m.key} className="py-2.5 px-2 text-center text-sm text-gray-400 font-medium">
+                                  {formatVal(m, avg)}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                          {/* Δ absolute change row */}
+                          <tr>
                             <td className="py-2.5 pr-4 text-xs text-gray-400 uppercase tracking-wide font-semibold">Δ</td>
                             {metricWeekData.map(m => {
                               const firstVal = m.weekAvgs.find(v => v !== null);
                               const lastVal = [...m.weekAvgs].reverse().find(v => v !== null);
-                              const change = firstVal && lastVal && firstVal !== 0
-                                ? ((lastVal - firstVal) / firstVal) * 100
-                                : 0;
-                              const direction = change > 2 ? 'up' : change < -2 ? 'down' : 'stable';
+                              if (firstVal == null || lastVal == null) {
+                                return <td key={m.key} className="py-2.5 px-2 text-center text-sm text-gray-400 font-medium">—</td>;
+                              }
+                              const diff = lastVal - firstVal;
+                              const direction = diff > 0.01 ? 'up' : diff < -0.01 ? 'down' : 'stable';
                               const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
                               let colorClass = 'text-gray-400';
                               if (m.goodDirection && direction !== 'stable') {
                                 colorClass = direction === m.goodDirection ? 'text-green-400' : 'text-orange-400';
                               }
+                              const absDiff = Math.abs(diff);
+                              let formatted: string;
+                              if (m.format) formatted = m.format(absDiff);
+                              else if (m.decimals > 0) formatted = absDiff.toFixed(m.decimals) + m.unit;
+                              else formatted = Math.round(absDiff).toLocaleString() + m.unit;
                               return (
                                 <td key={m.key} className={`py-2.5 px-2 text-center text-sm font-medium ${colorClass}`}>
-                                  {firstVal != null && lastVal != null ? `${arrow} ${Math.abs(change).toFixed(1)}%` : '—'}
+                                  {`${arrow} ${formatted}`}
                                 </td>
                               );
                             })}
