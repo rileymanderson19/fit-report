@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { createClient } from '@/libs/supabase/client';
 
-// Lazy-load ReportVisualization for Snapshots tab
+// Lazy-load ReportVisualization
 const ReportVisualization = dynamic(
   () => import('@/components/ReportVisualization').then(mod => ({ default: mod.ReportVisualization })),
   {
@@ -138,21 +138,11 @@ export default function ClientReportsClient({
   const supabase = createClient();
   const mountTimeRef = React.useRef<number>(performance.now());
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<'live' | 'snapshots'>('live');
-
-  // Snapshot reports state
-  const [reports, setReports] = useState<Report[]>(initialReports);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(
-    initialReports.length > 0 ? initialReports[0] : null
-  );
-
   // Live report state
   const [liveReportData, setLiveReportData] = useState<any>(initialLiveReportData);
   const [liveReportMetadata, setLiveReportMetadata] = useState<any>(initialLiveReportMetadata);
   const [isGeneratingLive, setIsGeneratingLive] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [minReps, setMinReps] = useState<number>(6);
@@ -167,12 +157,6 @@ export default function ClientReportsClient({
   // Shared state
   const [client, setClient] = useState<Client | null>(initialClient);
   const [isLoading, setIsLoading] = useState(!initialClient);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [isDeletingAll, setIsDeletingAll] = useState(false);
-  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
-  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Progress photos state
@@ -484,7 +468,7 @@ export default function ClientReportsClient({
   useEffect(() => {
     // Only fetch if we don't have initial data (e.g., for legacy routes or client-side navigation)
     if (!initialClient) {
-      const fetchClientAndReports = async () => {
+      const fetchClient = async () => {
         const fetchStart = performance.now();
         try {
           // Fetch client details
@@ -497,36 +481,21 @@ export default function ClientReportsClient({
           if (clientError) throw clientError;
           setClient(clientData);
 
-          // Fetch reports for this client
-          const { data: reportsData, error: reportsError } = await supabase
-            .from('reports')
-            .select('*')
-            .eq('client_id', clientId)
-            .order('created_at', { ascending: false });
-
-          if (reportsError) throw reportsError;
-          setReports(reportsData || []);
-
-          // Set the first report as selected if available
-          if (reportsData && reportsData.length > 0) {
-            setSelectedReport(reportsData[0]);
-          }
-
           const fetchTime = performance.now() - fetchStart;
           const totalTime = performance.now() - mountTimeRef.current;
-          console.log('[PERF CLIENT] Client & reports loaded (client-side):', {
+          console.log('[PERF CLIENT] Client loaded (client-side):', {
             fetchTime: `${fetchTime.toFixed(2)}ms`,
             totalFromMount: `${totalTime.toFixed(2)}ms`
           });
         } catch (error) {
           console.error('Error fetching data:', error);
-          toast.error('Failed to fetch client reports');
+          toast.error('Failed to fetch client data');
         } finally {
           setIsLoading(false);
         }
       };
 
-      fetchClientAndReports();
+      fetchClient();
     } else {
       // We have server-loaded data
       const totalTime = performance.now() - mountTimeRef.current;
@@ -555,205 +524,11 @@ export default function ClientReportsClient({
   // - Cold generation benefits from Trainerize response caching
   // - Page shell already rendered, so UX is still instant
   useEffect(() => {
-    if (startDate && endDate && client && activeTab === 'live' && !liveReportData) {
+    if (startDate && endDate && client && !liveReportData) {
       generateLiveReport();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, endDate, client, activeTab]);
-
-  const handleDeleteReport = async (report: Report) => {
-    setReportToDelete(report);
-    (document.getElementById('delete-modal') as HTMLDialogElement)?.showModal();
-  };
-
-  const confirmDelete = async () => {
-    if (!reportToDelete) return;
-
-    setIsDeleting(reportToDelete.id);
-    try {
-      const response = await fetch(`/api/reports/delete?id=${reportToDelete.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete report');
-      }
-
-      // Remove the report from the state
-      setReports(reports.filter(r => r.id !== reportToDelete.id));
-      
-      // If the deleted report was selected, select the first available report
-      if (selectedReport?.id === reportToDelete.id) {
-        const remainingReports = reports.filter(r => r.id !== reportToDelete.id);
-        setSelectedReport(remainingReports.length > 0 ? remainingReports[0] : null);
-      }
-
-      toast.success('Report deleted successfully');
-    } catch (error) {
-      console.error('Error deleting report:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete report');
-    } finally {
-      setIsDeleting(null);
-      setReportToDelete(null);
-      (document.getElementById('delete-modal') as HTMLDialogElement)?.close();
-    }
-  };
-
-  const cancelDelete = () => {
-    setReportToDelete(null);
-    (document.getElementById('delete-modal') as HTMLDialogElement)?.close();
-  };
-
-  const handleDeleteWorkout = async (workoutId: number) => {
-    if (!selectedReport) return;
-    
-    try {
-      // Create a deep copy of the report data
-      const newReportData = JSON.parse(JSON.stringify(selectedReport.report_data));
-      
-      // Remove the workout from workoutData
-      newReportData.workoutData.workouts = newReportData.workoutData.workouts.filter(
-        (w: any) => w.id !== workoutId
-      );
-
-      // Update the report in Supabase
-      const { error } = await supabase
-        .from('reports')
-        .update({ report_data: newReportData })
-        .eq('id', selectedReport.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setSelectedReport({
-        ...selectedReport,
-        report_data: newReportData
-      });
-
-      // Update reports list
-      setReports(reports.map(report => 
-        report.id === selectedReport.id 
-          ? { ...report, report_data: newReportData }
-          : report
-      ));
-
-      toast.success('Workout deleted successfully');
-    } catch (error) {
-      console.error('Error deleting workout:', error);
-      toast.error('Failed to delete workout');
-    }
-  };
-
-  const handleDeleteExercise = async (workoutId: number, exerciseName: string) => {
-    if (!selectedReport) return;
-    
-    try {
-      // Create a deep copy of the report data
-      const newReportData = JSON.parse(JSON.stringify(selectedReport.report_data));
-      
-      // Find the workout and remove the exercise
-      newReportData.workoutData.workouts = newReportData.workoutData.workouts.map((workout: any) => {
-        if (workout.id === workoutId) {
-          return {
-            ...workout,
-            exercises: workout.exercises.filter((e: any) => e.name !== exerciseName)
-          };
-        }
-        return workout;
-      });
-
-      // Update the report in Supabase
-      const { error } = await supabase
-        .from('reports')
-        .update({ report_data: newReportData })
-        .eq('id', selectedReport.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setSelectedReport({
-        ...selectedReport,
-        report_data: newReportData
-      });
-
-      // Update reports list
-      setReports(reports.map(report => 
-        report.id === selectedReport.id 
-          ? { ...report, report_data: newReportData }
-          : report
-      ));
-
-      toast.success('Exercise deleted successfully');
-    } catch (error) {
-      console.error('Error deleting exercise:', error);
-      toast.error('Failed to delete exercise');
-    }
-  };
-
-  const captureAndSendReport = async () => {
-    if (!selectedReport || !client) return;
-    
-    setIsCapturing(true);
-    try {
-      // Import mobile optimization utilities
-      const { captureReportWithMobileOptimization } = await import('@/utils/mobileImageCapture');
-      
-      // Generate filename
-      const filename = `${client.first_name}_${client.last_name}_report_${new Date().toISOString().split('T')[0]}.png`;
-      
-      // Use mobile-optimized capture
-      await captureReportWithMobileOptimization('report-container', filename);
-      
-      toast.success('Report downloaded successfully');
-    } catch (error) {
-      console.error('Error capturing report:', error);
-      toast.error('Failed to capture report');
-    } finally {
-      setIsCapturing(false);
-    }
-  };
-
-  const handleDeleteAllReports = () => {
-    (document.getElementById('delete-all-modal') as HTMLDialogElement)?.showModal();
-  };
-
-  const confirmDeleteAll = async () => {
-    setIsDeletingAll(true);
-    try {
-      const response = await fetch(`/api/reports/delete-all?clientId=${clientId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete reports');
-      }
-
-      // Clear all reports from state
-      setReports([]);
-      setSelectedReport(null);
-      toast.success('All reports deleted successfully');
-    } catch (error) {
-      console.error('Error deleting reports:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete reports');
-    } finally {
-      setIsDeletingAll(false);
-      (document.getElementById('delete-all-modal') as HTMLDialogElement)?.close();
-    }
-  };
-
-  const cancelDeleteAll = () => {
-    (document.getElementById('delete-all-modal') as HTMLDialogElement)?.close();
-  };
-
-  const handleGenerateLink = () => {
-    if (!selectedReport || !client) {
-      toast.error('Please select a report first');
-      return;
-    }
-    setIsLinkModalOpen(true);
-  };
+  }, [startDate, endDate, client]);
 
   const checkForNewerCache = async () => {
     if (!startDate || !endDate || !client || !liveReportData) {
@@ -873,61 +648,9 @@ export default function ClientReportsClient({
     }
   };
 
-  const saveSnapshot = async () => {
-    if (!liveReportData || !client) {
-      toast.error('No live report to save');
-      return;
-    }
-
-    setIsSavingSnapshot(true);
-    try {
-      const response = await fetch('/api/reports/store', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId,
-          reportData: liveReportData,
-          dateRange: {
-            from: startDate!.toISOString(),
-            to: endDate!.toISOString()
-          },
-          repRange: {
-            min: minReps,
-            max: maxReps
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to save snapshot');
-      }
-
-      const data = await response.json();
-
-      // Refresh the snapshots list
-      const { data: reportsData, error: reportsError } = await supabase
-        .from('reports')
-        .select('*')
-        .eq('client_id', clientId)
-        .order('created_at', { ascending: false });
-
-      if (!reportsError && reportsData) {
-        setReports(reportsData);
-      }
-
-      toast.success('Snapshot saved successfully');
-    } catch (error) {
-      console.error('Error saving snapshot:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save snapshot');
-    } finally {
-      setIsSavingSnapshot(false);
-    }
-  };
-
-  // Fetch progress photos when live tab + date range active
+  // Fetch progress photos when date range active
   useEffect(() => {
-    if (activeTab !== 'live' || !client || !startDate || !endDate || !client.trainerize_id) return;
+    if (!client || !startDate || !endDate || !client.trainerize_id) return;
 
     const fetchPhotos = async () => {
       setIsLoadingPhotos(true);
@@ -967,7 +690,7 @@ export default function ClientReportsClient({
     };
 
     fetchPhotos();
-  }, [activeTab, client, startDate, endDate, clientId]);
+  }, [client, startDate, endDate, clientId]);
 
   // Baseline photo handlers
   const handleSetBaseline = async (photo: ProgressPhoto) => {
@@ -1182,125 +905,26 @@ export default function ClientReportsClient({
         />
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6">
-        <div className="flex gap-2 border-b border-white/10">
-          <button
-            className={`px-6 py-3 font-medium transition-all ${
-              activeTab === 'live'
-                ? 'text-accent-purple border-b-2 border-accent-purple'
-                : 'text-gray-400 hover:text-white'
-            }`}
-            onClick={() => setActiveTab('live')}
-          >
-            Live Report
-          </button>
-          <button
-            className={`px-6 py-3 font-medium transition-all ${
-              activeTab === 'snapshots'
-                ? 'text-accent-purple border-b-2 border-accent-purple'
-                : 'text-gray-400 hover:text-white'
-            }`}
-            onClick={() => setActiveTab('snapshots')}
-          >
-            Snapshots {reports.length > 0 && `(${reports.length})`}
-          </button>
-        </div>
-      </div>
-
-      {/* Live Report Tab */}
-      {activeTab === 'live' && (
-        <div className="space-y-6">
+      {/* Report Content */}
+      <div className="space-y-6">
           {/* Report Configuration */}
-          <div className="card-elevated border-2 border-white/10">
+          <div className="card-elevated">
             <div className="card-body p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
-                    </svg>
-                    Report Configuration
-                  </h2>
-                  <p className="text-sm text-gray-400 mt-1">Customize your report settings</p>
-                </div>
+              {/* Date Range */}
+              <div className="mb-6">
+                <DateRangePicker
+                  from={startDate || undefined}
+                  to={endDate || undefined}
+                  onSelect={(range) => {
+                    setStartDate(range.from || null);
+                    setEndDate(range.to || null);
+                  }}
+                  showPresets={true}
+                />
               </div>
 
-              <div className="space-y-6">
-                {/* Date Range - Full Width */}
-                <div className="glass border border-white/10 p-4 rounded-lg">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                    </svg>
-                    Date Range
-                  </label>
-                  <DateRangePicker
-                    from={startDate || undefined}
-                    to={endDate || undefined}
-                    onSelect={(range) => {
-                      setStartDate(range.from || null);
-                      setEndDate(range.to || null);
-                    }}
-                    showPresets={true}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Template Selection */}
-                  <div className="glass border border-white/10 p-4 rounded-lg">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                      </svg>
-                      Report Template
-                    </label>
-                    <select
-                      className="bg-bg-secondary border border-white/20 text-white w-full px-4 py-3 rounded-lg focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
-                      value={reportTemplate}
-                      onChange={(e) => setReportTemplate(e.target.value as 'daily' | 'enhanced')}
-                    >
-                      <option value="enhanced">Progress Report (AI Insights)</option>
-                      <option value="daily">Daily Data (Detailed Breakdown)</option>
-                    </select>
-                  </div>
-
-                  {/* Progressive Overload Range */}
-                  <div className="glass border border-white/10 p-4 rounded-lg">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent-purple" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
-                      </svg>
-                      Rep Range ({minReps} - {maxReps})
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Min</label>
-                        <input
-                          type="number"
-                          className="bg-bg-secondary border border-white/20 text-white w-full px-3 py-2 rounded-lg focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
-                          value={minReps}
-                          onChange={(e) => setMinReps(Math.max(1, parseInt(e.target.value) || 1))}
-                          min="1"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Max</label>
-                        <input
-                          type="number"
-                          className="bg-bg-secondary border border-white/20 text-white w-full px-3 py-2 rounded-lg focus:outline-none focus:border-accent-purple focus:ring-2 focus:ring-accent-purple/20 transition-all"
-                          value={maxReps}
-                          onChange={(e) => setMaxReps(Math.max(minReps + 1, parseInt(e.target.value) || minReps + 1))}
-                          min={minReps + 1}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Generate Button */}
-              <div className="flex gap-3 mt-6 pt-6 border-t border-white/10">
+              {/* Action Buttons */}
+              <div className="flex gap-3">
                 <button
                   className="btn-gradient px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 hover:scale-105 transition-transform"
                   onClick={generateLiveReport}
@@ -1322,38 +946,17 @@ export default function ClientReportsClient({
                 </button>
 
                 {liveReportData && (
-                  <>
-                    <button
-                      className="glass border border-accent-purple/50 hover:border-accent-purple text-white px-8 py-3 rounded-lg font-medium hover:scale-105 transition-all"
-                      onClick={saveSnapshot}
-                      disabled={isSavingSnapshot}
-                    >
-                      {isSavingSnapshot ? (
-                        <>
-                          <span className="loading loading-spinner loading-sm" />
-                          <span className="ml-2">Saving...</span>
-                        </>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
-                          </svg>
-                          Save Snapshot
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      className="glass border border-green-500/50 hover:border-green-500 text-white px-8 py-3 rounded-lg font-medium hover:scale-105 transition-all"
-                      onClick={() => setIsShareModalOpen(true)}
-                    >
-                      <span className="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                        </svg>
-                        Share Progress
-                      </span>
-                    </button>
-                  </>
+                  <button
+                    className="glass border border-green-500/50 hover:border-green-500 text-white px-8 py-3 rounded-lg font-medium hover:scale-105 transition-all"
+                    onClick={() => setIsShareModalOpen(true)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                      </svg>
+                      Share Progress
+                    </span>
+                  </button>
                 )}
               </div>
             </div>
@@ -1495,7 +1098,7 @@ export default function ClientReportsClient({
               <div className="mb-4 flex items-start justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-white">Progress Photos</h2>
-                  <p className="text-sm text-gray-400 mt-1">Visual changes for this report period and all-time snapshots</p>
+                  <p className="text-sm text-gray-400 mt-1">Visual progress for this report period</p>
                 </div>
                 {client?.trainerize_id && (
                   <button
@@ -1918,248 +1521,6 @@ export default function ClientReportsClient({
             </div>
           )}
         </div>
-      )}
-
-      {/* Snapshots Tab */}
-      {activeTab === 'snapshots' && (
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Reports List Sidebar */}
-          <div className="w-full lg:w-1/4 space-y-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-white">Saved Reports</h2>
-              {reports.length > 0 && (
-                <button
-                  onClick={handleDeleteAllReports}
-                  className="glass border border-red-500/50 hover:border-red-500 text-red-400 px-3 py-1.5 rounded-lg text-sm transition-all"
-                  disabled={isDeletingAll}
-                >
-                  {isDeletingAll ? (
-                    <span className="loading loading-spinner loading-xs text-white" />
-                  ) : (
-                    'Delete All'
-                  )}
-                </button>
-              )}
-            </div>
-
-            <div className="grid gap-4 max-h-[calc(100vh-12rem)] overflow-y-auto">
-              {reports.map((report) => (
-                <div
-                  key={report.id}
-                  className={`group relative flex flex-col p-4 rounded-xl transition-all duration-200 cursor-pointer ${
-                    selectedReport?.id === report.id
-                      ? 'bg-accent-purple/10 border-2 border-accent-purple shadow-lg'
-                      : 'bg-bg-secondary hover:bg-white/5 border border-white/10'
-                  }`}
-                  onClick={() => setSelectedReport(report)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="text-sm text-gray-400 mt-1">
-                        Created: {new Date(report.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <button
-                      className={`glass border border-red-500/50 hover:border-red-500 text-red-400 px-2 py-1 rounded text-xs transition-all opacity-0 group-hover:opacity-100`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteReport(report);
-                      }}
-                      disabled={isDeleting === report.id}
-                    >
-                      {isDeleting === report.id ? (
-                        <span className="loading loading-spinner loading-xs text-white" />
-                      ) : (
-                        'Delete'
-                      )}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Report Visualization */}
-          <div className="w-full lg:w-3/4">
-            <div className="card-elevated">
-              <div className="card-body p-6">
-                {selectedReport ? (
-                  <div className="space-y-6">
-                    <div className="flex flex-col gap-6">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <h2 className="text-2xl font-bold text-white">
-                          Report for {client?.first_name} {client?.last_name}
-                        </h2>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <button
-                          className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
-                          onClick={captureAndSendReport}
-                          disabled={isCapturing}
-                        >
-                          {isCapturing ? (
-                            <span className="loading loading-spinner loading-sm text-white" />
-                          ) : (
-                            <>
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                              </svg>
-                              <span>Download Image</span>
-                            </>
-                          )}
-                        </button>
-                        <button
-                          className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
-                          onClick={handleGenerateLink}
-                          disabled={isCapturing}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
-                          </svg>
-                          <span>Generate Link</span>
-                        </button>
-                        <button
-                          className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 sm:flex-initial touch-manipulation hover:scale-105 transition-transform"
-                          onClick={() => setIsSendModalOpen(true)}
-                          disabled={isCapturing}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                          </svg>
-                          <span>Send to Client</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 7-Day Reference - Reference tool only, never captured */}
-                    {!isCapturing && (
-                      <SevenDayReference
-                        data={selectedReport.report_data}
-                        clientName={`${client?.first_name} ${client?.last_name}`}
-                        dateRangeStart={selectedReport.date_range_start}
-                        dateRangeEnd={selectedReport.date_range_end}
-                      />
-                    )}
-
-                    <div id="report-container" className={`space-y-8 ${isCapturing ? 'p-8 rounded-lg' : ''}`}>
-                      <ReportVisualization
-                        data={selectedReport.report_data}
-                        onDeleteWorkout={handleDeleteWorkout}
-                        onDeleteExercise={handleDeleteExercise}
-                        isScreenshotMode={isCapturing}
-                        clientName={`${client?.first_name} ${client?.last_name}`}
-                        dateRangeStart={selectedReport.date_range_start}
-                        dateRangeEnd={selectedReport.date_range_end}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <p className="text-lg text-gray-400">
-                      {reports.length > 0
-                        ? 'Select a report to view details'
-                        : 'No saved reports. Create a live report and save it as a snapshot!'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete All Confirmation Modal */}
-      <dialog id="delete-all-modal" className="modal modal-bottom sm:modal-middle">
-        <div className="card-elevated max-w-md">
-          <h3 className="font-bold text-lg text-white">Delete All Reports</h3>
-          <p className="py-4 text-gray-300">
-            Are you sure you want to delete all reports for {client?.first_name} {client?.last_name}?
-            This will delete {reports.length} report{reports.length !== 1 ? 's' : ''} and cannot be undone.
-          </p>
-          <div className="modal-action">
-            <button
-              className="glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg transition-all"
-              onClick={cancelDeleteAll}
-              disabled={isDeletingAll}
-            >
-              Cancel
-            </button>
-            <button
-              className="glass border border-red-500/50 hover:border-red-500 text-red-400 px-4 py-2 rounded-lg transition-all font-medium"
-              onClick={confirmDeleteAll}
-              disabled={isDeletingAll}
-            >
-              {isDeletingAll ? (
-                <span className="loading loading-spinner loading-sm text-white" />
-              ) : (
-                'Delete All Reports'
-              )}
-            </button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
-      </dialog>
-
-      {/* Delete Confirmation Modal */}
-      <dialog id="delete-modal" className="modal modal-bottom sm:modal-middle">
-        <div className="card-elevated max-w-md">
-          <h3 className="font-bold text-lg text-white">Confirm Delete</h3>
-          <p className="py-4 text-gray-300">
-            Are you sure you want to delete this report? This action cannot be undone.
-          </p>
-          <div className="modal-action">
-            <button
-              className="glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg transition-all"
-              onClick={cancelDelete}
-              disabled={isDeleting !== null}
-            >
-              Cancel
-            </button>
-            <button
-              className="glass border border-red-500/50 hover:border-red-500 text-red-400 px-4 py-2 rounded-lg transition-all font-medium"
-              onClick={confirmDelete}
-              disabled={isDeleting !== null}
-            >
-              {isDeleting ? (
-                <span className="loading loading-spinner loading-sm text-white" />
-              ) : (
-                'Delete'
-              )}
-            </button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
-      </dialog>
-
-      {/* Send Report Modal */}
-      <SendReportModal
-        isOpen={isSendModalOpen}
-        onClose={() => setIsSendModalOpen(false)}
-        report={selectedReport}
-        client={client}
-        onSuccess={(delivery) => {
-          toast.success(`Report sent successfully to ${delivery.clientName}!`);
-          setIsSendModalOpen(false);
-        }}
-      />
-
-      {/* Generate Link Modal */}
-      <GenerateLinkModal
-        isOpen={isLinkModalOpen}
-        onClose={() => setIsLinkModalOpen(false)}
-        report={selectedReport}
-        client={client}
-        onSuccess={() => {
-          // Modal will handle its own success feedback
-          // Optionally close the modal after a delay if desired
-        }}
-      />
 
       {/* Share Progress Modal */}
       <ShareProgressModal
