@@ -154,11 +154,13 @@ export default function ClientReportsClient({
   const processedData = React.useMemo(() => {
     if (!liveReportData) return { dailyData: [], weeklyAverages: [] };
 
+    const todayStr = new Date().toISOString().split('T')[0];
     const dailyMap = new Map<string, DailyData>();
 
-    // Process nutrition data
+    // Process nutrition data — exclude today (partial day)
     liveReportData.nutritionData?.nutrition?.forEach((item: any) => {
       const date = new Date(item.date).toISOString().split('T')[0];
+      if (date === todayStr) return;
       if (!dailyMap.has(date)) {
         dailyMap.set(date, {
           date,
@@ -179,9 +181,10 @@ export default function ClientReportsClient({
       day.fats = item.fatGrams || 0;
     });
 
-    // Process health data (steps)
+    // Process health data (steps) — exclude today (partial day)
     liveReportData.healthData?.healthData?.forEach((item: any) => {
       const date = new Date(item.date).toISOString().split('T')[0];
+      if (date === todayStr) return;
       if (!dailyMap.has(date)) {
         dailyMap.set(date, {
           date,
@@ -219,9 +222,10 @@ export default function ClientReportsClient({
       day.weight = item.weight || 0;
     });
 
-    // Process sleep data
+    // Process sleep data — exclude today (partial day)
     liveReportData.sleepData?.sleepData?.forEach((item: any) => {
       const date = new Date(item.date).toISOString().split('T')[0];
+      if (date === todayStr) return;
       if (!dailyMap.has(date)) {
         dailyMap.set(date, {
           date,
@@ -404,23 +408,22 @@ export default function ClientReportsClient({
     };
   }, [consistencyAnalysis, processedData.weeklyAverages]);
 
-  // Set default date range: last 14 days ending yesterday
+  // Set default date range: last 14 days ending today
   useEffect(() => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(23, 59, 59, 999);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
 
-    const fourteenDaysAgo = new Date(yesterday);
-    fourteenDaysAgo.setDate(yesterday.getDate() - 13);
+    const fourteenDaysAgo = new Date(today);
+    fourteenDaysAgo.setDate(today.getDate() - 13);
     fourteenDaysAgo.setHours(0, 0, 0, 0);
 
     setStartDate(fourteenDaysAgo);
-    setEndDate(yesterday);
+    setEndDate(today);
 
     // Hydrate from localStorage if no initial data and localStorage is available
     if (!initialLiveReportData && typeof window !== 'undefined' && window.localStorage) {
       try {
-        const localStorageKey = `liveReport_${clientId}_${fourteenDaysAgo.toISOString()}_${yesterday.toISOString()}_enhanced_6-10`;
+        const localStorageKey = `liveReport_${clientId}_${fourteenDaysAgo.toISOString()}_${today.toISOString()}_enhanced_6-10`;
         const cached = localStorage.getItem(localStorageKey);
         if (cached) {
           const parsed = JSON.parse(cached);
@@ -1317,6 +1320,11 @@ export default function ClientReportsClient({
                   const weeks = splitIntoWeeks(startDate, endDate);
                   const formatSteps = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : Math.round(n).toString();
 
+                  // Exclude today's partial data for non-weight metrics
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  const nutritionData = (liveReportData?.nutritionData?.nutrition || []).filter((n: any) => new Date(n.date).toISOString().split('T')[0] !== todayStr);
+                  const healthData = (liveReportData?.healthData?.healthData || []).filter((h: any) => new Date(h.date).toISOString().split('T')[0] !== todayStr);
+
                   const metrics: Array<{
                     key: string;
                     label: string;
@@ -1330,19 +1338,19 @@ export default function ClientReportsClient({
                       data: (liveReportData?.bodyStats?.bodyStats || []).map((w: any) => ({ date: w.date, value: w.weight || 0 })),
                       goodDirection: 'down' },
                     { key: 'calories', label: 'Calories', unit: '', decimals: 0,
-                      data: (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({ date: n.date, value: n.calories || 0 })),
+                      data: nutritionData.map((n: any) => ({ date: n.date, value: n.calories || 0 })),
                       goodDirection: null },
                     { key: 'protein', label: 'Protein', unit: 'g', decimals: 0,
-                      data: (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({ date: n.date, value: n.proteinGrams || 0 })),
+                      data: nutritionData.map((n: any) => ({ date: n.date, value: n.proteinGrams || 0 })),
                       goodDirection: 'up' },
                     { key: 'carbs', label: 'Carbs', unit: 'g', decimals: 0,
-                      data: (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({ date: n.date, value: n.carbsGrams || 0 })),
+                      data: nutritionData.map((n: any) => ({ date: n.date, value: n.carbsGrams || 0 })),
                       goodDirection: null },
                     { key: 'fats', label: 'Fats', unit: 'g', decimals: 0,
-                      data: (liveReportData?.nutritionData?.nutrition || []).map((n: any) => ({ date: n.date, value: n.fatGrams || 0 })),
+                      data: nutritionData.map((n: any) => ({ date: n.date, value: n.fatGrams || 0 })),
                       goodDirection: null },
                     { key: 'steps', label: 'Steps', unit: '', decimals: 0,
-                      data: (liveReportData?.healthData?.healthData || []).map((h: any) => ({ date: h.date, value: h.data?.steps || 0 })),
+                      data: healthData.map((h: any) => ({ date: h.date, value: h.data?.steps || 0 })),
                       goodDirection: 'up', format: formatSteps },
                   ];
 

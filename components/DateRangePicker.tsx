@@ -31,15 +31,14 @@ export function DateRangePicker({
   };
 
   const today = new Date();
-  const yesterday = subDays(today, 1);
-  
+
   const presetOptions: PresetOption[] = [
     {
       label: 'Last 7 days',
       value: 'last7',
       getRange: () => ({
         from: subDays(today, 7),
-        to: yesterday
+        to: today
       })
     },
     {
@@ -47,7 +46,7 @@ export function DateRangePicker({
       value: 'last2w',
       getRange: () => ({
         from: subDays(today, 14),
-        to: yesterday
+        to: today
       })
     },
     {
@@ -55,7 +54,7 @@ export function DateRangePicker({
       value: 'last4w',
       getRange: () => ({
         from: subDays(today, 28),
-        to: yesterday
+        to: today
       })
     },
     {
@@ -63,7 +62,7 @@ export function DateRangePicker({
       value: 'last8w',
       getRange: () => ({
         from: subDays(today, 56),
-        to: yesterday
+        to: today
       })
     },
     {
@@ -71,7 +70,7 @@ export function DateRangePicker({
       value: 'last12w',
       getRange: () => ({
         from: subDays(today, 84),
-        to: yesterday
+        to: today
       })
     }
   ];
