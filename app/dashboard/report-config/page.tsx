@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@/libs/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { useBrandConfig, BrandConfig } from "@/hooks/useBrandConfig";
+import { Upload, Trash2, Palette } from "lucide-react";
 
 interface ReportConfig {
   id?: string;
@@ -36,7 +38,21 @@ export default function ReportConfigPage() {
   const [message, setMessage] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
   const [newExcludedWorkout, setNewExcludedWorkout] = useState("");
-  
+  const [brandSaving, setBrandSaving] = useState(false);
+  const [brandMessage, setBrandMessage] = useState("");
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const { brand, loading: brandLoading, updateBrand, uploadLogo, removeLogo } = useBrandConfig();
+  const [localBrand, setLocalBrand] = useState<Partial<BrandConfig>>({});
+
+  // Sync local brand state when hook loads
+  useEffect(() => {
+    if (!brandLoading) {
+      setLocalBrand(brand);
+    }
+  }, [brand, brandLoading]);
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -240,6 +256,57 @@ export default function ReportConfigPage() {
     } : null);
   };
 
+  const saveBrandSettings = async () => {
+    setBrandSaving(true);
+    setBrandMessage("");
+    try {
+      await updateBrand({
+        business_name: localBrand.business_name || null,
+        primary_color: localBrand.primary_color || "#8B5CF6",
+        accent_color: localBrand.accent_color || "#7C3AED",
+        footer_text: localBrand.footer_text || null,
+        show_fitreport_badge: localBrand.show_fitreport_badge ?? true,
+      });
+      setBrandMessage("Brand settings saved!");
+      setTimeout(() => setBrandMessage(""), 3000);
+    } catch {
+      setBrandMessage("Error saving brand settings");
+    } finally {
+      setBrandSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoUploading(true);
+    setBrandMessage("");
+    try {
+      const url = await uploadLogo(file);
+      setLocalBrand(prev => ({ ...prev, logo_url: url }));
+      setBrandMessage("Logo uploaded!");
+      setTimeout(() => setBrandMessage(""), 3000);
+    } catch (err: any) {
+      setBrandMessage(err.message || "Error uploading logo");
+    } finally {
+      setLogoUploading(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
+
+  const handleLogoRemove = async () => {
+    if (!confirm("Remove your logo?")) return;
+    try {
+      await removeLogo();
+      setLocalBrand(prev => ({ ...prev, logo_url: null }));
+      setBrandMessage("Logo removed");
+      setTimeout(() => setBrandMessage(""), 3000);
+    } catch {
+      setBrandMessage("Error removing logo");
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-8 py-8">
@@ -267,9 +334,9 @@ export default function ReportConfigPage() {
     <div className="container mx-auto px-8 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold gradient-text font-display">Report Configuration</h1>
+          <h1 className="text-3xl font-bold gradient-text font-display">Report Settings</h1>
           <p className="text-gray-300 mt-2">
-            Customize your default messaging when sending fitness reports to clients
+            Customize your brand, messaging, and report defaults
           </p>
         </div>
         
@@ -295,6 +362,226 @@ export default function ReportConfigPage() {
           <span className="text-gray-300">{message}</span>
         </div>
       )}
+
+      {/* Brand Settings Section */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Palette className="w-5 h-5 text-accent-purple" />
+          <h2 className="text-xl font-bold text-white">Brand Settings</h2>
+        </div>
+
+        {brandMessage && (
+          <div className={`${brandMessage.includes("Error") ? "glass border border-red-500/30 bg-red-500/10" : "glass border border-green-500/30 bg-green-500/10"} p-3 rounded-lg mb-4`}>
+            <span className="text-gray-300 text-sm">{brandMessage}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Logo & Business Name */}
+          <div className="card-elevated">
+            <div className="card-body">
+              <h3 className="font-medium text-white mb-4">Logo & Identity</h3>
+
+              {/* Logo Upload */}
+              <div className="mb-4">
+                <label className="text-sm text-gray-300 mb-2 block">Logo</label>
+                <div className="flex items-center gap-4">
+                  {localBrand.logo_url ? (
+                    <div className="relative group">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-white flex items-center justify-center border border-white/10">
+                        <img
+                          src={localBrand.logo_url}
+                          alt="Brand logo"
+                          className="w-full h-full object-contain p-1"
+                        />
+                      </div>
+                      <button
+                        onClick={handleLogoRemove}
+                        className="absolute -top-2 -right-2 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Remove logo"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => logoInputRef.current?.click()}
+                      className="w-16 h-16 rounded-lg border-2 border-dashed border-white/20 hover:border-accent-purple/50 flex items-center justify-center cursor-pointer transition-colors"
+                    >
+                      {logoUploading ? (
+                        <span className="loading loading-spinner loading-sm text-accent-purple" />
+                      ) : (
+                        <Upload className="w-5 h-5 text-gray-500" />
+                      )}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <button
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={logoUploading}
+                      className="text-sm text-accent-purple hover:underline"
+                    >
+                      {localBrand.logo_url ? "Change logo" : "Upload logo"}
+                    </button>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, or WebP. Max 2MB.</p>
+                  </div>
+                </div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={handleLogoUpload}
+                />
+              </div>
+
+              {/* Business Name */}
+              <div>
+                <label className="text-sm text-gray-300 mb-2 block">Business Name</label>
+                <input
+                  type="text"
+                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
+                  value={localBrand.business_name || ""}
+                  onChange={(e) => setLocalBrand(prev => ({ ...prev, business_name: e.target.value }))}
+                  placeholder="Peak Performance Coaching"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Colors */}
+          <div className="card-elevated">
+            <div className="card-body">
+              <h3 className="font-medium text-white mb-4">Brand Colors</h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-300 mb-2 block">Primary Color</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={localBrand.primary_color || "#8B5CF6"}
+                      onChange={(e) => setLocalBrand(prev => ({ ...prev, primary_color: e.target.value }))}
+                      className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={localBrand.primary_color || "#8B5CF6"}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                          setLocalBrand(prev => ({ ...prev, primary_color: val }));
+                        }
+                      }}
+                      className="bg-bg-secondary border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-accent-purple rounded-lg px-3 py-2 w-28"
+                      placeholder="#8B5CF6"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-300 mb-2 block">Accent Color</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={localBrand.accent_color || "#7C3AED"}
+                      onChange={(e) => setLocalBrand(prev => ({ ...prev, accent_color: e.target.value }))}
+                      className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={localBrand.accent_color || "#7C3AED"}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                          setLocalBrand(prev => ({ ...prev, accent_color: val }));
+                        }
+                      }}
+                      className="bg-bg-secondary border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-accent-purple rounded-lg px-3 py-2 w-28"
+                      placeholder="#7C3AED"
+                    />
+                  </div>
+                </div>
+
+                {/* Color preview bar */}
+                <div className="mt-2">
+                  <div
+                    className="h-2 rounded-full"
+                    style={{
+                      background: `linear-gradient(to right, ${localBrand.primary_color || "#8B5CF6"}, ${localBrand.accent_color || "#7C3AED"})`
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer & Badge */}
+          <div className="card-elevated">
+            <div className="card-body">
+              <h3 className="font-medium text-white mb-4">Report Footer</h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-300 mb-2 block">Footer Text</label>
+                  <textarea
+                    className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 h-20 w-full"
+                    value={localBrand.footer_text || ""}
+                    onChange={(e) => setLocalBrand(prev => ({ ...prev, footer_text: e.target.value }))}
+                    placeholder="Peak Performance Coaching&#10;www.yoursite.com"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={localBrand.show_fitreport_badge ?? true}
+                    onChange={(e) => setLocalBrand(prev => ({ ...prev, show_fitreport_badge: e.target.checked }))}
+                    className="checkbox checkbox-sm checkbox-primary"
+                  />
+                  <label className="text-sm text-gray-300">
+                    Show &quot;Powered by FitReport&quot; badge
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Brand Preview + Save */}
+        <div className="mt-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {/* Mini live preview */}
+            <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3">
+              {localBrand.logo_url && (
+                <img src={localBrand.logo_url} alt="" className="w-6 h-6 object-contain" />
+              )}
+              <span className="text-sm font-medium text-gray-900">
+                {localBrand.business_name || "Your Business"}
+              </span>
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: localBrand.primary_color || "#8B5CF6" }}
+              />
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: localBrand.accent_color || "#7C3AED" }}
+              />
+            </div>
+            <span className="text-xs text-gray-500">Preview of how your brand appears in reports</span>
+          </div>
+
+          <button
+            onClick={saveBrandSettings}
+            disabled={brandSaving}
+            className={`btn-gradient px-6 py-3 rounded-lg font-medium ${brandSaving ? "loading" : ""}`}
+          >
+            {brandSaving ? "Saving..." : "Save Brand Settings"}
+          </button>
+        </div>
+      </div>
+
+      <hr className="border-white/10 mb-8" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Configuration Form */}

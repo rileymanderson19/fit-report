@@ -6,6 +6,7 @@ import ShareProgressSummaryCard from './ShareProgressSummaryCard';
 import ShareWeightProgressChart from './ShareWeightProgressChart';
 import ShareWeeklyHighlightsCard from './ShareWeeklyHighlightsCard';
 import { useReportAnalytics, DailyData, WeeklyAverage } from '@/hooks/useReportAnalytics';
+import { useBrandConfig } from '@/hooks/useBrandConfig';
 
 interface ShareProgressModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export default function ShareProgressModal({
   const [isCopied, setIsCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [unitPreference, setUnitPreference] = useState<'lbs' | 'kg'>('lbs');
+  const { brand } = useBrandConfig();
 
   // Process report data into daily data format
   const processedData = React.useMemo(() => {
@@ -446,6 +448,7 @@ export default function ShareProgressModal({
                   workoutsCompleted={consistencyAnalysis?.workouts.totalWorkouts || 0}
                   consistencyScore={consistencyAnalysis?.overallScore || 0}
                   unitPreference={unitPreference}
+                  brand={brand}
                 />
               )}
               {activeTab === 'weight' && (
@@ -460,6 +463,7 @@ export default function ShareProgressModal({
                   dateRangeStart={dateRangeStart}
                   dateRangeEnd={dateRangeEnd}
                   unitPreference={unitPreference}
+                  brand={brand}
                 />
               )}
               {activeTab === 'weekly' && (
@@ -470,6 +474,7 @@ export default function ShareProgressModal({
                   weeklyData={weeklyData}
                   weightChange={weightData.weeklyChange}
                   unitPreference={unitPreference}
+                  brand={brand}
                 />
               )}
               {activeTab === 'full' && (
@@ -480,9 +485,18 @@ export default function ShareProgressModal({
                 >
                   {/* Header */}
                   <div className="mb-6">
-                    <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
+                    <div
+                      className="h-1 w-16 rounded-full mb-4"
+                      style={{ background: `linear-gradient(to right, ${brand.primary_color}, ${brand.accent_color})` }}
+                    />
                     <div className="flex justify-between items-start">
                       <div>
+                        {brand.logo_url && (
+                          <img src={brand.logo_url} alt="" className="h-8 object-contain mb-2" />
+                        )}
+                        {brand.business_name && (
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">{brand.business_name}</p>
+                        )}
                         <h2 className="text-2xl font-bold text-gray-900">{clientName}</h2>
                         <p className="text-sm text-gray-500">
                           Progress Report: {new Date(dateRangeStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(dateRangeEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -505,6 +519,7 @@ export default function ShareProgressModal({
                         hideFooter={true}
                         hideHeader={true}
                         unitPreference={unitPreference}
+                        brand={brand}
                       />
                     </div>
 
@@ -525,13 +540,21 @@ export default function ShareProgressModal({
                         hideHeader={true}
                         hideWeightChange={true}
                         unitPreference={unitPreference}
+                        brand={brand}
                       />
                     </div>
                   </div>
 
                   {/* Branding Footer */}
-                  <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-center">
-                    <span className="text-xs text-gray-400">Powered by FitReport</span>
+                  <div className="mt-6 pt-4 border-t border-gray-100">
+                    {brand.footer_text && (
+                      <p className="text-xs text-gray-500 text-center whitespace-pre-line mb-1">{brand.footer_text}</p>
+                    )}
+                    {brand.show_fitreport_badge && (
+                      <div className="flex items-center justify-center">
+                        <span className="text-xs text-gray-400">Powered by FitReport</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

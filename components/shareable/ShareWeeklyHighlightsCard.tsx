@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Dumbbell, Footprints, Utensils, TrendingDown, TrendingUp, CheckCircle } from 'lucide-react';
+import { BrandConfig } from '@/hooks/useBrandConfig';
 
 interface WeeklyData {
   workoutsCompleted: number;
@@ -26,6 +27,7 @@ interface ShareWeeklyHighlightsCardProps {
   hideFooter?: boolean;
   hideHeader?: boolean;
   unitPreference?: 'lbs' | 'kg';
+  brand?: BrandConfig | null;
 }
 
 export default function ShareWeeklyHighlightsCard({
@@ -37,8 +39,10 @@ export default function ShareWeeklyHighlightsCard({
   isScreenshotMode = false,
   hideFooter = false,
   hideHeader = false,
-  unitPreference = 'lbs'
+  unitPreference = 'lbs',
+  brand
 }: ShareWeeklyHighlightsCardProps) {
+  const primaryColor = brand?.primary_color || '#8B5CF6';
   // Unit conversion helpers
   const convertWeight = (lbs: number): number => unitPreference === 'kg' ? lbs * 0.453592 : lbs;
   const weightUnit = unitPreference === 'kg' ? 'kg' : 'lbs';
@@ -74,7 +78,7 @@ export default function ShareWeeklyHighlightsCard({
       {/* Header */}
       {!hideHeader && (
         <div className="mb-6">
-          <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
+          <div className="h-1 w-16 rounded-full mb-4" style={{ background: `linear-gradient(to right, ${primaryColor}, ${brand?.accent_color || '#7C3AED'})` }} />
           <h2 className="text-xl font-bold text-gray-900">Weekly Highlights</h2>
           <p className="text-sm text-gray-500">
             {formatDate(dateRangeStart)} - {formatDate(dateRangeEnd)}
@@ -86,7 +90,7 @@ export default function ShareWeeklyHighlightsCard({
       <div className="space-y-4">
         {/* Weight Change per Week */}
         {weightChange !== undefined && weightChange !== 0 && (
-          <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-4">
+          <div className="rounded-xl p-4" style={{ background: `linear-gradient(to bottom right, ${primaryColor}10, ${brand?.accent_color || '#7C3AED'}10)` }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {weightChange < 0 ? (
@@ -109,7 +113,7 @@ export default function ShareWeeklyHighlightsCard({
           {weeklyData.avgCalories > 0 && (
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Utensils className="w-4 h-4 text-purple-500" />
+                <Utensils className="w-4 h-4" style={{ color: primaryColor }} />
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Calories</span>
               </div>
               <div className="text-xl font-bold text-gray-900">
@@ -123,7 +127,7 @@ export default function ShareWeeklyHighlightsCard({
           {weeklyData.avgProtein > 0 && (
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-4 h-4 rounded bg-purple-500 flex items-center justify-center">
+                <div className="w-4 h-4 rounded flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
                   <span className="text-[10px] font-bold text-white">P</span>
                 </div>
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Protein</span>
@@ -171,7 +175,7 @@ export default function ShareWeeklyHighlightsCard({
           {weeklyData.avgDailySteps > 0 && (
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Footprints className="w-4 h-4 text-purple-500" />
+                <Footprints className="w-4 h-4" style={{ color: primaryColor }} />
                 <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Steps</span>
               </div>
               <div className="text-xl font-bold text-gray-900">
@@ -184,7 +188,7 @@ export default function ShareWeeklyHighlightsCard({
           {/* Workouts */}
           <div className="bg-gray-50 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Dumbbell className="w-4 h-4 text-purple-500" />
+              <Dumbbell className="w-4 h-4" style={{ color: primaryColor }} />
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Workouts</span>
             </div>
             <div className="text-xl font-bold text-gray-900">
@@ -197,8 +201,15 @@ export default function ShareWeeklyHighlightsCard({
 
       {/* Branding Footer */}
       {!hideFooter && (
-        <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-center">
-          <span className="text-xs text-gray-400">Powered by FitReport</span>
+        <div className="mt-6 pt-4 border-t border-gray-100">
+          {brand?.footer_text && (
+            <p className="text-xs text-gray-500 text-center whitespace-pre-line mb-1">{brand.footer_text}</p>
+          )}
+          {(brand?.show_fitreport_badge !== false) && (
+            <div className="flex items-center justify-center">
+              <span className="text-xs text-gray-400">Powered by FitReport</span>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ import {
   Area,
   ComposedChart
 } from 'recharts';
+import { BrandConfig } from '@/hooks/useBrandConfig';
 
 interface WeightDataPoint {
   date: string;
@@ -36,6 +37,7 @@ interface ShareWeightProgressChartProps {
   hideHeader?: boolean;
   hideWeightChange?: boolean;
   unitPreference?: 'lbs' | 'kg';
+  brand?: BrandConfig | null;
 }
 
 export default function ShareWeightProgressChart({
@@ -49,8 +51,10 @@ export default function ShareWeightProgressChart({
   hideFooter = false,
   hideHeader = false,
   hideWeightChange = false,
-  unitPreference = 'lbs'
+  unitPreference = 'lbs',
+  brand
 }: ShareWeightProgressChartProps) {
+  const primaryColor = brand?.primary_color || '#A855F7';
   // Unit conversion helpers
   const convertWeight = (lbs: number): number => unitPreference === 'kg' ? lbs * 0.453592 : lbs;
   const weightUnit = unitPreference === 'kg' ? 'kg' : 'lbs';
@@ -110,7 +114,7 @@ export default function ShareWeightProgressChart({
       return (
         <div className="bg-white shadow-lg rounded-lg p-3 border border-gray-100">
           <p className="text-sm font-medium text-gray-900">{label}</p>
-          <p className="text-sm text-purple-600">
+          <p className="text-sm" style={{ color: primaryColor }}>
             {payload[0].value.toFixed(1)} {weightUnit}
           </p>
         </div>
@@ -142,7 +146,10 @@ export default function ShareWeightProgressChart({
       {/* Header */}
       <div className="mb-6">
         {!hideHeader && (
-          <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
+          <div
+            className="h-1 w-16 rounded-full mb-4"
+            style={{ background: `linear-gradient(to right, ${primaryColor}, ${brand?.accent_color || '#7C3AED'})` }}
+          />
         )}
         <div className="flex justify-between items-start">
           {!hideHeader && (
@@ -174,8 +181,8 @@ export default function ShareWeightProgressChart({
           <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <defs>
               <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#A855F7" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
+                <stop offset="5%" stopColor={primaryColor} stopOpacity={0.15} />
+                <stop offset="95%" stopColor={primaryColor} stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
@@ -223,10 +230,10 @@ export default function ShareWeightProgressChart({
             <Line
               type="monotone"
               dataKey="weight"
-              stroke="#A855F7"
+              stroke={primaryColor}
               strokeWidth={3}
-              dot={{ fill: '#A855F7', strokeWidth: 0, r: 4 }}
-              activeDot={{ fill: '#A855F7', strokeWidth: 2, stroke: '#fff', r: 6 }}
+              dot={{ fill: primaryColor, strokeWidth: 0, r: 4 }}
+              activeDot={{ fill: primaryColor, strokeWidth: 2, stroke: '#fff', r: 6 }}
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -250,8 +257,15 @@ export default function ShareWeightProgressChart({
 
       {/* Branding Footer */}
       {!hideFooter && (
-        <div className="mt-4 flex items-center justify-center">
-          <span className="text-xs text-gray-400">Powered by FitReport</span>
+        <div className="mt-4">
+          {brand?.footer_text && (
+            <p className="text-xs text-gray-500 text-center whitespace-pre-line mb-1">{brand.footer_text}</p>
+          )}
+          {(brand?.show_fitreport_badge !== false) && (
+            <div className="flex items-center justify-center">
+              <span className="text-xs text-gray-400">Powered by FitReport</span>
+            </div>
+          )}
         </div>
       )}
     </div>
