@@ -1,49 +1,26 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import {
   Upload, Edit2, Search, Users, CheckCircle2, AlertTriangle,
-  AlertCircle, CircleDashed, Trash2, X, Eye, MoreHorizontal,
-  TrendingUp, TrendingDown, Minus, ChevronLeft, ChevronRight
+  AlertCircle, Star, Trash2, X, Eye, ChevronLeft, ChevronRight, ChevronDown,
+  Flame, Scale, TrendingUp
 } from 'lucide-react';
-import GoalBadge from '@/components/GoalBadge';
-import type { ClientStatus } from '@/lib/client-status';
 
-interface DashboardClient {
+type ManualStatus = 'on_track' | 'watch' | 'needs_attention' | 'new';
+
+interface Client {
   id: string;
   first_name: string;
   last_name: string;
   email: string;
   goal: 'fat_loss' | 'maintenance' | 'muscle_gain' | null;
   notes: string | null;
+  status: ManualStatus;
   created_at: string;
-  status: {
-    status: ClientStatus;
-    summary: string;
-    metrics: {
-      latestWeight: number | null;
-      weightChange: number | null;
-      avgCalories: number | null;
-      avgProtein: number | null;
-      avgDailySteps: number | null;
-      avgSleep: number | null;
-      totalWorkouts: number;
-      workoutDays: number;
-    };
-    lastReportDate: string | null;
-    reportDateRange: { start: string; end: string } | null;
-  };
-}
-
-interface DashboardStats {
-  total: number;
-  onTrack: number;
-  watch: number;
-  needsAttention: number;
-  noData: number;
 }
 
 interface TrainerizeClient {
@@ -53,22 +30,39 @@ interface TrainerizeClient {
   email: string;
 }
 
-type StatusFilter = 'all' | ClientStatus;
+type StatusFilter = 'all' | ManualStatus;
 type GoalFilter = 'all' | 'fat_loss' | 'maintenance' | 'muscle_gain' | 'none';
-type SortOption = 'attention' | 'alpha' | 'recent';
+type SortOption = 'attention' | 'alpha' | 'newest';
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<ManualStatus, { label: string; icon: typeof CheckCircle2; color: string; bg: string; border: string; dot: string }> = {
   on_track: { label: 'On Track', icon: CheckCircle2, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30', dot: 'bg-green-400' },
   watch: { label: 'Watch', icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', dot: 'bg-yellow-400' },
   needs_attention: { label: 'Needs Attention', icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30', dot: 'bg-red-400' },
-  no_data: { label: 'No Data', icon: CircleDashed, color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30', dot: 'bg-gray-500' },
+  new: { label: 'New', icon: Star, color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30', dot: 'bg-blue-400' },
 };
+
+const STATUS_OPTIONS: ManualStatus[] = ['on_track', 'watch', 'needs_attention', 'new'];
+
+type GoalType = 'fat_loss' | 'maintenance' | 'muscle_gain' | null;
+
+const GOAL_CONFIG: Record<string, { label: string; icon: typeof Flame; color: string; bg: string; border: string; dot: string }> = {
+  fat_loss: { label: 'Fat Loss', icon: Flame, color: 'text-orange-400', bg: 'bg-orange-500/20', border: 'border-orange-500/30', dot: 'bg-orange-400' },
+  maintenance: { label: 'Maintenance', icon: Scale, color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30', dot: 'bg-blue-400' },
+  muscle_gain: { label: 'Muscle Gain', icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30', dot: 'bg-green-400' },
+  none: { label: 'Not Set', icon: Scale, color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30', dot: 'bg-gray-500' },
+};
+
+const GOAL_OPTIONS: { value: GoalType; key: string }[] = [
+  { value: 'fat_loss', key: 'fat_loss' },
+  { value: 'maintenance', key: 'maintenance' },
+  { value: 'muscle_gain', key: 'muscle_gain' },
+  { value: null, key: 'none' },
+];
 
 export default function ClientsPage() {
   const supabase = createClient();
 
-  const [clients, setClients] = useState<DashboardClient[]>([]);
-  const [stats, setStats] = useState<DashboardStats>({ total: 0, onTrack: 0, watch: 0, needsAttention: 0, noData: 0 });
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -76,6 +70,12 @@ export default function ClientsPage() {
   const [sortOption, setSortOption] = useState<SortOption>('attention');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Dropdown state
+  const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
+  const [goalDropdownId, setGoalDropdownId] = useState<string | null>(null);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const goalDropdownRef = useRef<HTMLDivElement>(null);
 
   // Import state
   const [trainerizeClients, setTrainerizeClients] = useState<TrainerizeClient[]>([]);
@@ -92,16 +92,14 @@ export default function ClientsPage() {
   // Edit state
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState('');
-  const [editingGoal, setEditingGoal] = useState<DashboardClient['goal']>(null);
+  const [editingGoal, setEditingGoal] = useState<Client['goal']>(null);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
 
-  // Step 1: Load clients from Supabase (same pattern as old working code)
+  // Load clients
   const fetchClients = useCallback(async () => {
     try {
       const { data: profile } = await supabase.auth.getUser();
-      if (!profile.user) {
-        throw new Error('No user found');
-      }
+      if (!profile.user) throw new Error('No user found');
 
       const { data, error } = await supabase
         .from('clients')
@@ -111,27 +109,18 @@ export default function ClientsPage() {
 
       if (error) throw error;
 
-      const defaultStatus: DashboardClient['status'] = {
-        status: 'no_data',
-        summary: '',
-        metrics: { latestWeight: null, weightChange: null, avgCalories: null, avgProtein: null, avgDailySteps: null, avgSleep: null, totalWorkouts: 0, workoutDays: 0 },
-        lastReportDate: null,
-        reportDateRange: null,
-      };
-
-      const dashClients: DashboardClient[] = (data || []).map(c => ({
+      const clientList: Client[] = (data || []).map(c => ({
         id: c.id,
         first_name: c.first_name,
         last_name: c.last_name,
         email: c.email,
         goal: c.goal,
         notes: c.notes,
+        status: c.status || 'new',
         created_at: c.created_at,
-        status: defaultStatus,
       }));
 
-      setClients(dashClients);
-      setStats({ total: dashClients.length, onTrack: 0, watch: 0, needsAttention: 0, noData: dashClients.length });
+      setClients(clientList);
     } catch (error) {
       console.error('Error fetching clients:', error);
       toast.error('Failed to fetch clients');
@@ -140,32 +129,32 @@ export default function ClientsPage() {
     }
   }, [supabase]);
 
-  // Step 2: Enrich with status data from API (runs after clients load)
-  const enrichWithStatus = useCallback(async () => {
-    try {
-      const response = await fetch('/api/clients/dashboard');
-      if (!response.ok) return;
-      const data = await response.json();
-      if (data.clients) {
-        setClients(data.clients);
-        setStats(data.stats);
-      }
-    } catch (error) {
-      console.error('Status enrichment failed:', error);
-      // Silently fail — clients are already displayed
-    }
-  }, []);
-
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
 
-  // Enrich after clients load
+  // Close dropdowns on outside click
   useEffect(() => {
-    if (!isLoading && clients.length > 0) {
-      enrichWithStatus();
-    }
-  }, [isLoading, clients.length, enrichWithStatus]);
+    const handleClick = (e: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
+        setStatusDropdownId(null);
+      }
+      if (goalDropdownRef.current && !goalDropdownRef.current.contains(e.target as Node)) {
+        setGoalDropdownId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Compute stats from client data
+  const stats = {
+    total: clients.length,
+    onTrack: clients.filter(c => c.status === 'on_track').length,
+    watch: clients.filter(c => c.status === 'watch').length,
+    needsAttention: clients.filter(c => c.status === 'needs_attention').length,
+    new: clients.filter(c => c.status === 'new').length,
+  };
 
   // Filter and sort
   const filteredClients = clients
@@ -173,27 +162,63 @@ export default function ClientsPage() {
       const matchesSearch = searchQuery === '' ||
         `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
         client.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || client.status.status === statusFilter;
+      const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
       const matchesGoal = goalFilter === 'all' ||
         (goalFilter === 'none' ? client.goal === null : client.goal === goalFilter);
       return matchesSearch && matchesStatus && matchesGoal;
     })
     .sort((a, b) => {
       if (sortOption === 'attention') {
-        const priority: Record<ClientStatus, number> = { needs_attention: 0, watch: 1, no_data: 2, on_track: 3 };
-        return priority[a.status.status] - priority[b.status.status];
+        const priority: Record<ManualStatus, number> = { needs_attention: 0, watch: 1, new: 2, on_track: 3 };
+        return priority[a.status] - priority[b.status];
       }
       if (sortOption === 'alpha') {
         return a.first_name.localeCompare(b.first_name);
       }
-      // recent: by last report date
-      const aDate = a.status.lastReportDate ? new Date(a.status.lastReportDate).getTime() : 0;
-      const bDate = b.status.lastReportDate ? new Date(b.status.lastReportDate).getTime() : 0;
-      return bDate - aDate;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
   const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
   const currentClients = filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Update client status
+  const updateClientStatus = async (clientId: string, newStatus: ManualStatus) => {
+    setStatusDropdownId(null);
+    // Optimistic update
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, status: newStatus } : c));
+
+    try {
+      const response = await fetch('/api/clients/update-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId, status: newStatus }),
+      });
+      if (!response.ok) throw new Error('Failed to update status');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update status');
+      fetchClients(); // Revert on error
+    }
+  };
+
+  // Update client goal
+  const updateClientGoal = async (clientId: string, newGoal: GoalType) => {
+    setGoalDropdownId(null);
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, goal: newGoal } : c));
+
+    try {
+      const response = await fetch('/api/clients/update-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId, goal: newGoal }),
+      });
+      if (!response.ok) throw new Error('Failed to update goal');
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      toast.error('Failed to update goal');
+      fetchClients();
+    }
+  };
 
   // Import handlers
   const fetchTrainerizeClients = async () => {
@@ -201,7 +226,6 @@ export default function ClientsPage() {
     try {
       const response = await fetch('/api/trainerize/fetch-clients');
       const data = await response.json();
-
       if (!response.ok) throw new Error(data.error || 'Failed to fetch clients');
 
       const mappedClients = (data.clients || []).map((client: any) => ({
@@ -233,9 +257,7 @@ export default function ClientsPage() {
         selectedImportIds.includes(client.id)
       );
 
-      if (selectedTrainerizeClients.length === 0) {
-        throw new Error('No clients selected');
-      }
+      if (selectedTrainerizeClients.length === 0) throw new Error('No clients selected');
 
       for (const client of selectedTrainerizeClients) {
         const { error } = await supabase
@@ -247,6 +269,7 @@ export default function ClientsPage() {
             email: client.email,
             trainerize_id: parseInt(client.id),
             active: true,
+            status: 'new',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
@@ -277,7 +300,6 @@ export default function ClientsPage() {
       }
 
       setClients(prev => prev.filter(c => c.id !== deletingClientId));
-      setStats(prev => ({ ...prev, total: prev.total - 1 }));
       toast.success('Client deleted');
     } catch (error) {
       console.error('Error deleting client:', error);
@@ -320,29 +342,12 @@ export default function ClientsPage() {
     }
   };
 
-  const timeAgo = (dateStr: string) => {
-    const now = new Date();
-    const date = new Date(dateStr);
-    const days = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (days === 0) return 'today';
-    if (days === 1) return 'yesterday';
-    if (days < 7) return `${days}d ago`;
-    return `${Math.floor(days / 7)}w ago`;
-  };
-
   const filteredTrainerizeClients = trainerizeClients.filter(client =>
     `${client.first_name} ${client.last_name}`.toLowerCase().includes(importSearchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(importSearchQuery.toLowerCase())
   );
 
-  if (isLoading) {
-    return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <span className="loading loading-spinner loading-lg text-accent-purple" />
-      </div>
-    );
-  }
-
+  // Helpers
   const getInitials = (first: string, last: string) =>
     `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
 
@@ -361,34 +366,13 @@ export default function ClientsPage() {
     return avatarColors[Math.abs(hash) % avatarColors.length];
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  const WeightTrend = ({ change, goal }: { change: number | null; goal: DashboardClient['goal'] }) => {
-    if (change === null) return <span className="text-gray-500 text-xs">—</span>;
-    const isPositive = change > 0;
-    const isNegative = change < 0;
-    const isNeutral = Math.abs(change) < 0.2;
-
-    // Determine if the trend is "good" based on goal
-    let trendGood = isNeutral;
-    if (goal === 'fat_loss') trendGood = isNegative;
-    else if (goal === 'muscle_gain') trendGood = isPositive;
-
-    const Icon = isNeutral ? Minus : isPositive ? TrendingUp : TrendingDown;
-    const colorClass = trendGood ? 'text-green-400' : isNeutral ? 'text-gray-400' : 'text-orange-400';
-
+  if (isLoading) {
     return (
-      <div className={`flex items-center gap-1 ${colorClass}`}>
-        <Icon className="h-3.5 w-3.5" />
-        <span className="text-xs font-medium">
-          {isPositive ? '+' : ''}{change.toFixed(1)} lbs
-        </span>
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <span className="loading loading-spinner loading-lg text-accent-purple" />
       </div>
     );
-  };
+  }
 
   return (
     <div className="p-6">
@@ -414,17 +398,17 @@ export default function ClientsPage() {
       {stats.total > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {([
-            { key: 'onTrack' as const, status: 'on_track' as ClientStatus, count: stats.onTrack },
-            { key: 'watch' as const, status: 'watch' as ClientStatus, count: stats.watch },
-            { key: 'needsAttention' as const, status: 'needs_attention' as ClientStatus, count: stats.needsAttention },
-            { key: 'noData' as const, status: 'no_data' as ClientStatus, count: stats.noData },
-          ]).map(({ key, status, count }) => {
+            { status: 'on_track' as ManualStatus, count: stats.onTrack },
+            { status: 'watch' as ManualStatus, count: stats.watch },
+            { status: 'needs_attention' as ManualStatus, count: stats.needsAttention },
+            { status: 'new' as ManualStatus, count: stats.new },
+          ]).map(({ status, count }) => {
             const config = STATUS_CONFIG[status];
             const Icon = config.icon;
             const isActive = statusFilter === status;
             return (
               <button
-                key={key}
+                key={status}
                 onClick={() => {
                   setStatusFilter(isActive ? 'all' : status);
                   setCurrentPage(1);
@@ -479,7 +463,7 @@ export default function ClientsPage() {
           >
             <option value="attention">Needs Attention First</option>
             <option value="alpha">Alphabetical</option>
-            <option value="recent">Recent Reports</option>
+            <option value="newest">Newest First</option>
           </select>
         </div>
       </div>
@@ -491,24 +475,20 @@ export default function ClientsPage() {
             <thead>
               <tr className="border-b border-white/10">
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Client</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">Last Report</th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Goal</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Trend</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Summary</th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Status</th>
                 <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {currentClients.map((client) => {
-                const config = STATUS_CONFIG[client.status.status];
-                const { metrics } = client.status;
+                const config = STATUS_CONFIG[client.status];
                 const fullName = `${client.first_name} ${client.last_name}`;
 
                 return (
                   <tr
                     key={client.id}
-                    className="hover:bg-white/[0.03] transition-colors group"
+                    className="hover:bg-white/[0.03] transition-colors"
                   >
                     {/* Client name + email */}
                     <td className="px-4 py-3">
@@ -528,41 +508,92 @@ export default function ClientsPage() {
                       </div>
                     </td>
 
-                    {/* Last report */}
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      {client.status.lastReportDate ? (
-                        <div>
-                          <p className="text-sm text-gray-300">{formatDate(client.status.lastReportDate)}</p>
-                          <p className="text-xs text-gray-500">{timeAgo(client.status.lastReportDate)}</p>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-500">No reports</span>
-                      )}
-                    </td>
-
-                    {/* Goal */}
+                    {/* Goal — clickable dropdown */}
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      <GoalBadge goal={client.goal} />
+                      <div className="relative" ref={goalDropdownId === client.id ? goalDropdownRef : undefined}>
+                        {(() => {
+                          const gc = GOAL_CONFIG[client.goal || 'none'];
+                          const GoalIcon = gc.icon;
+                          return (
+                            <button
+                              onClick={() => {
+                                setGoalDropdownId(goalDropdownId === client.id ? null : client.id);
+                                setStatusDropdownId(null);
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:ring-1 hover:ring-white/20 ${gc.bg} ${gc.color} border ${gc.border}`}
+                            >
+                              <GoalIcon className="h-3 w-3" />
+                              {gc.label}
+                              <ChevronDown className="h-3 w-3 opacity-50" />
+                            </button>
+                          );
+                        })()}
+
+                        {goalDropdownId === client.id && (
+                          <div className="absolute top-full left-0 mt-1 w-44 rounded-lg border border-white/10 shadow-xl z-50" style={{ backgroundColor: '#13111C' }}>
+                            {GOAL_OPTIONS.map(({ value, key }) => {
+                              const gc = GOAL_CONFIG[key];
+                              const GoalIcon = gc.icon;
+                              const isSelected = (client.goal || 'none') === (value || 'none');
+                              return (
+                                <button
+                                  key={key}
+                                  onClick={() => updateClientGoal(client.id, value)}
+                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-white/5 first:rounded-t-lg last:rounded-b-lg ${
+                                    isSelected ? 'bg-white/5' : ''
+                                  }`}
+                                >
+                                  <GoalIcon className={`h-3 w-3 ${gc.color}`} />
+                                  <span className={gc.color}>{gc.label}</span>
+                                  {isSelected && (
+                                    <CheckCircle2 className="h-3 w-3 ml-auto text-accent-purple" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </td>
 
-                    {/* Weight trend */}
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <WeightTrend change={metrics.weightChange} goal={client.goal} />
-                    </td>
-
-                    {/* Summary */}
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <p className={`text-xs ${config.color} max-w-[200px] truncate`} title={client.status.summary}>
-                        {client.status.summary || '—'}
-                      </p>
-                    </td>
-
-                    {/* Status badge */}
+                    {/* Status — clickable dropdown */}
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color} border ${config.border}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
-                        {config.label}
-                      </span>
+                      <div className="relative" ref={statusDropdownId === client.id ? statusDropdownRef : undefined}>
+                        <button
+                          onClick={() => {
+                            setStatusDropdownId(statusDropdownId === client.id ? null : client.id);
+                            setGoalDropdownId(null);
+                          }}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:ring-1 hover:ring-white/20 ${config.bg} ${config.color} border ${config.border}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+                          {config.label}
+                          <ChevronDown className="h-3 w-3 opacity-50" />
+                        </button>
+
+                        {statusDropdownId === client.id && (
+                          <div className="absolute top-full left-0 mt-1 w-44 rounded-lg border border-white/10 shadow-xl z-50" style={{ backgroundColor: '#13111C' }}>
+                            {STATUS_OPTIONS.map(s => {
+                              const sc = STATUS_CONFIG[s];
+                              return (
+                                <button
+                                  key={s}
+                                  onClick={() => updateClientStatus(client.id, s)}
+                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-white/5 first:rounded-t-lg last:rounded-b-lg ${
+                                    client.status === s ? 'bg-white/5' : ''
+                                  }`}
+                                >
+                                  <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
+                                  <span className={sc.color}>{sc.label}</span>
+                                  {client.status === s && (
+                                    <CheckCircle2 className="h-3 w-3 ml-auto text-accent-purple" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {/* Actions */}
@@ -708,7 +739,7 @@ export default function ClientsPage() {
                 <select
                   className="bg-bg-secondary border border-white/10 text-white text-sm rounded-lg px-3 py-2 w-full focus:outline-none focus:border-accent-purple"
                   value={editingGoal || ''}
-                  onChange={(e) => setEditingGoal(e.target.value as DashboardClient['goal'])}
+                  onChange={(e) => setEditingGoal(e.target.value as Client['goal'])}
                 >
                   <option value="">Not Set</option>
                   <option value="fat_loss">Fat Loss</option>

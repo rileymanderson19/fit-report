@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { clientId, notes, goal } = validation.data;
+    const { clientId, notes, goal, status } = validation.data;
 
     // Verify the client belongs to the user
     const { data: client, error: clientError } = await supabase
@@ -41,13 +41,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update the notes and goal
+    // Build update object with only provided fields
+    const updateData: Record<string, any> = {};
+    if (notes !== undefined) updateData.notes = notes || null;
+    if (goal !== undefined) updateData.goal = goal || null;
+    if (status !== undefined) updateData.status = status || 'new';
+
     const { error: updateError } = await supabase
       .from('clients')
-      .update({
-        notes: notes || null,
-        goal: goal || null
-      })
+      .update(updateData)
       .eq('id', clientId)
       .eq('trainer_id', user.id);
 
