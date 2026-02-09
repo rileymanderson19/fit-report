@@ -90,7 +90,23 @@ export async function GET(
       );
     }
 
-    // Return the report data with client info
+    // Fetch trainer's brand settings
+    const { data: brandConfig } = await supabase
+      .from('report_configurations')
+      .select('logo_url, business_name, primary_color, accent_color, footer_text, show_fitreport_badge')
+      .eq('trainer_id', report.trainer_id)
+      .single();
+
+    const brand = brandConfig ? {
+      logo_url: brandConfig.logo_url || null,
+      business_name: brandConfig.business_name || null,
+      primary_color: brandConfig.primary_color || '#8B5CF6',
+      accent_color: brandConfig.accent_color || '#7C3AED',
+      footer_text: brandConfig.footer_text || null,
+      show_fitreport_badge: brandConfig.show_fitreport_badge !== false,
+    } : null;
+
+    // Return the report data with client info and brand
     return NextResponse.json({
       report: {
         id: report.id,
@@ -104,6 +120,7 @@ export async function GET(
         link_expires_at: report.link_expires_at
       },
       client: report.clients,
+      brand,
       isExpired: false
     });
 

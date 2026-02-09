@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { X, Download, Copy, Check, BarChart3, Scale, Calendar, FileText } from 'lucide-react';
+import { X, Download, Copy, Check, BarChart3, Scale, Calendar, FileText, Share2, FileDown } from 'lucide-react';
 import ShareProgressSummaryCard from './ShareProgressSummaryCard';
 import ShareWeightProgressChart from './ShareWeightProgressChart';
 import ShareWeeklyHighlightsCard from './ShareWeeklyHighlightsCard';
+import SocialShareCard from './SocialShareCard';
 import { useReportAnalytics, DailyData, WeeklyAverage } from '@/hooks/useReportAnalytics';
 import { useBrandConfig } from '@/hooks/useBrandConfig';
 
@@ -18,7 +19,7 @@ interface ShareProgressModalProps {
   goalWeight?: number;
 }
 
-type TabType = 'summary' | 'weight' | 'weekly' | 'full';
+type TabType = 'summary' | 'weight' | 'weekly' | 'social' | 'full';
 
 export default function ShareProgressModal({
   isOpen,
@@ -32,7 +33,9 @@ export default function ShareProgressModal({
   const [activeTab, setActiveTab] = useState<TabType>('summary');
   const [isCopied, setIsCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [unitPreference, setUnitPreference] = useState<'lbs' | 'kg'>('lbs');
+  const [socialAspect, setSocialAspect] = useState<'square' | 'story'>('square');
   const { brand } = useBrandConfig();
 
   // Process report data into daily data format
@@ -286,7 +289,8 @@ export default function ShareProgressModal({
     try {
       const elementId = activeTab === 'summary' ? 'share-progress-summary' :
         activeTab === 'weight' ? 'share-weight-chart' :
-        activeTab === 'weekly' ? 'share-weekly-highlights' : 'share-full-report';
+        activeTab === 'weekly' ? 'share-weekly-highlights' :
+        activeTab === 'social' ? 'share-social-card' : 'share-full-report';
 
       const element = document.getElementById(elementId);
       if (!element) throw new Error('Element not found');
@@ -295,7 +299,7 @@ export default function ShareProgressModal({
       const dataUrl = await canvas.toPng(element, {
         quality: 1,
         pixelRatio: 2,
-        backgroundColor: '#ffffff'
+        backgroundColor: activeTab === 'social' ? undefined : '#ffffff'
       });
 
       const link = document.createElement('a');
@@ -314,7 +318,8 @@ export default function ShareProgressModal({
     try {
       const elementId = activeTab === 'summary' ? 'share-progress-summary' :
         activeTab === 'weight' ? 'share-weight-chart' :
-        activeTab === 'weekly' ? 'share-weekly-highlights' : 'share-full-report';
+        activeTab === 'weekly' ? 'share-weekly-highlights' :
+        activeTab === 'social' ? 'share-social-card' : 'share-full-report';
 
       const element = document.getElementById(elementId);
       if (!element) throw new Error('Element not found');
@@ -323,7 +328,7 @@ export default function ShareProgressModal({
       const blob = await canvas.toBlob(element, {
         quality: 1,
         pixelRatio: 2,
-        backgroundColor: '#ffffff'
+        backgroundColor: activeTab === 'social' ? undefined : '#ffffff'
       });
 
       if (blob) {
@@ -337,6 +342,60 @@ export default function ShareProgressModal({
       console.error('Copy failed:', error);
     }
   }, [activeTab]);
+
+  // PDF export function - captures the full report as a PDF
+  const handlePdfExport = useCallback(async () => {
+    setIsExportingPdf(true);
+    try {
+      // Temporarily switch to full report tab to render it
+      const prevTab = activeTab;
+      if (activeTab !== 'full') {
+        setActiveTab('full');
+        // Wait for render
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      const element = document.getElementById('share-full-report');
+      if (!element) throw new Error('Full report element not found');
+
+      const htmlToImage = await import('html-to-image');
+      const dataUrl = await htmlToImage.toPng(element, {
+        quality: 1,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
+      });
+
+      // Create PDF from the image
+      const { default: jsPDF } = await import('jspdf');
+
+      // Get element dimensions
+      const elementWidth = element.offsetWidth;
+      const elementHeight = element.offsetHeight;
+
+      // Create landscape PDF sized to the content
+      const pdfWidth = 297; // A4 landscape width in mm
+      const scale = pdfWidth / elementWidth;
+      const pdfHeight = elementHeight * scale;
+
+      const pdf = new jsPDF({
+        orientation: pdfWidth > pdfHeight ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: [pdfWidth, pdfHeight]
+      });
+
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${clientName.replace(/\s+/g, '-')}-report-${new Date().toISOString().split('T')[0]}.pdf`);
+
+      // Restore previous tab
+      if (prevTab !== 'full') {
+        setActiveTab(prevTab);
+      }
+    } catch (error) {
+      console.error('PDF export failed:', error);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }, [activeTab, clientName]);
 
   // Handle escape key
   React.useEffect(() => {
@@ -363,6 +422,7 @@ export default function ShareProgressModal({
     { id: 'summary', label: 'Summary', icon: <BarChart3 className="w-4 h-4" /> },
     { id: 'weight', label: 'Weight', icon: <Scale className="w-4 h-4" /> },
     { id: 'weekly', label: 'Weekly', icon: <Calendar className="w-4 h-4" /> },
+    { id: 'social', label: 'Social', icon: <Share2 className="w-4 h-4" /> },
     { id: 'full', label: 'Full Report', icon: <FileText className="w-4 h-4" /> }
   ];
 
@@ -378,7 +438,7 @@ export default function ShareProgressModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
           className={`bg-bg-secondary rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-hidden pointer-events-auto ${
-            activeTab === 'full' ? 'max-w-5xl' : 'max-w-2xl'
+            activeTab === 'full' ? 'max-w-5xl' : activeTab === 'social' && socialAspect === 'story' ? 'max-w-3xl' : 'max-w-2xl'
           }`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -476,6 +536,51 @@ export default function ShareProgressModal({
                   unitPreference={unitPreference}
                   brand={brand}
                 />
+              )}
+              {activeTab === 'social' && (
+                <div>
+                  {/* Aspect ratio toggle */}
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <span className="text-xs text-gray-400">Format:</span>
+                    <div className="flex items-center gap-0.5 bg-gray-700/50 border border-gray-600 rounded-lg p-0.5">
+                      <button
+                        onClick={() => setSocialAspect('square')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                          socialAspect === 'square'
+                            ? 'bg-accent-purple text-white shadow'
+                            : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
+                        }`}
+                      >
+                        Square (1:1)
+                      </button>
+                      <button
+                        onClick={() => setSocialAspect('story')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                          socialAspect === 'story'
+                            ? 'bg-accent-purple text-white shadow'
+                            : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
+                        }`}
+                      >
+                        Story (9:16)
+                      </button>
+                    </div>
+                  </div>
+                  <SocialShareCard
+                    clientName={clientName}
+                    dateRangeStart={dateRangeStart}
+                    dateRangeEnd={dateRangeEnd}
+                    weightChange={weightData.weeklyChange}
+                    currentWeight={weightData.currentWeight}
+                    workoutsCompleted={consistencyAnalysis?.workouts.totalWorkouts || 0}
+                    avgCalories={consistencyAnalysis?.calories.avg}
+                    avgProtein={consistencyAnalysis?.protein.avg}
+                    avgDailySteps={consistencyAnalysis ? Math.round(consistencyAnalysis.steps.avg) : undefined}
+                    consistencyScore={consistencyAnalysis?.overallScore}
+                    aspectRatio={socialAspect}
+                    unitPreference={unitPreference}
+                    brand={brand}
+                  />
+                </div>
               )}
               {activeTab === 'full' && (
                 <div
@@ -590,6 +695,18 @@ export default function ShareProgressModal({
                   Copy to Clipboard
                 </>
               )}
+            </button>
+            <button
+              onClick={handlePdfExport}
+              disabled={isExportingPdf}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg glass border border-white/20 hover:border-accent-purple/50 text-white font-medium transition-colors disabled:opacity-50"
+            >
+              {isExportingPdf ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                <FileDown className="w-4 h-4" />
+              )}
+              PDF
             </button>
           </div>
         </div>
