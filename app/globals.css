@@ -3,22 +3,52 @@
 @tailwind utilities;
 
 :root {
-  /* Color System - Dark Futuristic Fitness (Refined Purple Palette) */
-  --color-bg-primary: #0A0A0F;
-  --color-bg-secondary: #13111C;
-  --color-bg-tertiary: #1C1825;
-  --color-bg-elevated: #251E35;
+  /* Color System - Clean Professional Light Theme with Blue Accent */
 
-  /* Primary Purple Gradient - inspired by reference */
-  --color-primary-start: #8B5CF6;
-  --color-primary-mid: #A78BFA;
-  --color-primary-end: #C4B5FD;
+  /* Backgrounds */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F9FAFB;
+  --color-bg-tertiary: #F3F4F6;
+  --color-bg-elevated: #FFFFFF;
 
-  /* Accent Colors */
-  --color-accent-purple: #A855F7;
-  --color-accent-violet: #7C3AED;
-  --color-accent-indigo: #6366F1;
-  --color-accent-pink: #EC4899;
+  /* Primary Blue Accent */
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-light: #DBEAFE;
+  --color-primary-lighter: #EFF6FF;
+
+  /* Legacy aliases (mapped to primary blue for backward compat) */
+  --color-primary-start: #2563EB;
+  --color-primary-mid: #3B82F6;
+  --color-primary-end: #60A5FA;
+  --color-accent-purple: #2563EB;
+  --color-accent-violet: #1D4ED8;
+  --color-accent-indigo: #4F46E5;
+  --color-accent-pink: #DC2626;
+
+  /* Text */
+  --color-text-primary: #111827;
+  --color-text-secondary: #4B5563;
+  --color-text-muted: #9CA3AF;
+  --color-text-dim: #D1D5DB;
+
+  /* Borders */
+  --color-border: #E5E7EB;
+  --color-border-hover: #D1D5DB;
+  --color-border-focus: #2563EB;
+
+  /* Status */
+  --color-success: #16A34A;
+  --color-warning: #CA8A04;
+  --color-error: #DC2626;
+  --color-info: #2563EB;
+
+  /* Sidebar (dark for contrast) */
+  --color-sidebar-bg: #111827;
+  --color-sidebar-hover: #1F2937;
+  --color-sidebar-active: #1E3A5F;
+  --color-sidebar-text: #D1D5DB;
+  --color-sidebar-text-active: #FFFFFF;
 
   /* Font Families */
   --font-display: var(--font-space-grotesk);
@@ -30,31 +60,21 @@ html,
 body {
   scroll-behavior: smooth !important;
   background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
 }
 
-/* It makes the HTML progress bar filling smooth when value change. */
+/* Progress bar smooth fill */
 progress::-webkit-progress-value {
   transition: 0.6s width ease-out;
 }
 
 /* Animation Keyframes */
-@keyframes gradient-shift {
+@keyframes float {
   0%, 100% {
-    background-position: 0% 50%;
+    transform: translateY(0px);
   }
   50% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
-    filter: blur(20px);
-  }
-  50% {
-    opacity: 0.8;
-    filter: blur(25px);
+    transform: translateY(-20px);
   }
 }
 
@@ -67,85 +87,82 @@ progress::-webkit-progress-value {
   }
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
-
 @layer base {
-  /* Enhanced Button Gradient - Refined Purple */
+  /* ===== BUTTON SYSTEM ===== */
+
+  /* Primary Button (blue, solid) — also serves as .btn-gradient legacy alias */
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm;
+  }
+
+  .btn-primary:disabled {
+    @apply bg-gray-300 text-gray-500 cursor-not-allowed shadow-none;
+  }
+
+  /* Legacy alias: .btn-gradient now renders as solid blue primary */
   .btn-gradient {
-    @apply relative overflow-hidden !border-0 !border-transparent !text-white shadow-lg duration-200;
-    background: linear-gradient(135deg, var(--color-primary-start), var(--color-accent-purple), var(--color-primary-end));
-    background-size: 300% 300%;
-    animation: gradient-shift 6s ease infinite;
+    @apply bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all duration-200 !border-0 !border-transparent;
   }
 
   .btn-gradient:hover {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.5), 0 0 60px rgba(168, 85, 247, 0.3);
-    transform: translateY(-2px);
+    @apply shadow-md;
+    transform: translateY(-1px);
   }
 
   .btn-gradient:disabled {
-    @apply !bg-gray-500/30;
-    animation: none;
+    @apply bg-gray-300 text-gray-500 cursor-not-allowed shadow-none;
+    transform: none;
+  }
+
+  /* Secondary Button (white, bordered) */
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:border-gray-400 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm;
+  }
+
+  /* Danger Button */
+  .btn-danger {
+    @apply bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 px-4 py-2.5 rounded-lg font-medium transition-colors;
+  }
+
+  /* Ghost Button */
+  .btn-ghost {
+    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-4 py-2.5 rounded-lg font-medium transition-colors;
   }
 
   .btn {
     @apply !capitalize;
   }
 
-  /* Elevated Card Style */
+  /* ===== CARD SYSTEM ===== */
+
+  /* Standard Card */
+  .card {
+    @apply bg-white border border-gray-200 rounded-xl shadow-sm;
+  }
+
+  /* Card with hover effect */
+  .card-hover {
+    @apply bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-gray-300 transition-all;
+  }
+
+  /* Legacy alias: .card-elevated now renders as white card */
   .card-elevated {
-    @apply relative overflow-hidden;
-    background: linear-gradient(135deg, rgba(13, 11, 20, 0.8), rgba(26, 21, 35, 0.6));
-    border: 1px solid rgba(168, 85, 247, 0.2);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 80px rgba(168, 85, 247, 0.1);
-    backdrop-filter: blur(10px);
+    @apply bg-white border border-gray-200 rounded-xl shadow-sm;
   }
 
   .card-elevated:hover {
-    border-color: rgba(168, 85, 247, 0.4);
-    box-shadow: 0 15px 60px rgba(0, 0, 0, 0.6), 0 0 100px rgba(168, 85, 247, 0.2);
-    transform: translateY(-4px);
+    @apply shadow-md border-gray-300;
+    transform: translateY(-2px);
   }
 
-  /* Gradient Border Animation */
-  .gradient-border {
-    @apply relative;
-    background: linear-gradient(var(--color-bg-secondary), var(--color-bg-secondary)) padding-box,
-                linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-purple)) border-box;
-    border: 2px solid transparent;
+  /* ===== INPUT SYSTEM ===== */
+
+  .input-field {
+    @apply w-full bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-lg px-3.5 py-2.5 transition-colors;
   }
 
-  .gradient-border-animated {
-    @apply relative;
-    background: linear-gradient(var(--color-bg-secondary), var(--color-bg-secondary)) padding-box,
-                linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-purple), var(--color-accent-green)) border-box;
-    border: 2px solid transparent;
-    background-size: 300% 300%;
-    animation: gradient-shift 6s ease infinite;
-  }
+  /* ===== MOBILE TOUCH OPTIMIZATIONS ===== */
 
-  /* Noise Texture Overlay */
-  .noise-texture::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-    opacity: 0.6;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  /* Mobile touch optimizations */
   .touch-manipulation {
     touch-action: manipulation;
     -webkit-touch-callout: none;
@@ -153,7 +170,6 @@ progress::-webkit-progress-value {
     user-select: none;
   }
 
-  /* Improved mobile button accessibility */
   @media (max-width: 640px) {
     .btn {
       min-height: 44px;
@@ -172,52 +188,37 @@ progress::-webkit-progress-value {
   }
 }
 
-/* Enhanced Glow Effects */
-.glow-effect {
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2),
-              0 0 40px rgba(168, 85, 247, 0.15),
-              0 0 60px rgba(168, 85, 247, 0.1);
-  backdrop-filter: blur(8px);
-}
+/* ===== UTILITY CLASSES ===== */
 
-.glow-cyan {
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.4),
-              0 0 60px rgba(0, 240, 255, 0.2);
-}
-
-.glow-purple {
-  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4),
-              0 0 60px rgba(168, 85, 247, 0.2);
-}
-
-.glow-green {
-  box-shadow: 0 0 30px rgba(16, 255, 128, 0.4),
-              0 0 60px rgba(16, 255, 128, 0.2);
-}
-
-/* Gradient Text - Refined Purple */
+/* Gradient Text — now blue gradient instead of purple */
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-primary-start), var(--color-accent-purple), var(--color-primary-end));
-  background-size: 300% 300%;
+  background: linear-gradient(135deg, #2563EB, #3B82F6, #60A5FA);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: gradient-shift 6s ease infinite;
 }
 
-/* Glassmorphism */
+/* Light variant for use on colored backgrounds */
+.gradient-text-light {
+  background: linear-gradient(135deg, #2563EB, #3B82F6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Glass effect — now light frosted glass */
 .glass {
-  background: rgba(13, 11, 20, 0.6);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-/* Perspective Transform */
+/* Perspective Card — simplified for light theme */
 .perspective-card {
-  transform-style: preserve-3d;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .perspective-card:hover {
-  transform: perspective(1000px) rotateX(5deg) rotateY(5deg);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
 }

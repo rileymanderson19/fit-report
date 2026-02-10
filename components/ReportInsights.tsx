@@ -192,15 +192,15 @@ export function ReportInsights({ dailyData, weeklyAverages, clientName, isScreen
   return (
     <div className="space-y-6">
       {/* Executive Summary */}
-      <div className="card bg-gradient-to-r from-primary/10 to-secondary/10 shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-xl flex items-center gap-2">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-gray-200 rounded-xl shadow-sm">
+        <div className="p-6">
+          <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             📋 Executive Summary for {clientName}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-            <div className="stat">
-              <div className="stat-title text-xs">Sleep Quality</div>
-              <div className="stat-value text-lg">
+            <div className="p-2">
+              <div className="text-xs text-gray-500 uppercase tracking-wide">Sleep Quality</div>
+              <div className="text-lg font-bold text-gray-900">
                 {(() => {
                   const avgSleep = dailyData.reduce((sum, day) => sum + day.sleepHours, 0) / dailyData.length;
                   if (avgSleep >= 7.5) return '🟢 Excellent';
@@ -209,9 +209,9 @@ export function ReportInsights({ dailyData, weeklyAverages, clientName, isScreen
                 })()}
               </div>
             </div>
-            <div className="stat">
-              <div className="stat-title text-xs">Activity Level</div>
-              <div className="stat-value text-lg">
+            <div className="p-2">
+              <div className="text-xs text-gray-500 uppercase tracking-wide">Activity Level</div>
+              <div className="text-lg font-bold text-gray-900">
                 {(() => {
                   const avgSteps = dailyData.reduce((sum, day) => sum + day.steps, 0) / dailyData.length;
                   if (avgSteps >= 10000) return '🟢 Active';
@@ -220,9 +220,9 @@ export function ReportInsights({ dailyData, weeklyAverages, clientName, isScreen
                 })()}
               </div>
             </div>
-            <div className="stat">
-              <div className="stat-title text-xs">Training</div>
-              <div className="stat-value text-lg">
+            <div className="p-2">
+              <div className="text-xs text-gray-500 uppercase tracking-wide">Training</div>
+              <div className="text-lg font-bold text-gray-900">
                 {(() => {
                   const workoutDays = dailyData.filter(day => day.workouts && day.workouts.length > 0).length;
                   const frequency = workoutDays / dailyData.length;
@@ -232,9 +232,9 @@ export function ReportInsights({ dailyData, weeklyAverages, clientName, isScreen
                 })()}
               </div>
             </div>
-            <div className="stat">
-              <div className="stat-title text-xs">Nutrition</div>
-              <div className="stat-value text-lg">
+            <div className="p-2">
+              <div className="text-xs text-gray-500 uppercase tracking-wide">Nutrition</div>
+              <div className="text-lg font-bold text-gray-900">
                 {(() => {
                   const avgProtein = dailyData.reduce((sum, day) => sum + day.protein, 0) / dailyData.length;
                   const avgCalories = dailyData.reduce((sum, day) => sum + day.calories, 0) / dailyData.length;
@@ -250,20 +250,20 @@ export function ReportInsights({ dailyData, weeklyAverages, clientName, isScreen
       </div>
 
       {/* Key Insights */}
-      <div className="card bg-base-200/50 shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-xl flex items-center gap-2">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="p-6">
+          <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             🔍 Key Insights
           </h3>
           <div className="space-y-3 mt-4">
             {insights.map((insight, index) => (
-              <div 
+              <div
                 key={index}
-                className={`alert ${
-                  insight.type === 'positive' ? 'alert-success' :
-                  insight.type === 'concern' ? 'alert-warning' :
-                  insight.type === 'goal' ? 'alert-info' :
-                  'alert-info'
+                className={`rounded-xl p-4 flex items-center gap-3 ${
+                  insight.type === 'positive' ? 'bg-green-50 border border-green-200' :
+                  insight.type === 'concern' ? 'bg-yellow-50 border border-yellow-200' :
+                  insight.type === 'goal' ? 'bg-blue-50 border border-blue-200' :
+                  'bg-blue-50 border border-blue-200'
                 }`}
               >
                 <span className="text-lg">{insight.icon}</span>
@@ -271,7 +271,7 @@ export function ReportInsights({ dailyData, weeklyAverages, clientName, isScreen
               </div>
             ))}
             {insights.length === 0 && (
-              <div className="text-center py-4 text-base-content/60">
+              <div className="text-center py-4 text-gray-500">
                 No specific insights to highlight for this period.
               </div>
             )}
@@ -281,15 +281,15 @@ export function ReportInsights({ dailyData, weeklyAverages, clientName, isScreen
 
       {/* Action Items */}
       {recommendations.length > 0 && (
-        <div className="card bg-base-200/50 shadow-lg">
-          <div className="card-body">
-            <h3 className="card-title text-xl flex items-center gap-2">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="p-6">
+            <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
               🎯 Recommended Action Items
             </h3>
             <ul className="space-y-2 mt-4">
               {recommendations.map((rec, index) => (
                 <li key={index} className="flex items-start gap-3">
-                  <span className="text-primary font-bold">•</span>
+                  <span className="text-blue-600 font-bold">•</span>
                   <span>{rec}</span>
                 </li>
               ))}

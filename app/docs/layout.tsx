@@ -29,19 +29,15 @@ export default function DocsLayout({
   ];
 
   return (
-    <div className="bg-gradient-to-b from-bg-primary via-bg-secondary to-black text-white min-h-screen">
-      <div className="glass border-b border-white/10 backdrop-blur-sm">
-        <div className="container mx-auto">
-          <div className="navbar-start">
-            <Link href="/docs" className="text-white hover:text-accent-purple transition-colors font-display text-xl">
-              📚 FitReport Docs
-            </Link>
-          </div>
-          <div className="navbar-end">
-            <Link href="/dashboard" className="glass border border-white/10 hover:border-accent-purple/50 text-white px-4 py-2 rounded-lg text-sm transition-all">
-              Dashboard
-            </Link>
-          </div>
+    <div className="bg-white min-h-screen">
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/docs" className="text-gray-900 hover:text-blue-600 transition-colors font-display text-xl font-semibold">
+            FitReport Docs
+          </Link>
+          <Link href="/dashboard" className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
+            Dashboard
+          </Link>
         </div>
       </div>
 
@@ -53,15 +49,15 @@ export default function DocsLayout({
               <nav className="space-y-6">
                 {navigation.map((section) => (
                   <div key={section.category}>
-                    <h3 className="font-semibold text-sm uppercase tracking-wide text-gray-400 font-display mb-3">
+                    <h3 className="font-semibold text-sm uppercase tracking-wide text-gray-500 font-display mb-3">
                       {section.category}
                     </h3>
-                    <ul className="space-y-2">
+                    <ul className="space-y-1">
                       {section.links.map((link) => (
                         <li key={link.href}>
                           <Link
                             href={link.href}
-                            className="block text-sm text-gray-300 hover:text-white hover:bg-white/5 hover:border-l-2 hover:border-accent-purple rounded px-3 py-2 transition-colors"
+                            className="block text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 hover:border-l-2 hover:border-blue-500 rounded px-3 py-2 transition-colors"
                           >
                             {link.title}
                           </Link>
@@ -76,7 +72,7 @@ export default function DocsLayout({
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <div className="prose prose-lg prose-invert max-w-none [&>*]:text-gray-300 [&>h1]:text-white [&>h2]:text-white [&>h3]:text-white [&>a]:text-accent-purple [&>a]:hover:text-accent-violet [&>code]:text-accent-purple [&>code]:bg-bg-secondary">
+            <div className="prose prose-lg max-w-none [&>*]:text-gray-600 [&>h1]:text-gray-900 [&>h2]:text-gray-900 [&>h3]:text-gray-900 [&>a]:text-blue-600 [&>a]:hover:text-blue-700 [&>code]:text-blue-600 [&>code]:bg-blue-50">
               {children}
             </div>
           </div>
@@ -84,4 +80,4 @@ export default function DocsLayout({
       </div>
     </div>
   );
-} 
+}

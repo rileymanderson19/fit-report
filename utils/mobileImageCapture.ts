@@ -115,7 +115,7 @@ export function getMobileOptimizedStyles(): string {
       margin-bottom: 24px !important;
       border-radius: 8px !important;
     }
-    #report-container .card-body {
+    #report-container .p-6 {
       padding: 24px !important;
     }
     #report-container table {
@@ -231,7 +231,7 @@ export function getMobileOptimizedStyles(): string {
         font-size: 22px !important;
         margin-bottom: 16px !important;
       }
-      #report-container .card-body {
+      #report-container .p-6 {
         padding: 20px !important;
       }
       #report-container th {
@@ -254,7 +254,7 @@ export function getMobileOptimizedStyles(): string {
         #report-container h3 {
           font-size: 20px !important;
         }
-        #report-container .card-body {
+        #report-container .p-6 {
           padding: 16px !important;
         }
         #report-container th {

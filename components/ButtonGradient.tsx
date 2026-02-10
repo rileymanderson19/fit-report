@@ -10,7 +10,7 @@ const ButtonGradient = ({
   onClick?: () => void;
 }) => {
   return (
-    <button className="btn btn-gradient animate-shimmer" onClick={onClick}>
+    <button className="btn-primary px-6 py-2.5 rounded-lg font-medium animate-shimmer" onClick={onClick}>
       {title}
     </button>
   );

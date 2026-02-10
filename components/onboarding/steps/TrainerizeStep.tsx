@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/libs/supabase/client";
 import { toast } from "sonner";
+import { CheckCircle, XCircle } from "lucide-react";
 
 interface Trainer {
   firstName: string;
@@ -55,7 +56,6 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
             password: profile.trainerize_password || "",
             trainerId: profile.trainerize_id || "",
           });
-          // If credentials exist, set as verified
           if (profile.trainerize_id) {
             setVerificationStatus("success");
           }
@@ -143,7 +143,6 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
     setVerificationStatus("idle");
 
     try {
-      // Verify credentials
       const response = await fetch("/api/trainerize/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -155,7 +154,6 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
         throw new Error(data.error || "Invalid credentials");
       }
 
-      // Save to database
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -165,13 +163,7 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
         return;
       }
 
-      console.log("[TrainerizeStep] Saving credentials for user:", user.id);
-      console.log("[TrainerizeStep] Username:", formData.username);
-      console.log("[TrainerizeStep] Has password:", !!formData.password);
-      console.log("[TrainerizeStep] Trainer ID:", formData.trainerId);
-
-      // Use upsert to handle case where profile doesn't exist yet
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from("profiles")
         .upsert({
           id: user.id,
@@ -182,14 +174,11 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
         })
         .select();
 
-      console.log("[TrainerizeStep] Upsert result - error:", error, "data:", data);
-
       if (error) throw error;
 
       setVerificationStatus("success");
       toast.success("Credentials verified and saved!");
 
-      // Move to next step
       setTimeout(() => {
         onNext("credentials_setup");
       }, 1000);
@@ -206,28 +195,30 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
 
   if (isInitializing) {
     return (
-      <div className="card-elevated rounded-2xl p-8 flex justify-center">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+      <div className="card p-8 flex justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="card-elevated rounded-2xl p-8">
+    <div className="card p-8">
       <div className="text-center mb-8">
-        <div className="text-5xl mb-4">🔗</div>
-        <h2 className="text-2xl font-display font-bold text-white mb-2">
+        <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">🔗</span>
+        </div>
+        <h2 className="text-2xl font-display font-bold text-gray-900 mb-2">
           Connect Trainerize
         </h2>
-        <p className="text-gray-400">
+        <p className="text-gray-500">
           Enter your Trainerize credentials to securely access client data.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-md mx-auto">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Trainerize Username</span>
+      <form onSubmit={handleSubmit} className="space-y-5 max-w-md mx-auto">
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            Trainerize Username
           </label>
           <input
             type="text"
@@ -235,14 +226,14 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
             value={formData.username}
             onChange={handleChange}
             placeholder="your-username"
-            className="input input-bordered w-full"
+            className="input-field"
             disabled={isLoading}
           />
         </div>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Trainerize Password</span>
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            Trainerize Password
           </label>
           <input
             type="password"
@@ -250,14 +241,14 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
             value={formData.password}
             onChange={handleChange}
             placeholder="••••••••"
-            className="input input-bordered w-full"
+            className="input-field"
             disabled={isLoading}
           />
         </div>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Trainer ID</span>
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            Trainer ID
           </label>
           <div className="flex gap-2">
             <input
@@ -266,13 +257,13 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
               value={formData.trainerId}
               onChange={handleChange}
               placeholder="Enter or fetch your trainer ID"
-              className="input input-bordered flex-1"
+              className="input-field flex-1"
               disabled={isLoading}
             />
             <button
               type="button"
               onClick={fetchTrainerList}
-              className="btn btn-outline"
+              className="btn-secondary px-4 py-2.5 rounded-lg font-medium whitespace-nowrap"
               disabled={
                 isLoadingTrainerList ||
                 isLoading ||
@@ -281,33 +272,30 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
               }
             >
               {isLoadingTrainerList ? (
-                <span className="loading loading-spinner loading-sm"></span>
+                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
               ) : (
                 "Find ID"
               )}
             </button>
           </div>
-          <label className="label">
-            <span className="label-text-alt text-gray-500">
-              Click &quot;Find ID&quot; to fetch your trainer ID automatically
-            </span>
-          </label>
+          <p className="text-xs text-gray-400 mt-1.5">
+            Click &quot;Find ID&quot; to fetch your trainer ID automatically
+          </p>
         </div>
 
-        {/* Trainer List */}
         {showTrainerList && trainerList.length > 0 && (
-          <div className="bg-base-300/50 rounded-lg p-4">
-            <h4 className="font-medium text-white mb-3">Select Your Trainer Profile:</h4>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h4 className="font-medium text-gray-900 mb-3">Select Your Trainer Profile:</h4>
             <div className="space-y-2">
               {trainerList.map((trainer) => (
                 <button
                   key={trainer.id}
                   type="button"
                   onClick={() => selectTrainer(trainer.id)}
-                  className="w-full text-left p-3 bg-base-200 hover:bg-base-100 rounded-lg transition-colors"
+                  className="w-full text-left p-3 bg-white border border-gray-200 hover:border-blue-300 hover:bg-blue-50 rounded-lg transition-colors"
                 >
-                  <span className="font-medium">{trainer.firstName}</span>
-                  <span className="text-gray-400 text-sm ml-2">
+                  <span className="font-medium text-gray-900">{trainer.firstName}</span>
+                  <span className="text-gray-500 text-sm ml-2">
                     ID: {trainer.id}
                   </span>
                 </button>
@@ -317,55 +305,31 @@ export function TrainerizeStep({ onNext, onBack }: TrainerizeStepProps) {
         )}
 
         {verificationStatus === "success" && (
-          <div className="alert alert-success">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current shrink-0 h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>Credentials verified successfully!</span>
+          <div className="bg-green-50 border border-green-200 p-4 rounded-lg flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+            <span className="text-green-700 text-sm">Credentials verified successfully!</span>
           </div>
         )}
 
         {verificationStatus === "error" && (
-          <div className="alert alert-error">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current shrink-0 h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>Invalid credentials. Please check and try again.</span>
+          <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex items-start gap-3">
+            <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <span className="text-red-700 text-sm">Invalid credentials. Please check and try again.</span>
           </div>
         )}
 
         <div className="flex gap-3 pt-4">
-          <button type="button" onClick={onBack} className="btn btn-ghost">
+          <button type="button" onClick={onBack} className="btn-ghost px-4 py-2.5 rounded-lg font-medium">
             Back
           </button>
           <button
             type="submit"
-            className="btn btn-primary flex-1"
+            className="btn-primary flex-1 px-6 py-2.5 rounded-lg font-medium inline-flex items-center justify-center gap-2"
             disabled={isLoading}
           >
             {isLoading ? (
               <>
-                <span className="loading loading-spinner loading-sm"></span>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Verifying...
               </>
             ) : (

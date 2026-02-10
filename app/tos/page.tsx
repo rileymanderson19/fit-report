@@ -1,29 +1,7 @@
 import Link from "next/link";
 import { getSEOTags } from "@/libs/seo";
 import config from "@/config";
-
-// CHATGPT PROMPT TO GENERATE YOUR TERMS & SERVICES — replace with your own data 👇
-
-// 1. Go to https://chat.openai.com/
-// 2. Copy paste bellow
-// 3. Replace the data with your own (if needed)
-// 4. Paste the answer from ChatGPT directly in the <pre> tag below
-
-// You are an excellent lawyer.
-
-// I need your help to write a simple Terms & Services for my website. Here is some context:
-// - Website: https://shipfa.st
-// - Name: ShipFast
-// - Contact information: marc@shipfa.st
-// - Description: A JavaScript code boilerplate to help entrepreneurs launch their startups faster
-// - Ownership: when buying a package, users can download code to create apps. They own the code but they do not have the right to resell it. They can ask for a full refund within 7 day after the purchase.
-// - User data collected: name, email and payment information
-// - Non-personal data collection: web cookies
-// - Link to privacy-policy: https://shipfa.st/privacy-policy
-// - Governing Law: France
-// - Updates to the Terms: users will be updated by email
-
-// Please write a simple Terms & Services for my site. Add the current date. Do not add or explain your reasoning. Answer:
+import { ArrowLeft } from "lucide-react";
 
 export const metadata = getSEOTags({
   title: `Terms and Conditions | ${config.appName}`,
@@ -32,75 +10,97 @@ export const metadata = getSEOTags({
 
 const TOS = () => {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-bg-primary via-bg-secondary to-black text-white relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent-purple/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-accent-violet/10 rounded-full blur-[120px]" />
-      </div>
-
-      <div className="relative z-10 max-w-4xl mx-auto p-5 md:p-10">
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto p-5 md:p-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 glass border border-white/10 hover:border-accent-purple/50 px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 mb-8"
+          className="btn-secondary px-4 py-2 rounded-lg font-medium inline-flex items-center gap-2 mb-8"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              fillRule="evenodd"
-              d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <ArrowLeft className="w-4 h-4" />
           Back
         </Link>
 
-        <div className="card-elevated p-8 md:p-12 rounded-2xl">
-          <h1 className="text-3xl md:text-4xl font-display font-bold mb-8">
-            Terms and Conditions for <span className="gradient-text">{config.appName}</span>
+        <div className="card p-8 md:p-12">
+          <h1 className="text-3xl md:text-4xl font-display font-bold mb-8 text-gray-900">
+            Terms and Conditions for <span className="text-blue-600">{config.appName}</span>
           </h1>
 
-          <pre
-            className="leading-relaxed whitespace-pre-wrap font-sans text-gray-300"
-          >
-          {`Last Updated: September 26, 2023
+          <div className="prose prose-lg max-w-none text-gray-600 space-y-6">
+            <p className="text-sm text-gray-400">Last Updated: January 15, 2025</p>
 
-Welcome to ShipFast!
+            <p>
+              Welcome to FitReport! These Terms of Service (&quot;Terms&quot;) govern your use of the FitReport website and services. By using our website and services, you agree to these Terms.
+            </p>
 
-These Terms of Service ("Terms") govern your use of the ShipFast website at https://shipfa.st ("Website") and the services provided by ShipFast. By using our Website and services, you agree to these Terms.
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">1. Description of FitReport</h2>
+              <p>
+                FitReport is a SaaS platform that generates comprehensive fitness progress reports for personal trainers by integrating with Trainerize. The service provides automated report generation, client data visualization, and progress tracking tools.
+              </p>
+            </section>
 
-1. Description of ShipFast
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">2. Subscription and Access</h2>
+              <p>
+                FitReport is available through paid subscription plans. When you subscribe, you gain access to the features included in your chosen plan. Access continues for the duration of your active subscription. You may cancel at any time, and your access will continue until the end of your current billing period.
+              </p>
+            </section>
 
-ShipFast is a platform that offers a JavaScript code boilerplate to assist entrepreneurs in launching their startups more efficiently.
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">3. User Data and Privacy</h2>
+              <p>
+                We collect and store user data, including name, email, payment information, and Trainerize credentials, as necessary to provide our services. For details on how we handle your data, please refer to our{" "}
+                <Link href="/privacy-policy" className="text-blue-600 hover:text-blue-700">Privacy Policy</Link>.
+              </p>
+            </section>
 
-2. Ownership and Usage Rights
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">4. Client Data Handling</h2>
+              <p>
+                FitReport accesses client training data through the Trainerize platform on your behalf. You are responsible for ensuring you have the appropriate permissions and consent from your clients to access and use their fitness data for report generation. FitReport processes this data solely for the purpose of generating reports and does not share client data with third parties.
+              </p>
+            </section>
 
-When you purchase a package from ShipFast, you gain the right to download and use the code provided for creating applications. You own the code you create but do not have the right to resell it. We offer a full refund within 7 days of purchase, as specified in our refund policy.
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">5. Non-Personal Data Collection</h2>
+              <p>
+                We use web cookies to collect non-personal data for the purpose of improving our services and user experience.
+              </p>
+            </section>
 
-3. User Data and Privacy
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">6. Acceptable Use</h2>
+              <p>
+                You agree to use FitReport only for its intended purpose of generating fitness reports. You may not use the service to collect, store, or distribute client data for purposes unrelated to fitness coaching and reporting.
+              </p>
+            </section>
 
-We collect and store user data, including name, email, and payment information, as necessary to provide our services. For details on how we handle your data, please refer to our Privacy Policy at https://shipfa.st/privacy-policy.
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">7. Governing Law</h2>
+              <p>
+                These Terms are governed by the laws of the United States of America.
+              </p>
+            </section>
 
-4. Non-Personal Data Collection
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">8. Updates to the Terms</h2>
+              <p>
+                We may update these Terms from time to time. Users will be notified of any significant changes via email.
+              </p>
+            </section>
 
-We use web cookies to collect non-personal data for the purpose of improving our services and user experience.
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">9. Contact</h2>
+              <p>
+                For any questions or concerns regarding these Terms of Service, please contact us at{" "}
+                <a href="mailto:riley@rileymanderson.com" className="text-blue-600 hover:text-blue-700">riley@rileymanderson.com</a>.
+              </p>
+            </section>
 
-5. Governing Law
-
-These Terms are governed by the laws of France.
-
-6. Updates to the Terms
-
-We may update these Terms from time to time. Users will be notified of any changes via email.
-
-For any questions or concerns regarding these Terms of Service, please contact us at marc@shipfa.st.
-
-Thank you for using ShipFast!`}
-          </pre>
+            <p className="text-sm text-gray-400 pt-4 border-t border-gray-200">
+              Thank you for using FitReport!
+            </p>
+          </div>
         </div>
       </div>
     </main>

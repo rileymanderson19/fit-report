@@ -59,7 +59,7 @@ export default function DraggableModal({
   // Handle drag start
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!modalRef.current || !supportsDragging) return;
-    
+
     const rect = modalRef.current.getBoundingClientRect();
     setDragOffset({
       x: e.clientX - rect.left,
@@ -135,7 +135,7 @@ export default function DraggableModal({
       {/* Draggable Modal */}
       <div
         ref={modalRef}
-        className={`fixed z-50 card-elevated ${width} ${className} ${
+        className={`fixed z-50 card ${width} ${className} ${
           isDragging ? 'shadow-2xl cursor-grabbing' : ''
         }`}
         style={{
@@ -151,18 +151,18 @@ export default function DraggableModal({
         {/* Drag Handle Header */}
         <div
           ref={dragHandleRef}
-          className={`flex justify-between items-center p-4 border-b border-white/10 bg-gradient-to-r from-accent-purple/10 to-accent-violet/10 rounded-t-lg ${
+          className={`flex justify-between items-center p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600/10 to-blue-700/10 rounded-t-lg ${
             supportsDragging
               ? (isDragging ? 'cursor-grabbing' : 'cursor-grab')
               : ''
           }`}
           onMouseDown={handleMouseDown}
         >
-          <h3 className="font-bold text-lg select-none text-white">{title}</h3>
+          <h3 className="font-bold text-lg select-none text-gray-900">{title}</h3>
           <div className="flex items-center gap-2">
             {/* Reset Position Button */}
             <button
-              className="glass border border-white/10 hover:border-accent-purple/50 text-gray-300 hover:text-white p-2 rounded-lg transition-all"
+              className="bg-white border border-gray-200 hover:border-blue-600/50 text-gray-600 hover:text-gray-900 p-2 rounded-lg transition-all"
               onClick={resetPosition}
               title="Reset position"
               type="button"
@@ -173,7 +173,7 @@ export default function DraggableModal({
             </button>
             {/* Close Button */}
             <button
-              className="glass border border-white/10 hover:border-red-500/50 text-gray-300 hover:text-red-400 p-2 rounded-lg transition-all"
+              className="bg-white border border-gray-200 hover:border-red-500/50 text-gray-600 hover:text-red-400 p-2 rounded-lg transition-all"
               onClick={onClose}
               type="button"
             >
@@ -191,4 +191,4 @@ export default function DraggableModal({
       </div>
     </>
   );
-} 
+}

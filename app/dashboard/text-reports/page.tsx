@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/libs/supabase/client';
 import { toast } from 'sonner';
+import { Copy, RotateCcw } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -23,52 +24,42 @@ export default function TestTextReportPage() {
   const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(new Set());
   const [clientSearchQuery, setClientSearchQuery] = useState('');
   const [filteredClients, setFilteredClients] = useState<Client[]>([]);
-  
+
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [template, setTemplate] = useState<'daily' | 'weekly' | 'enhanced'>('enhanced');
   const [weightUnit, setWeightUnit] = useState<'lbs' | 'kg'>('lbs');
-  
-  // Workflow state
+
   const [clientQueue, setClientQueue] = useState<Client[]>([]);
   const [currentClientIndex, setCurrentClientIndex] = useState(0);
   const [currentResult, setCurrentResult] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [completedClients, setCompletedClients] = useState<CompletedClient[]>([]);
   const [isWorkflowActive, setIsWorkflowActive] = useState(false);
-  
-  // Combined document state
+
   const [combinedDocument, setCombinedDocument] = useState<string | null>(null);
   const [isGeneratingCombined, setIsGeneratingCombined] = useState(false);
   const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0 });
 
-  // Set default date range (last 2 weeks ending yesterday)
   useEffect(() => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
-    
+
     const twoWeeksAgo = new Date(yesterday);
-    twoWeeksAgo.setDate(yesterday.getDate() - 13); // 14 days total (including yesterday)
+    twoWeeksAgo.setDate(yesterday.getDate() - 13);
     twoWeeksAgo.setHours(0, 0, 0, 0);
-    
+
     setDateFrom(twoWeeksAgo.toISOString().split('T')[0]);
     setDateTo(yesterday.toISOString().split('T')[0]);
   }, []);
 
-  // Load clients on mount
   useEffect(() => {
     const loadClients = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          console.log('No user found');
-          return;
-        }
+        if (!user) return;
 
-        console.log('Loading clients for user:', user.id);
-
-        // Try querying with goal first, fallback to without goal if it fails
         let result = await supabase
           .from('clients')
           .select('id, first_name, last_name, goal')
@@ -79,9 +70,7 @@ export default function TestTextReportPage() {
         let data: Client[] | null = result.data;
         let error = result.error;
 
-        // If query failed, try without goal column
         if (error) {
-          console.log('Query with goal failed, trying without goal:', error);
           const fallbackResult = await supabase
             .from('clients')
             .select('id, first_name, last_name')
@@ -89,14 +78,11 @@ export default function TestTextReportPage() {
             .eq('active', true)
             .order('first_name', { ascending: true });
 
-          // Add goal: null to each client
           data = fallbackResult.data?.map(client => ({ ...client, goal: null as Client['goal'] })) || null;
           error = fallbackResult.error;
         }
 
-        console.log('Query result:', { data, error });
         if (error) throw error;
-        console.log('Setting clients:', data);
         setClients(data || []);
         setFilteredClients(data || []);
       } catch (error) {
@@ -108,7 +94,6 @@ export default function TestTextReportPage() {
     loadClients();
   }, [supabase]);
 
-  // Filter clients based on search query
   useEffect(() => {
     if (!clientSearchQuery.trim()) {
       setFilteredClients(clients);
@@ -118,7 +103,7 @@ export default function TestTextReportPage() {
     const searchTerms = clientSearchQuery.toLowerCase().split(' ').filter(term => term.length > 0);
     const filtered = clients.filter(client => {
       const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
-      return searchTerms.every(term => 
+      return searchTerms.every(term =>
         fullName.includes(term) ||
         client.first_name.toLowerCase().includes(term) ||
         client.last_name.toLowerCase().includes(term)
@@ -128,7 +113,6 @@ export default function TestTextReportPage() {
     setFilteredClients(filtered);
   }, [clientSearchQuery, clients]);
 
-  // Toggle client selection
   const toggleClientSelection = (clientId: string) => {
     const newSelected = new Set(selectedClientIds);
     if (newSelected.has(clientId)) {
@@ -139,84 +123,54 @@ export default function TestTextReportPage() {
     setSelectedClientIds(newSelected);
   };
 
-  // Select/Deselect all filtered clients
   const toggleSelectAll = () => {
-    if (selectedClientIds.size === filteredClients.length && 
+    if (selectedClientIds.size === filteredClients.length &&
         filteredClients.every(c => selectedClientIds.has(c.id))) {
-      // Deselect all filtered clients
       const newSelected = new Set(selectedClientIds);
       filteredClients.forEach(c => newSelected.delete(c.id));
       setSelectedClientIds(newSelected);
     } else {
-      // Select all filtered clients
       const newSelected = new Set(selectedClientIds);
       filteredClients.forEach(c => newSelected.add(c.id));
       setSelectedClientIds(newSelected);
     }
   };
 
-  // Convert database goal format to API format
   const getClientGoal = (client: Client): 'fat loss' | 'maintenance' | 'muscle gain' => {
     if (!client.goal) return 'fat loss';
-
     switch (client.goal) {
-      case 'fat_loss':
-        return 'fat loss';
-      case 'muscle_gain':
-        return 'muscle gain';
-      case 'maintenance':
-        return 'maintenance';
-      default:
-        return 'fat loss';
+      case 'fat_loss': return 'fat loss';
+      case 'muscle_gain': return 'muscle gain';
+      case 'maintenance': return 'maintenance';
+      default: return 'fat loss';
     }
   };
 
-  // Generate report for a specific client
   const generateReportForClient = async (client: Client) => {
-    try {
-      const response = await fetch('/api/reports/generate-text', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    const response = await fetch('/api/reports/generate-text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clientId: client.id,
+        dateRange: {
+          from: new Date(dateFrom).toISOString(),
+          to: new Date(dateTo).toISOString()
         },
-        body: JSON.stringify({
-          clientId: client.id,
-          dateRange: {
-            from: new Date(dateFrom).toISOString(),
-            to: new Date(dateTo).toISOString()
-          },
-          template,
-          weightUnit,
-          goal: getClientGoal(client)
-        }),
-      });
+        template,
+        weightUnit,
+        goal: getClientGoal(client)
+      }),
+    });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate text report');
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error generating report:', error);
-      throw error;
-    }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to generate text report');
+    return data;
   };
 
-  // Start workflow
   const handleStartWorkflow = async () => {
-    if (selectedClientIds.size === 0) {
-      toast.error('Please select at least one client');
-      return;
-    }
+    if (selectedClientIds.size === 0) { toast.error('Please select at least one client'); return; }
+    if (!dateFrom || !dateTo) { toast.error('Please set date range'); return; }
 
-    if (!dateFrom || !dateTo) {
-      toast.error('Please set date range');
-      return;
-    }
-
-    // Build client queue from selected clients
     const queue = clients.filter(c => selectedClientIds.has(c.id));
     setClientQueue(queue);
     setCurrentClientIndex(0);
@@ -224,7 +178,6 @@ export default function TestTextReportPage() {
     setIsWorkflowActive(true);
     setCurrentResult(null);
 
-    // Generate first client's report
     setIsGenerating(true);
     try {
       const result = await generateReportForClient(queue[0]);
@@ -238,24 +191,18 @@ export default function TestTextReportPage() {
     }
   };
 
-  // Handle Done button - move to next client
   const handleDone = async () => {
     const currentClient = clientQueue[currentClientIndex];
-    
-    // Mark current client as completed
     setCompletedClients(prev => [...prev, {
       id: currentClient.id,
       name: `${currentClient.first_name} ${currentClient.last_name}`,
       completedAt: new Date()
     }]);
 
-    // Check if there are more clients
     if (currentClientIndex < clientQueue.length - 1) {
       const nextIndex = currentClientIndex + 1;
       setCurrentClientIndex(nextIndex);
       setCurrentResult(null);
-      
-      // Generate next client's report
       setIsGenerating(true);
       try {
         const nextClient = clientQueue[nextIndex];
@@ -268,13 +215,11 @@ export default function TestTextReportPage() {
         setIsGenerating(false);
       }
     } else {
-      // All clients completed
       setIsWorkflowActive(false);
       toast.success('All clients completed!');
     }
   };
 
-  // Reset workflow
   const handleReset = () => {
     setIsWorkflowActive(false);
     setClientQueue([]);
@@ -283,17 +228,9 @@ export default function TestTextReportPage() {
     setCompletedClients([]);
   };
 
-  // Generate combined document
   const handleGenerateCombined = async () => {
-    if (selectedClientIds.size === 0) {
-      toast.error('Please select at least one client');
-      return;
-    }
-
-    if (!dateFrom || !dateTo) {
-      toast.error('Please set date range');
-      return;
-    }
+    if (selectedClientIds.size === 0) { toast.error('Please select at least one client'); return; }
+    if (!dateFrom || !dateTo) { toast.error('Please set date range'); return; }
 
     const selectedClients = clients.filter(c => selectedClientIds.has(c.id));
     setIsGeneratingCombined(true);
@@ -301,38 +238,24 @@ export default function TestTextReportPage() {
     setCombinedDocument(null);
 
     try {
-      // Generate all reports in parallel
       const reportPromises = selectedClients.map(async (client) => {
         const result = await generateReportForClient(client);
         setGenerationProgress(prev => ({ ...prev, current: prev.current + 1 }));
-        return {
-          client,
-          report: result.text,
-          metadata: result.metadata
-        };
+        return { client, report: result.text, metadata: result.metadata };
       });
 
       const reportResults = await Promise.all(reportPromises);
 
-      // Combine reports with delimiters
       const combinedLines: string[] = [];
-      
       reportResults.forEach((result, index) => {
         const clientName = `${result.client.first_name} ${result.client.last_name}`;
-        
-        // Add delimiter before each report (except first)
-        if (index > 0) {
-          combinedLines.push('');
-          combinedLines.push('');
-        }
-        
+        if (index > 0) { combinedLines.push(''); combinedLines.push(''); }
         combinedLines.push(`=== ${clientName.toUpperCase()} ===`);
         combinedLines.push('');
         combinedLines.push(result.report);
       });
 
-      const combinedText = combinedLines.join('\n');
-      setCombinedDocument(combinedText);
+      setCombinedDocument(combinedLines.join('\n'));
       toast.success(`Combined document generated for ${selectedClients.length} client(s)`);
     } catch (error) {
       console.error('Error generating combined document:', error);
@@ -350,175 +273,129 @@ export default function TestTextReportPage() {
 
   const currentClient = clientQueue[currentClientIndex];
   const selectedCount = selectedClientIds.size;
-  const allFilteredSelected = filteredClients.length > 0 && 
+  const allFilteredSelected = filteredClients.length > 0 &&
     filteredClients.every(c => selectedClientIds.has(c.id));
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6 gradient-text font-display">Client Check-In Reports</h1>
+    <div className="max-w-4xl">
+      <h1 className="text-2xl font-display font-bold text-gray-900 mb-6">Client Check-In Reports</h1>
 
       {!isWorkflowActive ? (
-        // Configuration View
         <>
-          <div className="card-elevated mb-6">
-            <div className="card-body">
-              <h2 className="card-title mb-4 text-white">Configuration</h2>
+          {/* Configuration */}
+          <div className="card p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuration</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {/* Template Selection */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="text-gray-300">Template</span>
-                  </label>
-                  <select
-                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
-                    value={template}
-                    onChange={(e) => setTemplate(e.target.value as any)}
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="enhanced">Enhanced</option>
-                  </select>
-                </div>
-
-                {/* Weight Unit */}
-                <div className="form-control">
-                  <label className="label">
-                    <span className="text-gray-300">Weight Unit</span>
-                  </label>
-                  <select
-                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
-                    value={weightUnit}
-                    onChange={(e) => setWeightUnit(e.target.value as any)}
-                  >
-                    <option value="lbs">Pounds (lbs)</option>
-                    <option value="kg">Kilograms (kg)</option>
-                  </select>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Template</label>
+                <select className="input-field text-sm" value={template} onChange={(e) => setTemplate(e.target.value as any)}>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="enhanced">Enhanced</option>
+                </select>
               </div>
-
-              {/* Date Range */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="text-gray-300">Start Date</span>
-                  </label>
-                  <input
-                    type="date"
-                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="text-gray-300">End Date</span>
-                  </label>
-                  <input
-                    type="date"
-                    className="bg-bg-secondary border border-white/10 text-white focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Weight Unit</label>
+                <select className="input-field text-sm" value={weightUnit} onChange={(e) => setWeightUnit(e.target.value as any)}>
+                  <option value="lbs">Pounds (lbs)</option>
+                  <option value="kg">Kilograms (kg)</option>
+                </select>
               </div>
-
-              {/* Client Selection */}
-              <div className="form-control mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="label">
-                    <span className="text-gray-300 font-semibold">Select Clients</span>
-                    <span className="text-gray-400 text-xs">({selectedCount} selected)</span>
-                  </label>
-                  <button
-                    className="glass border border-white/10 hover:border-accent-purple/50 text-white px-3 py-1.5 rounded-lg text-sm transition-all"
-                    onClick={toggleSelectAll}
-                  >
-                    {allFilteredSelected ? 'Deselect All' : 'Select All'}
-                  </button>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Start</label>
+                  <input type="date" className="input-field text-sm" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
                 </div>
-                
-                {/* Search */}
-                <input
-                  type="text"
-                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 mb-3"
-                  placeholder="Search clients..."
-                  value={clientSearchQuery}
-                  onChange={(e) => setClientSearchQuery(e.target.value)}
-                />
-
-                {/* Client List with Checkboxes */}
-                <div className="border border-white/10 rounded-lg max-h-96 overflow-y-auto">
-                  <div className="p-2">
-                    {filteredClients.length === 0 ? (
-                      <div className="text-center py-4 text-gray-400">
-                        No clients found
-                      </div>
-                    ) : (
-                      filteredClients.map((client) => {
-                        const clientName = `${client.first_name} ${client.last_name}`;
-                        const isSelected = selectedClientIds.has(client.id);
-                        return (
-                          <label
-                            key={client.id}
-                            className="flex items-center gap-3 p-3 hover:bg-white/5 rounded cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
-                              checked={isSelected}
-                              onChange={() => toggleClientSelection(client.id)}
-                            />
-                            <span className="flex-1 text-white">{clientName}</span>
-                          </label>
-                        );
-                      })
-                    )}
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">End</label>
+                  <input type="date" className="input-field text-sm" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
                 </div>
-              </div>
-
-              <div className="mt-4">
-                <button
-                  className="btn-gradient px-6 py-3 rounded-lg font-medium w-full"
-                  onClick={handleGenerateCombined}
-                  disabled={selectedCount === 0 || isGeneratingCombined}
-                >
-                  {isGeneratingCombined ? (
-                    <>
-                      <span className="loading loading-spinner text-accent-purple"></span>
-                      Generating... ({generationProgress.current}/{generationProgress.total})
-                    </>
-                  ) : (
-                    `Create Text Report (${selectedCount})`
-                  )}
-                </button>
               </div>
             </div>
+
+            {/* Client Selection */}
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Select Clients <span className="text-gray-400 font-normal">({selectedCount} selected)</span>
+                </label>
+                <button className="btn-ghost text-xs px-2 py-1" onClick={toggleSelectAll}>
+                  {allFilteredSelected ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+
+              <input
+                type="text"
+                className="input-field text-sm mb-3"
+                placeholder="Search clients..."
+                value={clientSearchQuery}
+                onChange={(e) => setClientSearchQuery(e.target.value)}
+              />
+
+              <div className="border border-gray-200 rounded-lg max-h-72 overflow-y-auto">
+                {filteredClients.length === 0 ? (
+                  <div className="text-center py-6 text-gray-400 text-sm">No clients found</div>
+                ) : (
+                  filteredClients.map((client) => {
+                    const clientName = `${client.first_name} ${client.last_name}`;
+                    const isSelected = selectedClientIds.has(client.id);
+                    return (
+                      <label
+                        key={client.id}
+                        className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          checked={isSelected}
+                          onChange={() => toggleClientSelection(client.id)}
+                        />
+                        <span className="text-sm text-gray-900">{clientName}</span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <button
+              className="btn-primary w-full py-3 rounded-lg font-medium"
+              onClick={handleGenerateCombined}
+              disabled={selectedCount === 0 || isGeneratingCombined}
+            >
+              {isGeneratingCombined ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Generating... ({generationProgress.current}/{generationProgress.total})
+                </span>
+              ) : (
+                `Create Text Report (${selectedCount})`
+              )}
+            </button>
           </div>
 
           {/* Combined Document Display */}
           {combinedDocument && (
-            <div className="card-elevated mb-6">
-              <div className="card-body">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h2 className="card-title text-white">Combined Document</h2>
-                    <p className="text-sm text-gray-400">
-                      {selectedCount} client{selectedCount !== 1 ? 's' : ''} • {combinedDocument.length.toLocaleString()} characters
-                    </p>
-                  </div>
-                  <button
-                    className="btn-gradient px-6 py-3 rounded-lg text-sm font-medium"
-                    onClick={() => copyToClipboard(combinedDocument)}
-                  >
-                    Copy Document
-                  </button>
+            <div className="card p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Combined Document</h2>
+                  <p className="text-sm text-gray-500">
+                    {selectedCount} client{selectedCount !== 1 ? 's' : ''} &middot; {combinedDocument.length.toLocaleString()} characters
+                  </p>
                 </div>
+                <button
+                  className="btn-primary text-sm inline-flex items-center gap-2"
+                  onClick={() => copyToClipboard(combinedDocument)}
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy Document
+                </button>
+              </div>
 
-                <div className="bg-bg-secondary p-4 rounded max-h-[600px] overflow-y-auto">
-                  <pre className="text-sm whitespace-pre-wrap">{combinedDocument}</pre>
-                </div>
+              <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg max-h-[600px] overflow-y-auto">
+                <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">{combinedDocument}</pre>
               </div>
             </div>
           )}
@@ -527,84 +404,67 @@ export default function TestTextReportPage() {
         // Workflow View
         <>
           {/* Progress Bar */}
-          <div className="card-elevated mb-6">
-            <div className="card-body">
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="card-title text-white">
-                  Client {currentClientIndex + 1} of {clientQueue.length}
-                </h2>
-                <button
-                  className="glass border border-white/10 hover:border-red-500/50 text-white px-3 py-1.5 rounded-lg text-sm transition-all"
-                  onClick={handleReset}
-                >
-                  Reset
-                </button>
-              </div>
-              <progress
-                className="[&::-webkit-progress-bar]:bg-bg-secondary [&::-webkit-progress-value]:bg-gradient-to-r [&::-webkit-progress-value]:from-primary-start [&::-webkit-progress-value]:to-accent-purple [&::-moz-progress-bar]:bg-gradient-to-r [&::-moz-progress-bar]:from-primary-start [&::-moz-progress-bar]:to-accent-purple w-full h-3 rounded-full bg-bg-secondary"
-                value={currentClientIndex + 1}
-                max={clientQueue.length}
-              ></progress>
-              <p className="text-sm text-gray-300">
-                {currentClient?.first_name} {currentClient?.last_name}
-              </p>
+          <div className="card p-6 mb-6">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Client {currentClientIndex + 1} of {clientQueue.length}
+              </h2>
+              <button className="btn-ghost text-sm inline-flex items-center gap-1.5" onClick={handleReset}>
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset
+              </button>
             </div>
+            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+              <div
+                className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                style={{ width: `${((currentClientIndex + 1) / clientQueue.length) * 100}%` }}
+              />
+            </div>
+            <p className="text-sm text-gray-500">
+              {currentClient?.first_name} {currentClient?.last_name}
+            </p>
           </div>
 
           {/* Current Report */}
           {isGenerating ? (
-            <div className="card-elevated">
-              <div className="card-body text-center py-12">
-                <span className="loading loading-spinner loading-lg text-accent-purple"></span>
-                <p className="mt-4 text-gray-300">Generating report...</p>
-              </div>
+            <div className="card p-12 text-center">
+              <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="mt-4 text-gray-500">Generating report...</p>
             </div>
           ) : currentResult ? (
-            <div className="card-elevated mb-6">
-              <div className="card-body">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="card-title text-white">Report</h2>
-                  <button
-                    className="glass border border-white/10 hover:border-accent-purple/50 text-white px-3 py-1.5 rounded-lg text-sm transition-all"
-                    onClick={() => copyToClipboard(currentResult.text)}
-                  >
-                    Copy Text
-                  </button>
-                </div>
-
-                {/* Text Output */}
-                <div className="mb-4">
-                  <div className="bg-bg-secondary p-4 rounded max-h-96 overflow-y-auto">
-                    <pre className="text-sm whitespace-pre-wrap">{currentResult.text}</pre>
-                  </div>
-                </div>
-
-                {/* Done Button */}
+            <div className="card p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Report</h2>
                 <button
-                  className="btn-gradient w-full mt-4"
-                  onClick={handleDone}
+                  className="btn-secondary text-sm inline-flex items-center gap-2"
+                  onClick={() => copyToClipboard(currentResult.text)}
                 >
-                  {currentClientIndex < clientQueue.length - 1 ? 'Done - Next Client' : 'Done - Complete'}
+                  <Copy className="w-4 h-4" />
+                  Copy Text
                 </button>
               </div>
+
+              <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg max-h-96 overflow-y-auto mb-4">
+                <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">{currentResult.text}</pre>
+              </div>
+
+              <button className="btn-primary w-full py-3 rounded-lg font-medium" onClick={handleDone}>
+                {currentClientIndex < clientQueue.length - 1 ? 'Done - Next Client' : 'Done - Complete'}
+              </button>
             </div>
           ) : null}
 
-          {/* Completed Clients History */}
+          {/* Completed Clients */}
           {completedClients.length > 0 && (
-            <div className="card-elevated">
-              <div className="card-body">
-                <h3 className="font-semibold mb-4 text-white">Completed ({completedClients.length})</h3>
-                <div className="space-y-2">
-                  {completedClients.map((client) => (
-                    <div key={client.id} className="flex justify-between items-center p-2 bg-bg-secondary rounded">
-                      <span className="text-white">{client.name}</span>
-                      <span className="text-sm text-green-400">
-                        ✓ Completed
-                      </span>
-                    </div>
-                  ))}
-                </div>
+            <div className="card p-6">
+              <h3 className="font-semibold text-gray-900 mb-3">Completed ({completedClients.length})</h3>
+              <div className="space-y-2">
+                {completedClients.map((client) => (
+                  <div key={client.id} className="flex justify-between items-center px-3 py-2 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-900">{client.name}</span>
+                    <span className="text-xs text-green-600 font-medium">Completed</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -613,4 +473,3 @@ export default function TestTextReportPage() {
     </div>
   );
 }
-

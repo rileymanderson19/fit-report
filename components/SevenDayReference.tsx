@@ -77,14 +77,14 @@ interface SevenDayReferenceProps {
   dateRangeEnd?: string;
 }
 
-export function SevenDayReference({ 
-  data, 
+export function SevenDayReference({
+  data,
   dateRangeEnd
 }: SevenDayReferenceProps) {
   // Process all data into daily format
   const processedDailyData = useMemo(() => {
     const dailyData = new Map<string, DailyData>();
-    
+
     // Process body stats
     data.bodyStats?.bodyStats?.forEach(item => {
       const date = new Date(item.date).toISOString().split('T')[0];
@@ -156,7 +156,7 @@ export function SevenDayReference({
       const durationMs = endTime.getTime() - startTime.getTime();
       const sleepHours = durationMs / (1000 * 60 * 60);
       const date = endTime.toISOString().split('T')[0];
-      
+
       if (!dailyData.has(date)) {
         dailyData.set(date, {
           date,
@@ -203,7 +203,7 @@ export function SevenDayReference({
       const [endYear, endMonth, endDay] = dateRangeEnd.split('T')[0].split('-').map(Number);
       const endDate = new Date(endYear, endMonth - 1, endDay);
       const last7Days: DailyData[] = [];
-      
+
       // Generate 7 consecutive days ending on the reporting period end date
       for (let i = 6; i >= 0; i--) {
         // Create each date consistently in local timezone
@@ -211,10 +211,10 @@ export function SevenDayReference({
         const currentMonth = endDate.getMonth();
         const currentDay = endDate.getDate() - i;
         const currentDate = new Date(currentYear, currentMonth, currentDay);
-        
+
         // Use consistent date string formatting to match data processing
         const dateStr = currentDate.toISOString().split('T')[0];
-        
+
         // Use existing data if available, otherwise create empty daily data
         const existingData = dailyData.get(dateStr);
         if (existingData) {
@@ -233,7 +233,7 @@ export function SevenDayReference({
           });
         }
       }
-      
+
       return last7Days;
     } else {
       // Fallback to original behavior if no date range provided
@@ -261,15 +261,15 @@ export function SevenDayReference({
   };
 
   return (
-    <div className="bg-base-200/50 border border-base-300 rounded-lg p-6 mb-8">
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold">7-Day Reference</h3>
-          <p className="text-sm text-base-content/70">
+          <p className="text-sm text-gray-500">
             Last 7 days overview - Reference only (not included in report)
           </p>
         </div>
-        <div className="badge badge-ghost">
+        <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
           Reference Tool
         </div>
       </div>
@@ -279,26 +279,26 @@ export function SevenDayReference({
           const { dayName, dayNum } = formatDate(day.date);
           const stepsTarget = 10000;
           const hasAnyData = day.weight > 0 || day.steps > 0 || day.calories > 0 || day.sleepHours > 0 || (day.workouts && day.workouts.length > 0);
-          
+
           return (
-            <div 
-              key={day.date} 
-              className={`bg-base-100 rounded-lg p-2 md:p-4 border transition-shadow ${
-                hasAnyData 
-                  ? 'border-base-300 hover:shadow-md' 
-                  : 'border-base-200 bg-base-50 opacity-75'
+            <div
+              key={day.date}
+              className={`bg-white rounded-lg p-2 md:p-4 border transition-shadow ${
+                hasAnyData
+                  ? 'border-gray-200 hover:shadow-md'
+                  : 'border-gray-100 bg-gray-50 opacity-75'
               }`}
             >
               {/* Date Header */}
               <div className="text-center mb-3">
-                <div className="text-xs font-medium text-base-content/60">{dayName}</div>
+                <div className="text-xs font-medium text-gray-500">{dayName}</div>
                 <div className="text-xl font-bold text-primary">{dayNum}</div>
               </div>
 
               {/* Weight */}
               {day.weight > 0 && (
                 <div className="mb-2 text-center">
-                  <div className="text-xs text-base-content/60">Weight</div>
+                  <div className="text-xs text-gray-500">Weight</div>
                   <div className="text-sm font-medium">{day.weight.toFixed(1)} lbs</div>
                 </div>
               )}
@@ -306,17 +306,17 @@ export function SevenDayReference({
               {/* Steps */}
               <div className="mb-2">
                 <div className="flex items-center justify-between mb-1">
-                  <div className="text-xs text-base-content/60">Steps</div>
+                  <div className="text-xs text-gray-500">Steps</div>
                   <div className={`text-xs font-medium ${getProgressColor(day.steps, stepsTarget)}`}>
                     {day.steps > 0 ? day.steps.toLocaleString() : '-'}
                   </div>
                 </div>
-                <div className="w-full bg-base-200 rounded-full h-1.5">
-                  <div 
+                <div className="w-full bg-gray-100 rounded-full h-1.5">
+                  <div
                     className={`h-1.5 rounded-full transition-all ${
-                      day.steps >= stepsTarget * 0.9 ? 'bg-success' : 
-                      day.steps >= stepsTarget * 0.7 ? 'bg-warning' : 
-                      day.steps > 0 ? 'bg-error' : 'bg-base-300'
+                      day.steps >= stepsTarget * 0.9 ? 'bg-success' :
+                      day.steps >= stepsTarget * 0.7 ? 'bg-warning' :
+                      day.steps > 0 ? 'bg-error' : 'bg-gray-200'
                     }`}
                     style={{ width: `${Math.min((day.steps / stepsTarget) * 100, 100)}%` }}
                   ></div>
@@ -326,19 +326,19 @@ export function SevenDayReference({
               {/* No data indicator for empty days */}
               {!hasAnyData && (
                 <div className="text-center py-2">
-                  <div className="text-xs text-base-content/40">No data</div>
+                  <div className="text-xs text-gray-400">No data</div>
                 </div>
               )}
 
-              
+
 
               {/* Nutrition Summary */}
               {day.calories > 0 && (
                 <div className="mb-2 text-center">
-                  <div className="text-xs text-base-content/60 mb-1">Nutrition</div>
+                  <div className="text-xs text-gray-500 mb-1">Nutrition</div>
                   <div className="text-xs">
                     <div>{day.calories.toFixed(0)} cal</div>
-                    <div className="text-base-content/50">
+                    <div className="text-gray-400">
                       P: {day.protein.toFixed(0)}g | C: {day.carbs.toFixed(0)}g | F: {day.fats.toFixed(0)}g
                     </div>
                   </div>
@@ -348,7 +348,7 @@ export function SevenDayReference({
               {/* Workouts */}
               {day.workouts && day.workouts.length > 0 && (
                 <div className="mb-2">
-                  <div className="text-xs text-base-content/60 mb-1">Workouts</div>
+                  <div className="text-xs text-gray-500 mb-1">Workouts</div>
                   <div className="space-y-1">
                     {day.workouts.slice(0, 2).map((workout, idx) => (
                       <div key={idx} className="text-xs p-1 bg-success/10 text-success rounded border">
@@ -356,7 +356,7 @@ export function SevenDayReference({
                       </div>
                     ))}
                     {day.workouts.length > 2 && (
-                      <div className="text-xs text-base-content/50">
+                      <div className="text-xs text-gray-400">
                         +{day.workouts.length - 2} more
                       </div>
                     )}
@@ -367,9 +367,9 @@ export function SevenDayReference({
               {/* Sleep */}
               {day.sleepHours > 0 && (
                 <div className="text-center">
-                  <div className="text-xs text-base-content/60">Sleep</div>
+                  <div className="text-xs text-gray-500">Sleep</div>
                   <div className={`text-xs font-medium ${
-                    day.sleepHours >= 7 ? 'text-success' : 
+                    day.sleepHours >= 7 ? 'text-success' :
                     day.sleepHours >= 6 ? 'text-warning' : 'text-error'
                   }`}>
                     {day.sleepHours.toFixed(1)}h
@@ -382,10 +382,10 @@ export function SevenDayReference({
       </div>
 
       {processedDailyData.length === 0 && (
-        <div className="text-center py-8 text-base-content/60">
+        <div className="text-center py-8 text-gray-500">
           No data available for the 7-day reference period
         </div>
       )}
     </div>
   );
-} 
+}

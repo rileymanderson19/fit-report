@@ -443,17 +443,17 @@ export default function ShareProgressModal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-accent-purple/10 to-accent-violet/10">
-            <h2 className="text-lg font-bold text-white">Share Progress</h2>
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600/10 to-blue-700/10">
+            <h2 className="text-lg font-bold text-gray-900">Share Progress</h2>
             <div className="flex items-center gap-3">
               {/* Unit Toggle */}
-              <div className="flex items-center gap-0.5 bg-gray-700/50 border border-gray-600 rounded-lg p-0.5">
+              <div className="flex items-center gap-0.5 bg-gray-100 border border-gray-200 rounded-lg p-0.5">
                 <button
                   onClick={() => setUnitPreference('lbs')}
                   className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
                     unitPreference === 'lbs'
-                      ? 'bg-accent-purple text-white shadow'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
+                      ? 'bg-blue-600 text-white shadow'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                   }`}
                 >
                   lbs
@@ -462,8 +462,8 @@ export default function ShareProgressModal({
                   onClick={() => setUnitPreference('kg')}
                   className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
                     unitPreference === 'kg'
-                      ? 'bg-accent-purple text-white shadow'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
+                      ? 'bg-blue-600 text-white shadow'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                   }`}
                 >
                   kg
@@ -471,23 +471,23 @@ export default function ShareProgressModal({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 p-2 bg-base-300/50 border-b border-white/10">
+          <div className="flex gap-1 p-2 bg-gray-200/50 border-b border-gray-200">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? 'bg-accent-purple text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-white/10'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
                 {tab.icon}
@@ -541,14 +541,14 @@ export default function ShareProgressModal({
                 <div>
                   {/* Aspect ratio toggle */}
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <span className="text-xs text-gray-400">Format:</span>
-                    <div className="flex items-center gap-0.5 bg-gray-700/50 border border-gray-600 rounded-lg p-0.5">
+                    <span className="text-xs text-gray-500">Format:</span>
+                    <div className="flex items-center gap-0.5 bg-gray-100 border border-gray-200 rounded-lg p-0.5">
                       <button
                         onClick={() => setSocialAspect('square')}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                           socialAspect === 'square'
-                            ? 'bg-accent-purple text-white shadow'
-                            : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
+                            ? 'bg-blue-600 text-white shadow'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                         }`}
                       >
                         Square (1:1)
@@ -557,8 +557,8 @@ export default function ShareProgressModal({
                         onClick={() => setSocialAspect('story')}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                           socialAspect === 'story'
-                            ? 'bg-accent-purple text-white shadow'
-                            : 'text-gray-300 hover:text-white hover:bg-gray-600/50'
+                            ? 'bg-blue-600 text-white shadow'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                         }`}
                       >
                         Story (9:16)
@@ -667,14 +667,14 @@ export default function ShareProgressModal({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 p-4 border-t border-white/10 bg-base-300/30">
+          <div className="flex gap-3 p-4 border-t border-gray-200 bg-gray-200/30">
             <button
               onClick={handleDownload}
               disabled={isDownloading}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-white font-medium transition-colors disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-600/80 text-white font-medium transition-colors disabled:opacity-50"
             >
               {isDownloading ? (
-                <span className="loading loading-spinner loading-sm" />
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
               ) : (
                 <Download className="w-4 h-4" />
               )}
@@ -682,7 +682,7 @@ export default function ShareProgressModal({
             </button>
             <button
               onClick={handleCopy}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg glass border border-white/20 hover:border-accent-purple/50 text-white font-medium transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white border border-gray-200 hover:border-blue-600/50 text-gray-900 font-medium transition-colors"
             >
               {isCopied ? (
                 <>
@@ -699,10 +699,10 @@ export default function ShareProgressModal({
             <button
               onClick={handlePdfExport}
               disabled={isExportingPdf}
-              className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg glass border border-white/20 hover:border-accent-purple/50 text-white font-medium transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white border border-gray-200 hover:border-blue-600/50 text-gray-900 font-medium transition-colors disabled:opacity-50"
             >
               {isExportingPdf ? (
-                <span className="loading loading-spinner loading-sm" />
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
               ) : (
                 <FileDown className="w-4 h-4" />
               )}

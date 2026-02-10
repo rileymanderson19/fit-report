@@ -592,8 +592,8 @@ export function ReportVisualization({
 
   if (processedDailyData.length === 0) {
     return (
-      <div className="alert alert-info">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6 text-blue-600">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <span>No data available for this period</span>
@@ -624,17 +624,17 @@ export function ReportVisualization({
       {/* Weight Unit Toggle */}
       {!isScreenshotMode && (
         <div className="flex justify-end">
-          <div className="form-control">
-            <label className="label cursor-pointer gap-3">
-              <span className="label-text font-medium">Weight Unit:</span>
-              <span className="label-text">{useMetric ? 'kg' : 'lbs'}</span>
-              <input 
-                type="checkbox" 
-                className="toggle toggle-primary" 
+          <div>
+            <label className="flex items-center cursor-pointer gap-3">
+              <span className="text-sm font-medium text-gray-700">Weight Unit:</span>
+              <span className="text-sm text-gray-600">{useMetric ? 'kg' : 'lbs'}</span>
+              <input
+                type="checkbox"
+                className="relative w-10 h-5 appearance-none bg-gray-300 rounded-full checked:bg-blue-600 transition-colors cursor-pointer before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:w-4 before:h-4 before:bg-white before:rounded-full before:transition-transform checked:before:translate-x-5"
                 checked={useMetric}
                 onChange={(e) => setUseMetric(e.target.checked)}
               />
-              <span className="label-text">{useMetric ? 'lbs' : 'kg'}</span>
+              <span className="text-sm text-gray-600">{useMetric ? 'lbs' : 'kg'}</span>
             </label>
           </div>
         </div>
@@ -646,7 +646,7 @@ export function ReportVisualization({
           {/* Metrics Table */}
           <div className="overflow-x-auto">
             <h3 className="text-xl font-semibold mb-4">Daily Metrics</h3>
-            <table className="table table-zebra w-full">
+            <table className="table w-full">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -683,9 +683,9 @@ export function ReportVisualization({
               {processedDailyData
                 .filter(day => day.workouts && day.workouts.length > 0)
                 .map((day) => (
-                  <div key={day.date} className="card bg-base-200">
-                    <div className="card-body p-6">
-                      <h4 className="card-title text-lg mb-6">{formatDate(day.date)}</h4>
+                  <div key={day.date} className="bg-gray-100 border border-gray-200 rounded-xl">
+                    <div className="p-6">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-6">{formatDate(day.date)}</h4>
                       {day.workouts!.map((workout) => (
                         <div key={workout.id} className="mb-4 last:mb-0">
                           <div className="flex items-center justify-between mb-6">
@@ -694,7 +694,7 @@ export function ReportVisualization({
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => onDeleteWorkout?.(workout.id)}
-                                  className="btn btn-sm btn-ghost text-error"
+                                  className="px-2 py-1 rounded text-sm text-red-600 hover:bg-gray-100"
                                   title={`Delete workout from ${formatDate(workout.date)}`}
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -708,23 +708,23 @@ export function ReportVisualization({
                             <div className="overflow-x-auto">
                               <table className="table w-full">
                                 <thead>
-                                  <tr className="border-b-2 border-base-300">
+                                  <tr className="border-b-2 border-gray-200">
                                     <th className="py-4 px-6 text-left font-semibold text-base w-1/4">Exercise</th>
                                     <th className="py-4 px-6 text-right font-semibold text-base w-[200px] whitespace-nowrap">Sets</th>
                                     <th className="py-4 px-6 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-base-300">
+                                <tbody className="divide-y divide-gray-200">
                                   {workout.exercises
                                     .filter(exercise => 
                                       !exercise.name.toLowerCase().includes('walking') &&
                                       !exercise.name.toLowerCase().includes('walk')
                                     )
                                     .map((exercise, idx) => (
-                                      <tr key={idx} className="hover:bg-base-200/50">
+                                      <tr key={idx} className="hover:bg-gray-50">
                                         <td className="py-4 px-6">
                                           <div className="flex items-center gap-3">
-                                            <span className="text-primary font-medium">{exercise.name}</span>
+                                            <span className="text-blue-600 font-medium">{exercise.name}</span>
                                             {!isScreenshotMode && (
                                               <button
                                                 onClick={() => {
@@ -733,7 +733,7 @@ export function ReportVisualization({
                                                   });
                                                   onDeleteWorkout?.(workout.id);
                                                 }}
-                                                className="btn btn-xs btn-ghost text-error"
+                                                className="px-1.5 py-0.5 rounded text-xs text-red-600 hover:bg-gray-100"
                                                 title="Delete exercise from all workouts"
                                               >
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -748,7 +748,7 @@ export function ReportVisualization({
                                           {exercise.stats?.map((stat, groupIdx) => (
                                               <div key={groupIdx} className="font-medium whitespace-nowrap">
                                                 {stat.reps} × {stat.weight ? formatWeight(stat.weight) : stat.weight}
-                                                <span className="text-sm ml-1 text-base-content/80">{getWeightUnit()}</span>
+                                                <span className="text-sm ml-1 text-gray-700">{getWeightUnit()}</span>
                                               </div>
                                           ))}
                                           </div>
@@ -772,7 +772,7 @@ export function ReportVisualization({
                   </div>
                 ))}
               {!processedDailyData.some(day => day.workouts && day.workouts.length > 0) && (
-                <div className="text-center py-4 text-base-content/60">
+                <div className="text-center py-4 text-gray-500">
                   No workouts recorded during this period
                 </div>
               )}
@@ -817,10 +817,10 @@ export function ReportVisualization({
                     .slice(0, 2);
 
                   return (
-                    <div key={title} className="card bg-base-200/50 mb-6">
-                      <div className="card-body">
+                    <div key={title} className="bg-white border border-gray-200 rounded-xl mb-6">
+                      <div className="p-6">
                         <div className="flex justify-between items-center mb-4">
-                          <h4 className="card-title text-xl">{title}</h4>
+                          <h4 className="text-xl font-semibold text-gray-900">{title}</h4>
                           {!isScreenshotMode && (
                             <button
                               onClick={() => {
@@ -829,7 +829,7 @@ export function ReportVisualization({
                                   onDeleteWorkout?.(workout.id);
                                 });
                               }}
-                              className="btn btn-sm btn-ghost text-error"
+                              className="px-2 py-1 rounded text-sm text-red-600 hover:bg-gray-100"
                               title={`Delete all "${title}" workouts`}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -843,7 +843,7 @@ export function ReportVisualization({
                           <div className="overflow-x-auto">
                             <table className="table w-full">
                               <thead>
-                                <tr className="border-b border-base-300">
+                                <tr className="border-b border-gray-200">
                                   <th className="py-6 px-6 text-left font-semibold text-base w-1/4">Exercise</th>
                                   {[...sortedWorkouts].reverse().map(workout => (
                                     <th key={workout.id} className="py-6 px-6 text-right font-semibold text-base w-[200px] whitespace-nowrap">
@@ -853,17 +853,17 @@ export function ReportVisualization({
                                   <th className="py-6 px-6 text-left font-semibold text-base min-w-[300px]">Trainer Notes</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-base-300">
+                              <tbody className="divide-y divide-gray-200">
                                 {sortedWorkouts[0].exercises
                                   .filter(exercise => 
                                     !exercise.name.toLowerCase().includes('walking') &&
                                     !exercise.name.toLowerCase().includes('walk')
                                   )
                                   .map((exercise, idx) => (
-                                    <tr key={idx} className="hover:bg-base-200/70">
+                                    <tr key={idx} className="hover:bg-gray-50">
                                       <td className="py-6 px-6">
                                         <div className="flex items-center gap-3">
-                                          <span className="text-primary font-medium">{exercise.name}</span>
+                                          <span className="text-blue-600 font-medium">{exercise.name}</span>
                                           {!isScreenshotMode && (
                                             <button
                                               onClick={() => {
@@ -871,7 +871,7 @@ export function ReportVisualization({
                                                   onDeleteExercise?.(workout.id, exercise.name);
                                                 });
                                               }}
-                                              className="btn btn-xs btn-ghost text-error"
+                                              className="px-1.5 py-0.5 rounded text-xs text-red-600 hover:bg-gray-100"
                                               title="Delete exercise from all workouts"
                                             >
                                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -889,9 +889,9 @@ export function ReportVisualization({
                                               {matchingExercise?.stats?.map((stat, statIdx) => (
                                                 <div key={statIdx} className="font-medium whitespace-nowrap">
                                                   {stat.reps || ''}{stat.weight ? ` × ${formatWeight(stat.weight)}` : ''}
-                                                  {stat.weight ? <span className="text-sm ml-1 text-base-content/80">{getWeightUnit()}</span> : ''}
-                                                  {stat.time ? <span className="text-sm ml-1 text-base-content/80">{stat.time}s</span> : ''}
-                                                  {stat.distance ? <span className="text-sm ml-1 text-base-content/80">{stat.distance}mi</span> : ''}
+                                                  {stat.weight ? <span className="text-sm ml-1 text-gray-700">{getWeightUnit()}</span> : ''}
+                                                  {stat.time ? <span className="text-sm ml-1 text-gray-700">{stat.time}s</span> : ''}
+                                                  {stat.distance ? <span className="text-sm ml-1 text-gray-700">{stat.distance}mi</span> : ''}
                                                 </div>
                                               ))}
                                             </div>
@@ -924,7 +924,7 @@ export function ReportVisualization({
                   return date >= weekStart && date <= weekEnd && day.workouts && day.workouts.length > 0;
                 });
               }) && (
-                <div className="text-center py-4 text-base-content/60">
+                <div className="text-center py-4 text-gray-500">
                   No workouts recorded during this period
                 </div>
               )}

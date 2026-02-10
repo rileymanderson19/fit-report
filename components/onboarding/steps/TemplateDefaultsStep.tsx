@@ -37,7 +37,6 @@ export function TemplateDefaultsStep({
 
         if (!user) return;
 
-        // Try to load existing coach profile settings
         const { data: coachProfile } = await supabase
           .from("coach_profiles")
           .select("*")
@@ -45,10 +44,8 @@ export function TemplateDefaultsStep({
           .single();
 
         if (coachProfile) {
-          // Map any existing settings
           setSettings((prev) => ({
             ...prev,
-            // Add any existing settings from coach_profiles here
           }));
         }
       } catch (error) {
@@ -77,7 +74,6 @@ export function TemplateDefaultsStep({
     setIsSaving(true);
 
     try {
-      // Store settings in localStorage for now (can be expanded to DB later)
       localStorage.setItem("fitreport_defaults", JSON.stringify(settings));
 
       toast.success("Default settings saved!");
@@ -92,35 +88,36 @@ export function TemplateDefaultsStep({
 
   if (isLoading) {
     return (
-      <div className="card-elevated rounded-2xl p-8 flex justify-center">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+      <div className="card p-8 flex justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="card-elevated rounded-2xl p-8">
+    <div className="card p-8">
       <div className="text-center mb-8">
-        <div className="text-5xl mb-4">⚙️</div>
-        <h2 className="text-2xl font-display font-bold text-white mb-2">
+        <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">⚙️</span>
+        </div>
+        <h2 className="text-2xl font-display font-bold text-gray-900 mb-2">
           Set Your Defaults
         </h2>
-        <p className="text-gray-400">
+        <p className="text-gray-500">
           Configure your preferred settings for report generation.
         </p>
       </div>
 
       <div className="space-y-6 max-w-md mx-auto">
-        {/* Rep Range */}
-        <div className="bg-base-300/50 rounded-lg p-4">
-          <h3 className="font-medium text-white mb-3">Default Rep Range</h3>
-          <p className="text-sm text-gray-400 mb-4">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h3 className="font-medium text-gray-900 mb-3">Default Rep Range</h3>
+          <p className="text-sm text-gray-500 mb-4">
             Exercises within this rep range will be highlighted in reports.
           </p>
           <div className="flex items-center gap-4">
-            <div className="form-control flex-1">
-              <label className="label">
-                <span className="label-text text-sm">Min Reps</span>
+            <div className="flex-1">
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                Min Reps
               </label>
               <input
                 type="number"
@@ -129,13 +126,13 @@ export function TemplateDefaultsStep({
                 onChange={handleChange}
                 min={1}
                 max={50}
-                className="input input-bordered w-full"
+                className="input-field"
               />
             </div>
-            <div className="text-gray-400 pt-8">to</div>
-            <div className="form-control flex-1">
-              <label className="label">
-                <span className="label-text text-sm">Max Reps</span>
+            <div className="text-gray-400 pt-6">to</div>
+            <div className="flex-1">
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                Max Reps
               </label>
               <input
                 type="number"
@@ -144,39 +141,38 @@ export function TemplateDefaultsStep({
                 onChange={handleChange}
                 min={1}
                 max={50}
-                className="input input-bordered w-full"
+                className="input-field"
               />
             </div>
           </div>
         </div>
 
-        {/* Units */}
-        <div className="bg-base-300/50 rounded-lg p-4">
-          <h3 className="font-medium text-white mb-3">Unit Preferences</h3>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h3 className="font-medium text-gray-900 mb-3">Unit Preferences</h3>
           <div className="grid grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text text-sm">Weight Unit</span>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                Weight Unit
               </label>
               <select
                 name="weightUnit"
                 value={settings.weightUnit}
                 onChange={handleChange}
-                className="select select-bordered w-full"
+                className="input-field"
               >
                 <option value="lbs">Pounds (lbs)</option>
                 <option value="kg">Kilograms (kg)</option>
               </select>
             </div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text text-sm">Measurement Unit</span>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                Measurement Unit
               </label>
               <select
                 name="measurementUnit"
                 value={settings.measurementUnit}
                 onChange={handleChange}
-                className="select select-bordered w-full"
+                className="input-field"
               >
                 <option value="inches">Inches</option>
                 <option value="cm">Centimeters</option>
@@ -185,17 +181,16 @@ export function TemplateDefaultsStep({
           </div>
         </div>
 
-        {/* Report Range */}
-        <div className="bg-base-300/50 rounded-lg p-4">
-          <h3 className="font-medium text-white mb-3">Default Report Range</h3>
-          <p className="text-sm text-gray-400 mb-4">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h3 className="font-medium text-gray-900 mb-3">Default Report Range</h3>
+          <p className="text-sm text-gray-500 mb-4">
             How many days of data to include in reports by default.
           </p>
           <select
             name="defaultReportRange"
             value={settings.defaultReportRange}
             onChange={handleChange}
-            className="select select-bordered w-full"
+            className="input-field"
           >
             <option value={7}>Last 7 days</option>
             <option value={14}>Last 14 days</option>
@@ -203,19 +198,18 @@ export function TemplateDefaultsStep({
           </select>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3 pt-4">
-          <button onClick={onBack} className="btn btn-ghost">
+          <button onClick={onBack} className="btn-ghost px-4 py-2.5 rounded-lg font-medium">
             Back
           </button>
           <button
             onClick={handleSave}
-            className="btn btn-primary flex-1"
+            className="btn-primary flex-1 px-6 py-2.5 rounded-lg font-medium inline-flex items-center justify-center gap-2"
             disabled={isSaving}
           >
             {isSaving ? (
               <>
-                <span className="loading loading-spinner loading-sm"></span>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Saving...
               </>
             ) : (

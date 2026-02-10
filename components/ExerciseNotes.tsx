@@ -24,19 +24,19 @@ export function ExerciseNotes({ exerciseId, initialNotes = '', onSave }: Exercis
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="textarea textarea-bordered w-full min-h-[80px] text-sm font-normal resize-none"
+            className="input-field w-full min-h-[80px] text-sm font-normal resize-none"
             placeholder="Add trainer notes (e.g., increase weight next session)"
             autoFocus
           />
         </div>
         <div className="flex flex-col gap-2 pt-1">
-          <button onClick={handleSave} className="btn btn-xs btn-success gap-1">
+          <button onClick={handleSave} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
               <path d="M12.207 4.793a1 1 0 0 1 0 1.414l-5 5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.5 9.086l4.293-4.293a1 1 0 0 1 1.414 0z"/>
             </svg>
             Save
           </button>
-          <button onClick={() => setIsEditing(false)} className="btn btn-xs btn-ghost gap-1">
+          <button onClick={() => setIsEditing(false)} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium btn-ghost">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
               <path d="M3.28 2.22a.75.75 0 0 0-1.06 1.06L7.94 9l-5.72 5.72a.75.75 0 1 0 1.06 1.06L9 10.06l5.72 5.72a.75.75 0 1 0 1.06-1.06L10.06 9l5.72-5.72a.75.75 0 0 0-1.06-1.06L9 7.94 3.28 2.22Z" />
             </svg>
@@ -50,13 +50,13 @@ export function ExerciseNotes({ exerciseId, initialNotes = '', onSave }: Exercis
   return (
     <div className="flex items-start justify-between gap-3 min-w-[300px] group">
       {notes ? (
-        <p className="text-sm text-base-content whitespace-pre-wrap leading-relaxed py-1">{notes}</p>
+        <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed py-1">{notes}</p>
       ) : (
-        <p className="text-sm text-base-content/50 italic py-1">No notes</p>
+        <p className="text-sm text-gray-400 italic py-1">No notes</p>
       )}
       <button
         onClick={() => setIsEditing(true)}
-        className="btn btn-xs btn-outline btn-primary opacity-0 group-hover:opacity-100 transition-opacity"
+        className="btn-secondary px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1"
         title="Edit notes"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">

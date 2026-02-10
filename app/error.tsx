@@ -13,15 +13,15 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div className="h-screen w-full bg-gradient-to-b from-bg-primary via-bg-secondary to-black text-white relative overflow-hidden">
+    <div className="h-screen w-full bg-gray-50 text-gray-900 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent-purple/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-violet/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-700/10 rounded-full blur-[120px]" />
       </div>
 
       <div className="relative z-10 h-screen w-full flex flex-col justify-center items-center text-center gap-6 p-6">
-        <div className="card-elevated p-8 rounded-2xl">
+        <div className="card p-8 rounded-2xl">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             data-name="Layer 1"
@@ -136,7 +136,7 @@ export default function Error({
           </svg>
         </div>
 
-        <p className="font-display font-bold text-2xl md:text-3xl gradient-text">
+        <p className="font-display font-bold text-2xl md:text-3xl text-gray-900">
           Something went wrong
         </p>
 
@@ -144,7 +144,7 @@ export default function Error({
 
         <div className="flex flex-wrap gap-4 justify-center">
           <button
-            className="glass border border-white/10 hover:border-accent-purple/50 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 inline-flex items-center gap-2"
+            className="bg-white border border-gray-200 hover:border-blue-600/50 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:-translate-y-1 inline-flex items-center gap-2"
             onClick={reset}
           >
             <svg
@@ -164,7 +164,7 @@ export default function Error({
           <ButtonSupport />
           <Link
             href="/"
-            className="btn-gradient px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:scale-105 inline-flex items-center gap-2"
+            className="btn-primary px-6 py-2.5 rounded-lg font-medium transition-all duration-200 hover:-translate-y-1 inline-flex items-center gap-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -139,46 +139,46 @@ export function ProgressTracking({ dailyData, weeklyAverages }: ProgressTracking
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'achieved': return 'text-success';
-      case 'close': return 'text-warning';
-      case 'needs-work': return 'text-error';
-      default: return 'text-base-content';
+      case 'achieved': return 'text-green-600';
+      case 'close': return 'text-yellow-600';
+      case 'needs-work': return 'text-red-600';
+      default: return 'text-gray-900';
     }
   };
 
   const getStatusBg = (status: string) => {
     switch (status) {
-      case 'achieved': return 'bg-success/20';
-      case 'close': return 'bg-warning/20';
-      case 'needs-work': return 'bg-error/20';
-      default: return 'bg-base-200';
+      case 'achieved': return 'bg-green-50';
+      case 'close': return 'bg-yellow-50';
+      case 'needs-work': return 'bg-red-50';
+      default: return 'bg-gray-100';
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Goal Achievement Dashboard */}
-      <div className="card bg-base-200/50 shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-xl flex items-center gap-2">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="p-6">
+          <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             🎯 Goal Achievement Dashboard
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             {goalAchievements.map((goal, index) => (
-              <div key={index} className={`card ${getStatusBg(goal.status)} shadow-sm`}>
-                <div className="card-body p-4">
-                  <div className="text-sm font-medium text-base-content/80">{goal.name}</div>
+              <div key={index} className={`${getStatusBg(goal.status)} rounded-xl shadow-sm`}>
+                <div className="p-4">
+                  <div className="text-sm font-medium text-gray-700">{goal.name}</div>
                   <div className="flex items-baseline gap-2 my-2">
                     <span className="text-2xl font-bold">{goal.current}</span>
-                    <span className="text-sm text-base-content/60">/ {goal.target} {goal.unit}</span>
+                    <span className="text-sm text-gray-500">/ {goal.target} {goal.unit}</span>
                   </div>
-                  
+
                   {/* Progress bar */}
-                  <div className="w-full bg-base-300 rounded-full h-2 mb-2">
-                    <div 
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div
                       className={`h-2 rounded-full transition-all duration-300 ${
-                        goal.status === 'achieved' ? 'bg-success' :
-                        goal.status === 'close' ? 'bg-warning' : 'bg-error'
+                        goal.status === 'achieved' ? 'bg-green-500' :
+                        goal.status === 'close' ? 'bg-yellow-500' : 'bg-red-500'
                       }`}
                       style={{ width: `${Math.min(goal.percentage, 100)}%` }}
                     ></div>
@@ -196,22 +196,22 @@ export function ProgressTracking({ dailyData, weeklyAverages }: ProgressTracking
 
       {/* Trend Analysis */}
       {trends.length > 0 && (
-        <div className="card bg-base-200/50 shadow-lg">
-          <div className="card-body">
-            <h3 className="card-title text-xl flex items-center gap-2">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="p-6">
+            <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
               📈 Week-over-Week Trends
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
               {trends.map((trend, index) => (
-                <div key={index} className="stat bg-base-100 rounded-lg shadow-sm">
-                  <div className="stat-title text-sm">{trend.metric}</div>
-                  <div className={`stat-value text-lg flex items-center gap-2 ${
-                    trend.improving ? 'text-success' : 'text-error'
+                <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  <div className="text-sm text-gray-500">{trend.metric}</div>
+                  <div className={`text-lg font-bold flex items-center gap-2 ${
+                    trend.improving ? 'text-green-600' : 'text-red-600'
                   }`}>
                     {trend.improving ? '↗️' : '↘️'}
                     {Math.abs(trend.change).toFixed(1)}
                   </div>
-                  <div className="stat-desc">
+                  <div className="text-xs text-gray-400">
                     {trend.change >= 0 ? '+' : ''}{trend.percentage.toFixed(1)}% from last week
                   </div>
                 </div>
@@ -222,16 +222,16 @@ export function ProgressTracking({ dailyData, weeklyAverages }: ProgressTracking
       )}
 
       {/* Performance Highlights */}
-      <div className="card bg-base-200/50 shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-xl flex items-center gap-2">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="p-6">
+          <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             ⭐ Performance Highlights
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             {/* Best Day */}
-            <div className="card bg-success/10 border border-success/20">
-              <div className="card-body p-4">
-                <h4 className="font-semibold text-success">🏆 Best Performance Day</h4>
+            <div className="bg-green-50 border border-green-200 rounded-xl">
+              <div className="p-4">
+                <h4 className="font-semibold text-green-600">🏆 Best Performance Day</h4>
                 {(() => {
                   const bestDay = dailyData.reduce((best, day) => {
                     const score = (day.steps / 10000) + (day.sleepHours / 8) + ((day.workouts?.length || 0) * 0.5);
@@ -260,9 +260,9 @@ export function ProgressTracking({ dailyData, weeklyAverages }: ProgressTracking
             </div>
 
             {/* Consistency Score */}
-            <div className="card bg-info/10 border border-info/20">
-              <div className="card-body p-4">
-                <h4 className="font-semibold text-info">📊 Consistency Score</h4>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl">
+              <div className="p-4">
+                <h4 className="font-semibold text-blue-600">📊 Consistency Score</h4>
                 {(() => {
                   // Calculate consistency based on how many days met basic targets
                   const consistentDays = dailyData.filter(day => 
@@ -274,7 +274,7 @@ export function ProgressTracking({ dailyData, weeklyAverages }: ProgressTracking
                     <div className="text-sm space-y-1">
                       <div className="text-2xl font-bold">{consistencyPercent.toFixed(0)}%</div>
                       <div>{consistentDays} out of {dailyData.length} days</div>
-                      <div className="text-xs text-base-content/60">
+                      <div className="text-xs text-gray-500">
                         Met basic activity + sleep goals
                       </div>
                     </div>
@@ -284,9 +284,9 @@ export function ProgressTracking({ dailyData, weeklyAverages }: ProgressTracking
             </div>
 
             {/* Areas for Improvement */}
-            <div className="card bg-warning/10 border border-warning/20">
-              <div className="card-body p-4">
-                <h4 className="font-semibold text-warning">💡 Focus Areas</h4>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl">
+              <div className="p-4">
+                <h4 className="font-semibold text-yellow-600">💡 Focus Areas</h4>
                 <div className="text-sm space-y-1">
                   {(() => {
                     const improvements = [];

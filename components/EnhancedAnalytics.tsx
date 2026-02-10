@@ -374,14 +374,14 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
           <h2 className="text-2xl font-bold mb-2">Enhanced Analytics for {clientName}</h2>
         </div>
         
-        <div className="card bg-base-200/50 shadow-lg">
-          <div className="card-body text-center py-12">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="p-6 text-center py-12">
             <div className="text-6xl mb-4">📊</div>
             <h3 className="text-xl font-semibold mb-2">No Data Available</h3>
-            <p className="text-base-content/70 mb-4">
+            <p className="text-gray-600 mb-4">
               Start tracking your fitness metrics to see detailed analytics and insights.
             </p>
-            <div className="text-sm text-base-content/60">
+            <div className="text-sm text-gray-500">
               Available metrics: Weight • Steps • Sleep • Protein • Workouts
             </div>
           </div>
@@ -398,8 +398,8 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
       </div>
 
       {/* Consistency Dashboard */}
-      <div className="card bg-base-200/50 shadow-lg">
-        <div className="card-body">
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="p-6">
           <div className="mb-6">
             <h3 className="text-xl font-bold">Consistency Analysis</h3>
           </div>
@@ -488,17 +488,17 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
               const formatted = item.format(stats);
               
               return (
-                <div key={item.key} className="card bg-base-100 shadow-lg border border-base-300">
-                  <div className="card-body p-4">
+                <div key={item.key} className="bg-white border border-gray-200 rounded-xl shadow-sm">
+                  <div className="p-4">
                     {/* Header */}
                     <div className="mb-3">
                       <h4 className="font-semibold text-lg">{item.label}</h4>
-                      <div className="text-xs text-base-content/60">{item.desc}</div>
+                      <div className="text-xs text-gray-500">{item.desc}</div>
                     </div>
                     
                     {/* Main Value */}
                     <div className="text-center mb-3">
-                      <div className="text-2xl font-bold text-base-content">
+                      <div className="text-2xl font-bold text-gray-900">
                         {formatted.main}
                       </div>
                     </div>
@@ -506,21 +506,21 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
                     {/* Stats Grid */}
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-base-content/70">
+                        <span className="text-gray-600">
                           {item.key === 'workouts' ? 'Missed:' : 
                            item.key === 'weight' ? 'Trend:' : 'Average:'}
                         </span>
                         <span className="font-medium">{formatted.avg}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-base-content/70">
+                        <span className="text-gray-600">
                           {item.key === 'workouts' ? 'Scheduled:' : 
                            item.key === 'weight' ? 'Latest:' : 'High:'}
                         </span>
                         <span className="font-medium">{formatted.max}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-base-content/70">
+                        <span className="text-gray-600">
                           {item.key === 'workouts' ? 'Completed:' : 
                            item.key === 'weight' ? 'Lowest:' : 'Low:'}
                         </span>
@@ -537,11 +537,11 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
 
       {/* Last 7 Days Calendar */}
       {last7DaysCalendar && (
-        <div className="card bg-base-200/50 shadow-lg">
-          <div className="card-body">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="p-6">
             <div className="mb-6">
               <h3 className="text-xl font-bold">Last 7 Days</h3>
-              <p className="text-sm text-base-content/70 mt-1">
+              <p className="text-sm text-gray-600 mt-1">
                 Rolling 7-day snapshot of daily performance
               </p>
             </div>
@@ -553,90 +553,90 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
                 return (
                   <div 
                     key={day.date}
-                    className={`bg-base-100 rounded-lg p-2 md:p-3 border transition-shadow ${
-                      hasAnyData 
-                        ? 'border-base-300 hover:shadow-md' 
-                        : 'border-base-200 opacity-75'
+                    className={`bg-white rounded-lg p-2 md:p-3 border transition-shadow ${
+                      hasAnyData
+                        ? 'border-gray-200 hover:shadow-md'
+                        : 'border-gray-100 opacity-75'
                     }`}
                   >
                     {/* Date Header */}
-                    <div className="text-center mb-3 pb-2 border-b border-base-300">
-                      <div className="text-xs font-medium text-base-content/60">{day.dayName}</div>
-                      <div className="text-lg font-bold text-primary">{day.dayNum}</div>
+                    <div className="text-center mb-3 pb-2 border-b border-gray-200">
+                      <div className="text-xs font-medium text-gray-500">{day.dayName}</div>
+                      <div className="text-lg font-bold text-blue-600">{day.dayNum}</div>
                     </div>
 
                     {/* Nutrition */}
                     <div className="mb-3">
-                      <div className="text-xs font-semibold text-base-content/70 mb-1">Nutrition</div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1">Nutrition</div>
                       {day.calories > 0 ? (
                         <div className="space-y-0.5">
                           <div className="text-xs">
                             <span className="font-medium">{Math.round(day.calories)}</span>
-                            <span className="text-base-content/60 ml-0.5">cal</span>
+                            <span className="text-gray-500 ml-0.5">cal</span>
                           </div>
                           <div className="text-xs">
                             <span className="font-medium">{Math.round(day.protein)}</span>
-                            <span className="text-base-content/60 ml-0.5">g protein</span>
+                            <span className="text-gray-500 ml-0.5">g protein</span>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-xs text-base-content/40">—</div>
+                        <div className="text-xs text-gray-400">—</div>
                       )}
                     </div>
 
                     {/* Steps */}
                     <div className="mb-3">
-                      <div className="text-xs font-semibold text-base-content/70 mb-1">Steps</div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1">Steps</div>
                       {day.steps > 0 ? (
                         <div className="text-xs font-medium">{day.steps.toLocaleString()}</div>
                       ) : (
-                        <div className="text-xs text-base-content/40">—</div>
+                        <div className="text-xs text-gray-400">—</div>
                       )}
                     </div>
 
                     {/* Workout Status */}
                     <div className="mb-3">
-                      <div className="text-xs font-semibold text-base-content/70 mb-1">Workout</div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1">Workout</div>
                       {day.workoutStatus === 'completed' && (
                         <div className="flex items-center gap-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-success" viewBox="0 0 20 20" fill="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          <span className="text-xs font-medium text-success">Done</span>
+                          <span className="text-xs font-medium text-green-600">Done</span>
                         </div>
                       )}
                       {day.workoutStatus === 'not-completed' && (
                         <div className="flex items-center gap-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-warning" viewBox="0 0 20 20" fill="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                           </svg>
-                          <span className="text-xs font-medium text-warning">Missed</span>
+                          <span className="text-xs font-medium text-yellow-600">Missed</span>
                         </div>
                       )}
                       {day.workoutStatus === 'none' && (
-                        <div className="text-xs text-base-content/40">—</div>
+                        <div className="text-xs text-gray-400">—</div>
                       )}
                     </div>
 
                     {/* Weigh-in */}
                     <div>
-                      <div className="text-xs font-semibold text-base-content/70 mb-1">Weigh-in</div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1">Weigh-in</div>
                       {day.weight > 0 ? (
                         <div className="flex items-center gap-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-info" viewBox="0 0 20 20" fill="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          <span className="text-xs font-medium text-info">{day.weight.toFixed(1)} lbs</span>
+                          <span className="text-xs font-medium text-blue-600">{day.weight.toFixed(1)} lbs</span>
                         </div>
                       ) : (
-                        <div className="text-xs text-base-content/40">—</div>
+                        <div className="text-xs text-gray-400">—</div>
                       )}
                     </div>
 
                     {/* No data indicator */}
                     {!hasAnyData && (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-xs text-base-content/30">No data</div>
+                        <div className="text-xs text-gray-300">No data</div>
                       </div>
                     )}
                   </div>
@@ -650,9 +650,9 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
 
 
       {/* Weekly Progress Summary */}
-      <div className="card bg-base-200/50 shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-xl mb-6">Weekly Progress Summary</h3>
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <div className="p-6">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Weekly Progress Summary</h3>
           <div className="space-y-4">
             {weeklyAverages.map((week, idx) => {
               // Parse dates consistently in local timezone
@@ -672,9 +672,9 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
               return (
                 <div 
                   key={week.weekStart} 
-                  className="card border-2 border-base-300 bg-base-100"
+                  className="bg-white border-2 border-gray-200 rounded-xl"
                 >
-                  <div className="card-body p-4">
+                  <div className="p-4">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-semibold text-lg">
                         {`${formatDate(week.weekStart)} - ${formatDate(week.weekEnd)}`}
@@ -685,45 +685,45 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
                         .filter(Boolean).length <= 3 ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-6'
                     }`}>
                       {dataAvailability.weight && (
-                        <div className="stat p-2">
-                          <div className="stat-title text-xs">Weight</div>
-                          <div className="stat-value text-sm">{week.avgWeight.toFixed(1)}</div>
-                          <div className="stat-desc text-xs">lbs</div>
+                        <div className="p-2">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">Weight</div>
+                          <div className="text-sm font-bold text-gray-900">{week.avgWeight.toFixed(1)}</div>
+                          <div className="text-xs text-gray-400">lbs</div>
                         </div>
                       )}
                       {dataAvailability.calories && (
-                        <div className="stat p-2">
-                          <div className="stat-title text-xs">Calories</div>
-                          <div className="stat-value text-sm">{Math.round(week.avgCalories).toLocaleString()}</div>
-                          <div className="stat-desc text-xs">daily avg</div>
+                        <div className="p-2">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">Calories</div>
+                          <div className="text-sm font-bold text-gray-900">{Math.round(week.avgCalories).toLocaleString()}</div>
+                          <div className="text-xs text-gray-400">daily avg</div>
                         </div>
                       )}
                       {dataAvailability.protein && (
-                        <div className="stat p-2">
-                          <div className="stat-title text-xs">Protein</div>
-                          <div className="stat-value text-sm">{Math.round(week.avgProtein)}</div>
-                          <div className="stat-desc text-xs">grams</div>
+                        <div className="p-2">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">Protein</div>
+                          <div className="text-sm font-bold text-gray-900">{Math.round(week.avgProtein)}</div>
+                          <div className="text-xs text-gray-400">grams</div>
                         </div>
                       )}
                       {dataAvailability.steps && (
-                        <div className="stat p-2">
-                          <div className="stat-title text-xs">Steps</div>
-                          <div className="stat-value text-sm">{Math.round(week.avgSteps).toLocaleString()}</div>
-                          <div className="stat-desc text-xs">daily avg</div>
+                        <div className="p-2">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">Steps</div>
+                          <div className="text-sm font-bold text-gray-900">{Math.round(week.avgSteps).toLocaleString()}</div>
+                          <div className="text-xs text-gray-400">daily avg</div>
                         </div>
                       )}
                       {dataAvailability.workouts && (
-                        <div className="stat p-2">
-                          <div className="stat-title text-xs">Training</div>
-                          <div className="stat-value text-sm">{workoutsThisWeek}</div>
-                          <div className="stat-desc text-xs">workouts</div>
+                        <div className="p-2">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">Training</div>
+                          <div className="text-sm font-bold text-gray-900">{workoutsThisWeek}</div>
+                          <div className="text-xs text-gray-400">workouts</div>
                         </div>
                       )}
                       {dataAvailability.sleep && (
-                        <div className="stat p-2">
-                          <div className="stat-title text-xs">Sleep</div>
-                          <div className="stat-value text-sm">{week.avgSleepHours.toFixed(1)}</div>
-                          <div className="stat-desc text-xs">hours</div>
+                        <div className="p-2">
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">Sleep</div>
+                          <div className="text-sm font-bold text-gray-900">{week.avgSleepHours.toFixed(1)}</div>
+                          <div className="text-xs text-gray-400">hours</div>
                         </div>
                       )}
                     </div>

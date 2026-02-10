@@ -8,7 +8,7 @@ export function PaginationControls({ totalPages, currentPage, onPageChange }: Pa
   return (
     <div className="flex justify-center gap-2 mt-3">
       <button
-        className="btn btn-sm text-xs"
+        className="btn-ghost px-3 py-1.5 rounded-lg text-sm font-medium"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
@@ -18,7 +18,7 @@ export function PaginationControls({ totalPages, currentPage, onPageChange }: Pa
         Page {currentPage} of {totalPages}
       </span>
       <button
-        className="btn btn-sm text-xs"
+        className="btn-ghost px-3 py-1.5 rounded-lg text-sm font-medium"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
@@ -26,4 +26,4 @@ export function PaginationControls({ totalPages, currentPage, onPageChange }: Pa
       </button>
     </div>
   );
-} 
+}

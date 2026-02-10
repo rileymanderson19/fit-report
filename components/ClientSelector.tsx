@@ -30,7 +30,7 @@ export function ClientSelector({ value, onChange }: ClientSelectorProps) {
 
   if (isLoading) {
     return (
-      <select className="select select-bordered w-full" disabled>
+      <select className="input-field w-full" disabled>
         <option>Loading clients...</option>
       </select>
     );
@@ -38,7 +38,7 @@ export function ClientSelector({ value, onChange }: ClientSelectorProps) {
 
   return (
     <select
-      className="select select-bordered w-full"
+      className="input-field w-full"
       value={value || ''}
       onChange={(e) => onChange(e.target.value || null)}
     >
@@ -50,4 +50,4 @@ export function ClientSelector({ value, onChange }: ClientSelectorProps) {
       ))}
     </select>
   );
-} 
+}

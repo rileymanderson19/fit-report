@@ -63,21 +63,21 @@ export default function TestMessagingPage() {
     canvas.width = 800;
     canvas.height = 600;
     const ctx = canvas.getContext('2d');
-    
+
     if (ctx) {
       // White background
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, 800, 600);
-      
+
       // Header
       ctx.fillStyle = '#2563eb';
       ctx.fillRect(0, 0, 800, 80);
-      
+
       // Title
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 24px Arial';
       ctx.fillText('Fitness Report - Sample', 40, 45);
-      
+
       // Sample content
       ctx.fillStyle = '#1a1a1a';
       ctx.font = '16px Arial';
@@ -85,16 +85,16 @@ export default function TestMessagingPage() {
       ctx.fillText('Date Range: Last 7 days', 40, 150);
       ctx.fillText('Workouts Completed: 3', 40, 180);
       ctx.fillText('Average Steps: 8,500', 40, 210);
-      
+
       // Sample chart area
       ctx.strokeStyle = '#e2e8f0';
       ctx.lineWidth = 2;
       ctx.strokeRect(40, 250, 720, 200);
-      
+
       ctx.fillStyle = '#64748b';
       ctx.font = '14px Arial';
       ctx.fillText('Sample Chart Area - Workout Progress', 60, 270);
-      
+
       // Convert to data URL
       setImageDataUrl(canvas.toDataURL('image/png'));
       toast.success('Sample image generated');
@@ -132,7 +132,7 @@ export default function TestMessagingPage() {
       });
 
       const result = await response.json();
-      
+
       const testResult: TestResult = {
         testType,
         success: response.ok,
@@ -179,7 +179,7 @@ export default function TestMessagingPage() {
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         setUploadInvestigation(result);
         toast.success('Upload investigation completed');
@@ -211,7 +211,7 @@ export default function TestMessagingPage() {
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         setDebugResults(result);
         toast.success('Debug analysis completed');
@@ -229,20 +229,20 @@ export default function TestMessagingPage() {
     <div className="container mx-auto px-8 py-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Trainerize Messaging API Test</h1>
-        <p className="text-base-content/70">
+        <p className="text-gray-500">
           This tool helps us understand the capabilities and limitations of the Trainerize messaging API.
         </p>
-        
+
         {/* Investigation and Debug Tools */}
         <div className="mt-4 flex flex-wrap gap-2">
-          <button 
-            className="btn btn-outline btn-sm"
+          <button
+            className="btn-secondary px-3 py-1.5 rounded-lg text-sm font-medium"
             onClick={investigateUploadCapabilities}
             disabled={isInvestigating}
           >
             {isInvestigating ? (
               <>
-                <span className="loading loading-spinner loading-sm" />
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin inline-block mr-2" />
                 Investigating...
               </>
             ) : (
@@ -250,14 +250,14 @@ export default function TestMessagingPage() {
             )}
           </button>
 
-          <button 
-            className="btn btn-secondary btn-sm"
+          <button
+            className="btn-secondary px-3 py-1.5 rounded-lg text-sm font-medium"
             onClick={() => debugMessageFormat('url')}
             disabled={isDebugging}
           >
             {isDebugging ? (
               <>
-                <span className="loading loading-spinner loading-sm" />
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin inline-block mr-2" />
                 Debugging...
               </>
             ) : (
@@ -265,8 +265,8 @@ export default function TestMessagingPage() {
             )}
           </button>
 
-          <button 
-            className="btn btn-secondary btn-sm"
+          <button
+            className="btn-secondary px-3 py-1.5 rounded-lg text-sm font-medium"
             onClick={() => debugMessageFormat('base64')}
             disabled={isDebugging}
           >
@@ -277,17 +277,17 @@ export default function TestMessagingPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Test Configuration */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Test Configuration</h2>
+        <div className="card bg-white shadow-xl">
+          <div className="p-6">
+            <h2 className="text-xl font-semibold text-gray-900">Test Configuration</h2>
 
             {/* Client Selection */}
-            <div className="form-control">
+            <div className="space-y-1.5">
               <label className="label">
-                <span className="label-text">Select Test Client</span>
+                <span className="text-sm font-medium text-gray-700">Select Test Client</span>
               </label>
-              <select 
-                className="select select-bordered"
+              <select
+                className="input-field"
                 value={selectedClient}
                 onChange={(e) => setSelectedClient(e.target.value)}
               >
@@ -301,12 +301,12 @@ export default function TestMessagingPage() {
             </div>
 
             {/* Test Type */}
-            <div className="form-control">
+            <div className="space-y-1.5">
               <label className="label">
-                <span className="label-text">Test Type</span>
+                <span className="text-sm font-medium text-gray-700">Test Type</span>
               </label>
-              <select 
-                className="select select-bordered"
+              <select
+                className="input-field"
                 value={testType}
                 onChange={(e) => setTestType(e.target.value)}
               >
@@ -319,13 +319,13 @@ export default function TestMessagingPage() {
             </div>
 
             {/* Subject */}
-            <div className="form-control">
+            <div className="space-y-1.5">
               <label className="label">
-                <span className="label-text">Subject (optional)</span>
+                <span className="text-sm font-medium text-gray-700">Subject (optional)</span>
               </label>
-              <input 
+              <input
                 type="text"
-                className="input input-bordered"
+                className="input-field"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Leave empty for default"
@@ -333,12 +333,12 @@ export default function TestMessagingPage() {
             </div>
 
             {/* Message Body */}
-            <div className="form-control">
+            <div className="space-y-1.5">
               <label className="label">
-                <span className="label-text">Message Body (optional)</span>
+                <span className="text-sm font-medium text-gray-700">Message Body (optional)</span>
               </label>
-              <textarea 
-                className="textarea textarea-bordered h-24"
+              <textarea
+                className="input-field h-24"
                 value={messageBody}
                 onChange={(e) => setMessageBody(e.target.value)}
                 placeholder="Leave empty for default test message"
@@ -347,19 +347,19 @@ export default function TestMessagingPage() {
 
             {/* Image Generation for Base64 and URL Tests */}
             {(testType === 'image_base64' || testType === 'image_url') && (
-              <div className="form-control">
+              <div className="space-y-1.5">
                 <label className="label">
-                  <span className="label-text">Sample Image</span>
+                  <span className="text-sm font-medium text-gray-700">Sample Image</span>
                 </label>
                 <div className="flex gap-2">
-                  <button 
-                    className="btn btn-secondary btn-sm"
+                  <button
+                    className="btn-secondary px-3 py-1.5 rounded-lg text-sm font-medium"
                     onClick={generateSampleImage}
                   >
                     Generate Sample Report Image
                   </button>
                   {imageDataUrl && (
-                    <span className="text-success text-sm self-center">✓ Image ready</span>
+                    <span className="text-success text-sm self-center">Image ready</span>
                   )}
                 </div>
               </div>
@@ -367,14 +367,14 @@ export default function TestMessagingPage() {
 
             {/* Run Test Button */}
             <div className="card-actions justify-end mt-4">
-              <button 
-                className="btn btn-primary"
+              <button
+                className="btn-primary px-6 py-2.5 rounded-lg font-medium"
                 onClick={runTest}
                 disabled={isLoading || !selectedClient}
               >
                 {isLoading ? (
                   <>
-                    <span className="loading loading-spinner loading-sm" />
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block mr-2" />
                     Running Test...
                   </>
                 ) : (
@@ -386,13 +386,13 @@ export default function TestMessagingPage() {
         </div>
 
         {/* Test Results */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
+        <div className="card bg-white shadow-xl">
+          <div className="p-6">
             <div className="flex justify-between items-center">
-              <h2 className="card-title">Test Results</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Test Results</h2>
               {testResults.length > 0 && (
-                <button 
-                  className="btn btn-ghost btn-sm"
+                <button
+                  className="btn-ghost px-3 py-1.5 rounded-lg text-sm font-medium"
                   onClick={clearResults}
                 >
                   Clear Results
@@ -402,7 +402,7 @@ export default function TestMessagingPage() {
 
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {testResults.length === 0 ? (
-                <div className="text-center py-8 text-base-content/60">
+                <div className="text-center py-8 text-gray-500">
                   No test results yet. Run a test to see results here.
                 </div>
               ) : (
@@ -412,13 +412,13 @@ export default function TestMessagingPage() {
                   }`}>
                     <div className="flex justify-between items-start mb-2">
                       <span className="font-semibold">{result.testType}</span>
-                      <span className="text-sm text-base-content/70">
+                      <span className="text-sm text-gray-500">
                         {new Date(result.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
-                    
+
                     <div className={`text-sm ${result.success ? 'text-success' : 'text-error'}`}>
-                      {result.success ? '✓ Success' : '✗ Failed'}
+                      {result.success ? 'Success' : 'Failed'}
                     </div>
 
                     {result.error && (
@@ -429,10 +429,10 @@ export default function TestMessagingPage() {
 
                     {result.data && (
                       <details className="mt-2">
-                        <summary className="text-sm cursor-pointer text-base-content/80">
+                        <summary className="text-sm cursor-pointer text-gray-600">
                           View Details
                         </summary>
-                        <pre className="text-xs mt-2 p-2 bg-base-200 rounded overflow-x-auto">
+                        <pre className="text-xs mt-2 p-2 bg-gray-100 rounded overflow-x-auto">
                           {JSON.stringify(result.data, null, 2)}
                         </pre>
                       </details>
@@ -447,12 +447,12 @@ export default function TestMessagingPage() {
 
              {/* Debug Results */}
        {debugResults && (
-         <div className="card bg-base-100 shadow-xl mt-8">
-           <div className="card-body">
-             <h3 className="card-title">Debug Analysis Results</h3>
-             
+         <div className="card bg-white shadow-xl mt-8">
+           <div className="p-6">
+             <h3 className="text-xl font-semibold text-gray-900">Debug Analysis Results</h3>
+
              {/* Recommendations */}
-             <div className="alert alert-info mb-4">
+             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                <div>
                  <h4 className="font-semibold mb-2">Recommendations:</h4>
                  <ul className="list-disc list-inside space-y-1">
@@ -471,7 +471,7 @@ export default function TestMessagingPage() {
                  }`}>
                    <h5 className="font-semibold">Storage Test</h5>
                    <div className="text-sm">
-                     Status: {debugResults.debug.storageTest.success ? '✅ Success' : '❌ Failed'}
+                     Status: {debugResults.debug.storageTest.success ? 'Success' : 'Failed'}
                      {debugResults.debug.storageTest.error && (
                        <div className="text-error">Error: {debugResults.debug.storageTest.error}</div>
                      )}
@@ -487,13 +487,13 @@ export default function TestMessagingPage() {
                  }`}>
                    <h5 className="font-semibold">Image Upload Test</h5>
                    <div className="text-sm">
-                     Status: {debugResults.debug.uploadTest.success ? '✅ Success' : '❌ Failed'}
+                     Status: {debugResults.debug.uploadTest.success ? 'Success' : 'Failed'}
                      {debugResults.debug.uploadTest.error && (
                        <div className="text-error">Error: {debugResults.debug.uploadTest.error}</div>
                      )}
                      {debugResults.debug.uploadTest.publicUrl && (
                        <div>
-                         <div>Public URL: <a href={debugResults.debug.uploadTest.publicUrl} target="_blank" rel="noopener noreferrer" className="link link-primary">{debugResults.debug.uploadTest.publicUrl}</a></div>
+                         <div>Public URL: <a href={debugResults.debug.uploadTest.publicUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-700">{debugResults.debug.uploadTest.publicUrl}</a></div>
                        </div>
                      )}
                    </div>
@@ -501,12 +501,12 @@ export default function TestMessagingPage() {
                )}
 
                {debugResults.debug?.messageFormat && (
-                 <div className="p-3 rounded border border-base-300 bg-base-50">
+                 <div className="p-3 rounded border border-gray-200 bg-gray-50">
                    <h5 className="font-semibold">Message Format Preview</h5>
                    <div className="text-sm space-y-2">
                      <div><strong>Subject:</strong> {debugResults.debug.messageFormat.subject}</div>
                      <div><strong>Body Length:</strong> {debugResults.debug.messageFormat.bodyLength} characters</div>
-                     <div className="bg-base-200 p-2 rounded">
+                     <div className="bg-gray-100 p-2 rounded">
                        <strong>Message Body:</strong>
                        <pre className="whitespace-pre-wrap text-xs mt-1">
                          {debugResults.debug.messageFormat.truncatedPreview || debugResults.debug.messageFormat.body}
@@ -522,10 +522,10 @@ export default function TestMessagingPage() {
 
        {/* Upload Investigation Results */}
        {uploadInvestigation && (
-        <div className="card bg-base-100 shadow-xl mt-8">
-          <div className="card-body">
-            <h3 className="card-title">Upload Capabilities Investigation</h3>
-            
+        <div className="card bg-white shadow-xl mt-8">
+          <div className="p-6">
+            <h3 className="text-xl font-semibold text-gray-900">Upload Capabilities Investigation</h3>
+
             <div className="stats stats-horizontal shadow mb-4">
               <div className="stat">
                 <div className="stat-title">Endpoints Tested</div>
@@ -544,7 +544,7 @@ export default function TestMessagingPage() {
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {uploadInvestigation.results?.map((result: any, index: number) => (
                 <div key={index} className={`p-3 rounded border-l-4 text-sm ${
-                  result.status && result.status < 400 ? 'border-success bg-success/10' : 
+                  result.status && result.status < 400 ? 'border-success bg-success/10' :
                   result.status === 404 ? 'border-warning bg-warning/10' :
                   'border-error bg-error/10'
                 }`}>
@@ -554,7 +554,7 @@ export default function TestMessagingPage() {
                   {result.data && (
                     <details className="mt-1">
                       <summary className="cursor-pointer">Response Data</summary>
-                      <pre className="text-xs mt-1 p-1 bg-base-200 rounded overflow-x-auto">
+                      <pre className="text-xs mt-1 p-1 bg-gray-100 rounded overflow-x-auto">
                         {result.data}
                       </pre>
                     </details>
@@ -568,12 +568,12 @@ export default function TestMessagingPage() {
 
       {/* Image Preview */}
       {imageDataUrl && (
-        <div className="card bg-base-100 shadow-xl mt-8">
-          <div className="card-body">
-            <h3 className="card-title">Generated Sample Image</h3>
-            <img 
-              src={imageDataUrl} 
-              alt="Sample report" 
+        <div className="card bg-white shadow-xl mt-8">
+          <div className="p-6">
+            <h3 className="text-xl font-semibold text-gray-900">Generated Sample Image</h3>
+            <img
+              src={imageDataUrl}
+              alt="Sample report"
               className="max-w-full h-auto rounded-lg border"
             />
           </div>
@@ -581,4 +581,4 @@ export default function TestMessagingPage() {
       )}
     </div>
   );
-} 
+}

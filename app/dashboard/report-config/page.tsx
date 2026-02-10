@@ -104,7 +104,7 @@ export default function ReportConfigPage() {
     // Check for duplicates (case-insensitive)
     const excludedNames = config?.excluded_workout_names || [];
     if (excludedNames.some(name => name.toLowerCase() === workoutName.toLowerCase())) {
-      setMessage("❌ This workout is already excluded");
+      setMessage("This workout is already excluded");
       setTimeout(() => setMessage(""), 3000);
       return;
     }
@@ -153,11 +153,11 @@ export default function ReportConfigPage() {
           setConfig(data);
         }
 
-        setMessage("✅ Workout excluded and saved!");
+        setMessage("Workout excluded and saved!");
         setTimeout(() => setMessage(""), 3000);
       } catch (error) {
         console.error('Save error:', error);
-        setMessage("❌ Error saving exclusion");
+        setMessage("Error saving exclusion");
         setTimeout(() => setMessage(""), 3000);
       } finally {
         setSaving(false);
@@ -194,11 +194,11 @@ export default function ReportConfigPage() {
         if (error) throw error;
       }
 
-      setMessage("✅ Workout removed and saved!");
+      setMessage("Workout removed and saved!");
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error('Save error:', error);
-      setMessage("❌ Error saving changes");
+      setMessage("Error saving changes");
       setTimeout(() => setMessage(""), 3000);
     } finally {
       setSaving(false);
@@ -211,8 +211,8 @@ export default function ReportConfigPage() {
     try {
       await updateBrand({
         business_name: localBrand.business_name || null,
-        primary_color: localBrand.primary_color || "#8B5CF6",
-        accent_color: localBrand.accent_color || "#7C3AED",
+        primary_color: localBrand.primary_color || "#2563EB",
+        accent_color: localBrand.accent_color || "#1D4ED8",
         footer_text: localBrand.footer_text || null,
         show_fitreport_badge: localBrand.show_fitreport_badge ?? true,
       });
@@ -260,7 +260,7 @@ export default function ReportConfigPage() {
     return (
       <div className="container mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
-          <span className="loading loading-spinner loading-lg text-accent-purple"></span>
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -269,11 +269,9 @@ export default function ReportConfigPage() {
   if (!config) {
     return (
       <div className="container mx-auto px-8 py-8">
-        <div className="card-elevated">
-          <div className="card-body">
-            <h2 className="card-title text-red-500 text-white">Error Loading Configuration</h2>
-            <p className="text-gray-300">Unable to load your report configuration. Please try refreshing the page.</p>
-          </div>
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-red-600">Error Loading Configuration</h2>
+          <p className="text-gray-500 mt-2">Unable to load your report configuration. Please try refreshing the page.</p>
         </div>
       </div>
     );
@@ -282,204 +280,198 @@ export default function ReportConfigPage() {
   return (
     <div className="container mx-auto px-8 py-8 max-w-5xl">
       <div className="mb-10">
-        <h1 className="text-3xl font-bold gradient-text font-display">Report Settings</h1>
-        <p className="text-gray-400 mt-2">
+        <h1 className="text-3xl font-bold text-gray-900 font-display">Report Settings</h1>
+        <p className="text-gray-500 mt-2">
           Customize your brand and report defaults
         </p>
       </div>
 
       {message && (
-        <div className={`${message.includes("✅") ? "glass border border-green-500/30 bg-green-500/10" : "glass border border-red-500/30 bg-red-500/10"} p-4 rounded-lg mb-6`}>
-          <span className="text-gray-300">{message}</span>
+        <div className={`${message.includes("Error") ? "bg-red-50 border border-red-200 text-red-700" : "bg-green-50 border border-green-200 text-green-700"} p-4 rounded-lg mb-6 text-sm`}>
+          {message}
         </div>
       )}
 
       {/* Brand Settings Section */}
       <section className="mb-10">
         <div className="flex items-center gap-2 mb-6">
-          <Palette className="w-5 h-5 text-accent-purple" />
-          <h2 className="text-xl font-bold text-white">Brand Settings</h2>
+          <Palette className="w-5 h-5 text-blue-600" />
+          <h2 className="text-xl font-bold text-gray-900">Brand Settings</h2>
         </div>
 
         {brandMessage && (
-          <div className={`${brandMessage.includes("Error") ? "glass border border-red-500/30 bg-red-500/10" : "glass border border-green-500/30 bg-green-500/10"} p-3 rounded-lg mb-4`}>
-            <span className="text-gray-300 text-sm">{brandMessage}</span>
+          <div className={`${brandMessage.includes("Error") ? "bg-red-50 border border-red-200 text-red-700" : "bg-green-50 border border-green-200 text-green-700"} p-3 rounded-lg mb-4 text-sm`}>
+            {brandMessage}
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Logo & Business Name */}
-          <div className="card-elevated">
-            <div className="card-body">
-              <h3 className="font-medium text-white mb-4">Logo & Identity</h3>
+          <div className="card p-6">
+            <h3 className="font-medium text-gray-900 mb-4">Logo & Identity</h3>
 
-              <div className="mb-4">
-                <label className="text-sm text-gray-300 mb-2 block">Logo</label>
-                <div className="flex items-center gap-4">
-                  {localBrand.logo_url ? (
-                    <div className="relative group">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-white flex items-center justify-center border border-white/10">
-                        <img
-                          src={localBrand.logo_url}
-                          alt="Brand logo"
-                          className="w-full h-full object-contain p-1"
-                        />
-                      </div>
-                      <button
-                        onClick={handleLogoRemove}
-                        className="absolute -top-2 -right-2 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Remove logo"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Logo</label>
+              <div className="flex items-center gap-4">
+                {localBrand.logo_url ? (
+                  <div className="relative group">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-200">
+                      <img
+                        src={localBrand.logo_url}
+                        alt="Brand logo"
+                        className="w-full h-full object-contain p-1"
+                      />
                     </div>
-                  ) : (
-                    <div
-                      onClick={() => logoInputRef.current?.click()}
-                      className="w-16 h-16 rounded-lg border-2 border-dashed border-white/20 hover:border-accent-purple/50 flex items-center justify-center cursor-pointer transition-colors"
-                    >
-                      {logoUploading ? (
-                        <span className="loading loading-spinner loading-sm text-accent-purple" />
-                      ) : (
-                        <Upload className="w-5 h-5 text-gray-500" />
-                      )}
-                    </div>
-                  )}
-                  <div className="flex-1">
                     <button
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={logoUploading}
-                      className="text-sm text-accent-purple hover:underline"
+                      onClick={handleLogoRemove}
+                      className="absolute -top-2 -right-2 p-1 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove logo"
                     >
-                      {localBrand.logo_url ? "Change logo" : "Upload logo"}
+                      <Trash2 className="w-3 h-3" />
                     </button>
-                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, or WebP. Max 2MB.</p>
                   </div>
+                ) : (
+                  <div
+                    onClick={() => logoInputRef.current?.click()}
+                    className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex items-center justify-center cursor-pointer transition-colors"
+                  >
+                    {logoUploading ? (
+                      <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Upload className="w-5 h-5 text-gray-400" />
+                    )}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <button
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={logoUploading}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    {localBrand.logo_url ? "Change logo" : "Upload logo"}
+                  </button>
+                  <p className="text-xs text-gray-400 mt-1">PNG, JPG, or WebP. Max 2MB.</p>
                 </div>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="hidden"
-                  onChange={handleLogoUpload}
-                />
               </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={handleLogoUpload}
+              />
+            </div>
 
-              <div>
-                <label className="text-sm text-gray-300 mb-2 block">Business Name</label>
-                <input
-                  type="text"
-                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
-                  value={localBrand.business_name || ""}
-                  onChange={(e) => setLocalBrand(prev => ({ ...prev, business_name: e.target.value }))}
-                  placeholder="Peak Performance Coaching"
-                />
-              </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Business Name</label>
+              <input
+                type="text"
+                className="input-field"
+                value={localBrand.business_name || ""}
+                onChange={(e) => setLocalBrand(prev => ({ ...prev, business_name: e.target.value }))}
+                placeholder="Peak Performance Coaching"
+              />
             </div>
           </div>
 
           {/* Colors */}
-          <div className="card-elevated">
-            <div className="card-body">
-              <h3 className="font-medium text-white mb-4">Brand Colors</h3>
+          <div className="card p-6">
+            <h3 className="font-medium text-gray-900 mb-4">Brand Colors</h3>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-300 mb-2 block">Primary Color</label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={localBrand.primary_color || "#8B5CF6"}
-                      onChange={(e) => setLocalBrand(prev => ({ ...prev, primary_color: e.target.value }))}
-                      className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      value={localBrand.primary_color || "#8B5CF6"}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                          setLocalBrand(prev => ({ ...prev, primary_color: val }));
-                        }
-                      }}
-                      className="bg-bg-secondary border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-accent-purple rounded-lg px-3 py-2 w-28"
-                      placeholder="#8B5CF6"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm text-gray-300 mb-2 block">Accent Color</label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={localBrand.accent_color || "#7C3AED"}
-                      onChange={(e) => setLocalBrand(prev => ({ ...prev, accent_color: e.target.value }))}
-                      className="w-10 h-10 rounded-lg cursor-pointer border border-white/10 bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      value={localBrand.accent_color || "#7C3AED"}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
-                          setLocalBrand(prev => ({ ...prev, accent_color: val }));
-                        }
-                      }}
-                      className="bg-bg-secondary border border-white/10 text-white font-mono text-sm focus:outline-none focus:border-accent-purple rounded-lg px-3 py-2 w-28"
-                      placeholder="#7C3AED"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-2">
-                  <div
-                    className="h-2 rounded-full"
-                    style={{
-                      background: `linear-gradient(to right, ${localBrand.primary_color || "#8B5CF6"}, ${localBrand.accent_color || "#7C3AED"})`
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Primary Color</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={localBrand.primary_color || "#2563EB"}
+                    onChange={(e) => setLocalBrand(prev => ({ ...prev, primary_color: e.target.value }))}
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-gray-200 bg-white"
+                  />
+                  <input
+                    type="text"
+                    value={localBrand.primary_color || "#2563EB"}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                        setLocalBrand(prev => ({ ...prev, primary_color: val }));
+                      }
                     }}
+                    className="input-field font-mono text-sm w-28"
+                    placeholder="#2563EB"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Accent Color</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={localBrand.accent_color || "#1D4ED8"}
+                    onChange={(e) => setLocalBrand(prev => ({ ...prev, accent_color: e.target.value }))}
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-gray-200 bg-white"
+                  />
+                  <input
+                    type="text"
+                    value={localBrand.accent_color || "#1D4ED8"}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                        setLocalBrand(prev => ({ ...prev, accent_color: val }));
+                      }
+                    }}
+                    className="input-field font-mono text-sm w-28"
+                    placeholder="#1D4ED8"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <div
+                  className="h-2 rounded-full"
+                  style={{
+                    background: `linear-gradient(to right, ${localBrand.primary_color || "#2563EB"}, ${localBrand.accent_color || "#1D4ED8"})`
+                  }}
+                />
               </div>
             </div>
           </div>
 
           {/* Footer & Badge */}
-          <div className="card-elevated">
-            <div className="card-body">
-              <h3 className="font-medium text-white mb-4">Report Footer</h3>
+          <div className="card p-6">
+            <h3 className="font-medium text-gray-900 mb-4">Report Footer</h3>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-300 mb-2 block">Footer Text</label>
-                  <textarea
-                    className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 h-20 w-full"
-                    value={localBrand.footer_text || ""}
-                    onChange={(e) => setLocalBrand(prev => ({ ...prev, footer_text: e.target.value }))}
-                    placeholder="Peak Performance Coaching&#10;www.yoursite.com"
-                  />
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Footer Text</label>
+                <textarea
+                  className="input-field h-20 resize-none"
+                  value={localBrand.footer_text || ""}
+                  onChange={(e) => setLocalBrand(prev => ({ ...prev, footer_text: e.target.value }))}
+                  placeholder="Peak Performance Coaching&#10;www.yoursite.com"
+                />
+              </div>
 
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={localBrand.show_fitreport_badge ?? true}
-                    onChange={(e) => setLocalBrand(prev => ({ ...prev, show_fitreport_badge: e.target.checked }))}
-                    className="checkbox checkbox-sm checkbox-primary"
-                  />
-                  <label className="text-sm text-gray-300">
-                    Show &quot;Powered by FitReport&quot; badge
-                  </label>
-                </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={localBrand.show_fitreport_badge ?? true}
+                  onChange={(e) => setLocalBrand(prev => ({ ...prev, show_fitreport_badge: e.target.checked }))}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-600">
+                  Show &quot;Powered by FitReport&quot; badge
+                </label>
               </div>
             </div>
           </div>
         </div>
 
         {/* Brand Preview + Save */}
-        <div className="mt-6 flex items-center justify-between">
+        <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3">
+            <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
               {localBrand.logo_url && (
                 <img src={localBrand.logo_url} alt="" className="w-6 h-6 object-contain" />
               )}
@@ -487,21 +479,21 @@ export default function ReportConfigPage() {
                 {localBrand.business_name || "Your Business"}
               </span>
               <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: localBrand.primary_color || "#8B5CF6" }}
+                className="w-4 h-4 rounded-full border border-gray-200"
+                style={{ backgroundColor: localBrand.primary_color || "#2563EB" }}
               />
               <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: localBrand.accent_color || "#7C3AED" }}
+                className="w-4 h-4 rounded-full border border-gray-200"
+                style={{ backgroundColor: localBrand.accent_color || "#1D4ED8" }}
               />
             </div>
-            <span className="text-xs text-gray-500">Preview of how your brand appears in reports</span>
+            <span className="text-xs text-gray-400">Preview of how your brand appears in reports</span>
           </div>
 
           <button
             onClick={saveBrandSettings}
             disabled={brandSaving}
-            className={`btn-gradient px-6 py-3 rounded-lg font-medium ${brandSaving ? "loading" : ""}`}
+            className="btn-primary px-6 py-2.5 rounded-lg font-medium"
           >
             {brandSaving ? "Saving..." : "Save Brand Settings"}
           </button>
@@ -511,73 +503,71 @@ export default function ReportConfigPage() {
       {/* Workout Exclusions Section */}
       <section>
         <div className="flex items-center gap-2 mb-6">
-          <FilterX className="w-5 h-5 text-accent-purple" />
-          <h2 className="text-xl font-bold text-white">Workout Exclusions</h2>
+          <FilterX className="w-5 h-5 text-blue-600" />
+          <h2 className="text-xl font-bold text-gray-900">Workout Exclusions</h2>
         </div>
 
-        <div className="card-elevated">
-          <div className="card-body">
-            <p className="text-sm text-gray-400 mb-6">
-              Exclude specific workouts from all reports. Useful for filtering out warm-ups like Zone 2 Cardio or Walking.
-            </p>
+        <div className="card p-6">
+          <p className="text-sm text-gray-500 mb-6">
+            Exclude specific workouts from all reports. Useful for filtering out warm-ups like Zone 2 Cardio or Walking.
+          </p>
 
-            <div className="flex gap-3">
-              <input
-                type="text"
-                className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 flex-1"
-                placeholder="Enter workout name (e.g., Zone 2 Cardio)"
-                value={newExcludedWorkout}
-                onChange={(e) => setNewExcludedWorkout(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    addExcludedWorkout();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="btn-gradient px-6 py-3 rounded-lg font-medium"
-                onClick={addExcludedWorkout}
-                disabled={!newExcludedWorkout.trim() || saving}
-              >
-                {saving ? "Saving..." : "Add"}
-              </button>
-            </div>
-            <p className="text-gray-500 text-xs mt-2">
-              Case-insensitive, must match the exact workout name
-            </p>
-
-            {config.excluded_workout_names && config.excluded_workout_names.length > 0 && (
-              <div className="mt-6">
-                <div className="flex flex-wrap gap-2">
-                  {config.excluded_workout_names.map((workoutName, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-2 bg-bg-secondary border border-white/10 text-sm text-white px-3 py-1.5 rounded-full"
-                    >
-                      {workoutName}
-                      <button
-                        type="button"
-                        className="text-gray-400 hover:text-red-400 transition-colors"
-                        onClick={() => removeExcludedWorkout(index)}
-                        title={`Remove ${workoutName}`}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {(!config.excluded_workout_names || config.excluded_workout_names.length === 0) && (
-              <div className="text-center py-8 text-gray-500">
-                No workouts are currently excluded from reports
-              </div>
-            )}
+          <div className="flex gap-3">
+            <input
+              type="text"
+              className="input-field flex-1"
+              placeholder="Enter workout name (e.g., Zone 2 Cardio)"
+              value={newExcludedWorkout}
+              onChange={(e) => setNewExcludedWorkout(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  addExcludedWorkout();
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="btn-primary px-6 py-2.5 rounded-lg font-medium"
+              onClick={addExcludedWorkout}
+              disabled={!newExcludedWorkout.trim() || saving}
+            >
+              {saving ? "Saving..." : "Add"}
+            </button>
           </div>
+          <p className="text-gray-400 text-xs mt-2">
+            Case-insensitive, must match the exact workout name. Separate multiple with commas.
+          </p>
+
+          {config.excluded_workout_names && config.excluded_workout_names.length > 0 && (
+            <div className="mt-6">
+              <div className="flex flex-wrap gap-2">
+                {config.excluded_workout_names.map((workoutName, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 text-sm text-gray-700 px-3 py-1.5 rounded-full"
+                  >
+                    {workoutName}
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      onClick={() => removeExcludedWorkout(index)}
+                      title={`Remove ${workoutName}`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(!config.excluded_workout_names || config.excluded_workout_names.length === 0) && (
+            <div className="text-center py-8 text-gray-400">
+              No workouts are currently excluded from reports
+            </div>
+          )}
         </div>
       </section>
     </div>
   );
-} 
+}

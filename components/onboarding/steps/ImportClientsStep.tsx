@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/libs/supabase/client";
 import { toast } from "sonner";
+import { CheckCircle, ArrowRight } from "lucide-react";
 
 interface Client {
   id: string;
@@ -46,7 +47,6 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
 
         setAvailableClients(data.clients || []);
 
-        // Check how many are already imported
         const {
           data: { user },
         } = await supabase.auth.getUser();
@@ -96,7 +96,6 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
     setIsImporting(true);
 
     try {
-      // Get the full client objects for selected IDs
       const clientsToImport = availableClients.filter(client =>
         selectedClients.has(client.id)
       );
@@ -117,7 +116,6 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
 
       toast.success(`Successfully imported ${clientsToImport.length} clients!`);
 
-      // Update onboarding status
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -128,7 +126,6 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
           .eq("id", user.id);
       }
 
-      // Show success state
       setImportSuccess(true);
       setJustImportedCount(clientsToImport.length);
     } catch (error) {
@@ -146,7 +143,6 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
   };
 
   const handleSkip = async () => {
-    // Update status even when skipping so they can continue
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -159,37 +155,26 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
     onNext("clients_imported");
   };
 
-  // Success state after import
   if (importSuccess) {
     return (
-      <div className="card-elevated rounded-2xl p-8">
+      <div className="card p-8">
         <div className="text-center">
-          <div className="text-6xl mb-6">✅</div>
-          <h2 className="text-2xl font-display font-bold text-white mb-4">
+          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-display font-bold text-gray-900 mb-4">
             Clients Imported!
           </h2>
-          <p className="text-gray-400 mb-8">
+          <p className="text-gray-500 mb-8">
             Successfully imported {justImportedCount} client{justImportedCount !== 1 ? "s" : ""}.
             You can now generate reports for them.
           </p>
           <button
             onClick={handleContinue}
-            className="btn btn-primary btn-lg"
+            className="btn-primary px-8 py-3 rounded-lg font-medium text-lg inline-flex items-center gap-2"
           >
             Continue
-            <svg
-              className="w-5 h-5 ml-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
+            <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -198,27 +183,29 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
 
   if (isLoading) {
     return (
-      <div className="card-elevated rounded-2xl p-8 flex justify-center">
+      <div className="card p-8 flex justify-center">
         <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="text-gray-400 mt-4">Loading clients from Trainerize...</p>
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-gray-500 mt-4">Loading clients from Trainerize...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="card-elevated rounded-2xl p-8">
+    <div className="card p-8">
       <div className="text-center mb-8">
-        <div className="text-5xl mb-4">👥</div>
-        <h2 className="text-2xl font-display font-bold text-white mb-2">
+        <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">👥</span>
+        </div>
+        <h2 className="text-2xl font-display font-bold text-gray-900 mb-2">
           Import Your Clients
         </h2>
-        <p className="text-gray-400">
+        <p className="text-gray-500">
           Select the clients you want to track and generate reports for.
         </p>
         {importedCount > 0 && (
-          <p className="text-sm text-accent-purple mt-2">
+          <p className="text-sm text-blue-600 mt-2">
             You already have {importedCount} client(s) imported.
           </p>
         )}
@@ -226,80 +213,75 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
 
       {availableClients.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-400 mb-4">
+          <p className="text-gray-500 mb-4">
             No clients found in your Trainerize account.
           </p>
-          <button onClick={onBack} className="btn btn-outline">
+          <button onClick={onBack} className="btn-secondary px-6 py-2.5 rounded-lg font-medium">
             Go Back
           </button>
         </div>
       ) : (
         <>
-          {/* Selection Header */}
           <div className="flex items-center justify-between mb-4">
-            <button onClick={selectAll} className="btn btn-ghost btn-sm">
+            <button onClick={selectAll} className="btn-ghost text-sm px-3 py-1.5 rounded-lg">
               {selectedClients.size === availableClients.length
                 ? "Deselect All"
                 : "Select All"}
             </button>
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-gray-500">
               {selectedClients.size} of {availableClients.length} selected
             </span>
           </div>
 
-          {/* Client List */}
           <div className="max-h-96 overflow-y-auto space-y-2 mb-6">
             {availableClients.map((client) => (
               <label
                 key={client.id}
-                className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-colors ${
+                className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-colors border ${
                   selectedClients.has(client.id)
-                    ? "bg-accent-purple/20 border border-accent-purple/50"
-                    : "bg-base-300/50 hover:bg-base-300"
+                    ? "bg-blue-50 border-blue-200"
+                    : "bg-gray-50 border-gray-200 hover:bg-gray-100"
                 }`}
               >
                 <input
                   type="checkbox"
                   checked={selectedClients.has(client.id)}
                   onChange={() => toggleClient(client.id)}
-                  className="checkbox checkbox-primary"
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <div className="avatar placeholder">
-                  <div className="w-10 h-10 rounded-full bg-base-200">
-                    {client.photoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={client.photoUrl} alt={client.displayName} />
-                    ) : (
-                      <span className="text-lg">
-                        {client.displayName.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                  {client.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={client.photoUrl} alt={client.displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-lg font-medium text-gray-600">
+                      {client.displayName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-white">{client.displayName}</p>
+                  <p className="font-medium text-gray-900">{client.displayName}</p>
                   {client.email && (
-                    <p className="text-sm text-gray-400">{client.email}</p>
+                    <p className="text-sm text-gray-500">{client.email}</p>
                   )}
                 </div>
               </label>
             ))}
           </div>
 
-          {/* Actions */}
           <div className="flex flex-col gap-3">
             <div className="flex gap-3">
-              <button onClick={onBack} className="btn btn-ghost">
+              <button onClick={onBack} className="btn-ghost px-4 py-2.5 rounded-lg font-medium">
                 Back
               </button>
               <button
                 onClick={handleImport}
-                className="btn btn-primary flex-1"
+                className="btn-primary flex-1 px-6 py-2.5 rounded-lg font-medium inline-flex items-center justify-center gap-2"
                 disabled={isImporting || selectedClients.size === 0}
               >
                 {isImporting ? (
                   <>
-                    <span className="loading loading-spinner loading-sm"></span>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Importing...
                   </>
                 ) : (
@@ -312,14 +294,14 @@ export function ImportClientsStep({ onNext, onBack }: ImportClientsStepProps) {
             {importedCount > 0 && (
               <button
                 onClick={handleContinue}
-                className="btn btn-outline w-full"
+                className="btn-secondary w-full px-6 py-2.5 rounded-lg font-medium"
               >
                 Continue with {importedCount} existing client{importedCount !== 1 ? "s" : ""}
               </button>
             )}
             <button
               onClick={handleSkip}
-              className="btn btn-ghost btn-sm text-gray-500"
+              className="btn-ghost text-sm px-4 py-2 rounded-lg text-gray-400"
             >
               Skip for now
             </button>

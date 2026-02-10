@@ -6,7 +6,7 @@ import { useEffect, useState, ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Crisp } from "crisp-sdk-web";
 import NextTopLoader from "nextjs-toploader";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 import { Tooltip } from "react-tooltip";
 import config from "@/config";
 
@@ -61,7 +61,7 @@ const CrispChat = (): null => {
   // Add User Unique ID to Crisp to easily identify users when reaching support (optional)
   useEffect(() => {
     if (!isMounted || !data?.user || !config?.crisp?.id) return;
-    
+
     Crisp.session.setData({ userId: data.user?.id });
   }, [data, isMounted]);
 
@@ -87,9 +87,8 @@ const ClientLayout = ({ children }: { children: ReactNode }) => {
 
       {/* Show Success/Error messages anywhere from the app with toast() */}
       <Toaster
-        toastOptions={{
-          duration: 3000,
-        }}
+        duration={3000}
+        richColors
       />
 
       {/* Show tooltips if any JSX elements has these 2 attributes: data-tooltip-id="tooltip" data-tooltip-content="" */}

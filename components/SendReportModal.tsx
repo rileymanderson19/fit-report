@@ -36,12 +36,12 @@ const substituteVariables = (text: string, variables: Record<string, string>): s
   return result;
 };
 
-export default function SendReportModal({ 
-  isOpen, 
-  onClose, 
-  report, 
+export default function SendReportModal({
+  isOpen,
+  onClose,
+  report,
   client,
-  onSuccess 
+  onSuccess
 }: SendReportModalProps) {
   const [isSending, setIsSending] = useState(false);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
@@ -87,7 +87,7 @@ export default function SendReportModal({
         setIncludeWorkouts(config.include_workouts_default);
         setIncludeNutrition(config.include_nutrition_default);
         setIncludeProgress(config.include_progress_default);
-        
+
         setConfigLoaded(true);
       } else {
         // No saved configuration - use defaults with basic variable substitution
@@ -141,11 +141,11 @@ export default function SendReportModal({
     try {
       // Capture the report image using the same method as Download Image
       let imageData: string | undefined;
-      
+
       try {
         // Import mobile optimization utilities
         const { captureReportImageData } = await import('@/utils/mobileImageCapture');
-        
+
         // Use mobile-optimized capture to get image data only
         imageData = await captureReportImageData('report-container');
       } catch (captureError) {
@@ -201,14 +201,14 @@ export default function SendReportModal({
     <div className="modal modal-open">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
 
-      <div className="card-elevated w-11/12 max-w-2xl relative z-50 m-auto mt-20">
+      <div className="card w-11/12 max-w-2xl relative z-50 m-auto mt-20">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-gradient-to-r from-accent-purple/10 to-accent-violet/10 rounded-t-lg">
-          <h3 className="font-bold text-lg text-white">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600/10 to-blue-700/10 rounded-t-lg">
+          <h3 className="font-bold text-lg text-gray-900">
             Send Fitness Report to {client?.first_name} {client?.last_name}
           </h3>
           <button
-            className="glass border border-white/10 hover:border-red-500/50 text-gray-300 hover:text-red-400 p-2 rounded-lg transition-all"
+            className="bg-white border border-gray-200 hover:border-red-500/50 text-gray-600 hover:text-red-400 p-2 rounded-lg transition-all"
             onClick={handleClose}
             disabled={isSending || isLoadingConfig}
           >
@@ -222,8 +222,8 @@ export default function SendReportModal({
         <div className="p-6 bg-bg-secondary">
           {isLoadingConfig && (
             <div className="flex items-center justify-center py-8">
-              <span className="loading loading-spinner loading-lg text-accent-purple"></span>
-              <span className="ml-2 text-gray-300">Loading your configuration...</span>
+              <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <span className="ml-2 text-gray-600">Loading your configuration...</span>
             </div>
           )}
 
@@ -232,11 +232,11 @@ export default function SendReportModal({
               {/* Subject */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium text-white">Subject</span>
+                  <span className="text-sm font-medium font-medium text-gray-900">Subject</span>
                 </label>
                 <input
                   type="text"
-                  className="glass border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:border-accent-purple focus:outline-none focus:ring-2 focus:ring-accent-purple/50 rounded-lg px-4 py-3 w-full"
+                  className="bg-white border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-500 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/50 rounded-lg px-4 py-3 w-full"
                   placeholder={`Your Fitness Report - ${new Date().toLocaleDateString()}`}
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
@@ -247,10 +247,10 @@ export default function SendReportModal({
               {/* Custom Message */}
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium text-white">Message</span>
+                  <span className="text-sm font-medium font-medium text-gray-900">Message</span>
                 </label>
                 <textarea
-                  className="glass border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:border-accent-purple focus:outline-none focus:ring-2 focus:ring-accent-purple/50 rounded-lg p-3 h-32"
+                  className="bg-white border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-500 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/50 rounded-lg p-3 h-32"
                   placeholder="Enter your message to the client..."
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
@@ -262,10 +262,10 @@ export default function SendReportModal({
               {signature && (
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-medium text-white">Signature</span>
+                    <span className="text-sm font-medium font-medium text-gray-900">Signature</span>
                   </label>
                   <textarea
-                    className="glass border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:border-accent-purple focus:outline-none focus:ring-2 focus:ring-accent-purple/50 rounded-lg p-3 h-20"
+                    className="bg-white border border-gray-200 bg-gray-50 text-gray-900 placeholder-gray-500 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/50 rounded-lg p-3 h-20"
                     placeholder="Your signature..."
                     value={signature}
                     onChange={(e) => setSignature(e.target.value)}
@@ -277,22 +277,22 @@ export default function SendReportModal({
           )}
 
           {/* Footer Actions */}
-          <div className="flex justify-end gap-2 mt-6 pt-6 border-t border-white/10">
+          <div className="flex justify-end gap-2 mt-6 pt-6 border-t border-gray-200">
             <button
-              className="glass border border-white/10 hover:border-white/20 px-6 py-3 rounded-lg font-medium transition-all text-white"
+              className="btn-secondary px-6 py-3 rounded-lg font-medium transition-all"
               onClick={handleClose}
               disabled={isSending || isLoadingConfig}
             >
               Cancel
             </button>
             <button
-              className="btn-gradient px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+              className="btn-primary px-6 py-2.5 rounded-lg font-medium flex items-center gap-2"
               onClick={handleSendReport}
               disabled={isSending || isLoadingConfig || !report || !client}
             >
               {isSending ? (
                 <>
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                   Sending Report...
                 </>
               ) : (
@@ -309,4 +309,4 @@ export default function SendReportModal({
       </div>
     </div>
   );
-} 
+}

@@ -63,14 +63,14 @@ export function InviteForm({ onSuccess }: InviteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Email Address *</span>
+      <div>
+        <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+          Email Address *
         </label>
         <input
           type="email"
           placeholder="coach@example.com"
-          className="input input-bordered w-full"
+          className="input-field"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -78,32 +78,30 @@ export function InviteForm({ onSuccess }: InviteFormProps) {
         />
       </div>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Coach Name</span>
+      <div>
+        <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+          Coach Name
         </label>
         <input
           type="text"
           placeholder="John Smith"
-          className="input input-bordered w-full"
+          className="input-field"
           value={coachName}
           onChange={(e) => setCoachName(e.target.value)}
           disabled={isSubmitting}
         />
-        <label className="label">
-          <span className="label-text-alt text-gray-500">
-            Optional - helps identify the invite
-          </span>
-        </label>
+        <p className="text-xs text-gray-400 mt-1.5">
+          Optional - helps identify the invite
+        </p>
       </div>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Notes</span>
+      <div>
+        <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+          Notes
         </label>
         <textarea
           placeholder="Any additional notes..."
-          className="textarea textarea-bordered w-full"
+          className="input-field"
           rows={2}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -113,12 +111,12 @@ export function InviteForm({ onSuccess }: InviteFormProps) {
 
       <button
         type="submit"
-        className="btn btn-primary w-full"
+        className="btn-primary w-full px-6 py-2.5 rounded-lg font-medium inline-flex items-center justify-center gap-2"
         disabled={isSubmitting}
       >
         {isSubmitting ? (
           <>
-            <span className="loading loading-spinner loading-sm"></span>
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             Creating Invite...
           </>
         ) : (

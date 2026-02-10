@@ -19,14 +19,14 @@ interface ClientSearchBarProps {
   className?: string;
 }
 
-export default function ClientSearchBar({ 
-  currentClientId, 
+export default function ClientSearchBar({
+  currentClientId,
   placeholder = "Search clients to navigate...",
   className = ""
 }: ClientSearchBarProps) {
   const router = useRouter();
   const supabase = createClient();
-  
+
   // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [clients, setClients] = useState<Client[]>([]);
@@ -35,7 +35,7 @@ export default function ClientSearchBar({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
+
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -44,7 +44,7 @@ export default function ClientSearchBar({
   // Fetch clients from Supabase
   const fetchClients = useCallback(async () => {
     if (!isInitialLoad) return; // Only fetch once unless forced
-    
+
     try {
       setIsLoading(true);
       const { data: profile } = await supabase.auth.getUser();
@@ -59,7 +59,7 @@ export default function ClientSearchBar({
         .order('first_name', { ascending: true });
 
       if (error) throw error;
-      
+
       setClients(data || []);
       setIsInitialLoad(false);
     } catch (error) {
@@ -78,18 +78,18 @@ export default function ClientSearchBar({
   // Filter clients based on search query
   const filterClients = useCallback((query: string, clientList: Client[]) => {
     if (!query.trim()) return [];
-    
+
     const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
-    
+
     return clientList.filter(client => {
       // Exclude current client from results
       if (currentClientId && client.id === currentClientId) return false;
-      
+
       const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
       const email = client.email.toLowerCase();
-      
-      return searchTerms.every(term => 
-        fullName.includes(term) || 
+
+      return searchTerms.every(term =>
+        fullName.includes(term) ||
         email.includes(term) ||
         client.first_name.toLowerCase().includes(term) ||
         client.last_name.toLowerCase().includes(term)
@@ -136,25 +136,25 @@ export default function ClientSearchBar({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < filteredClients.length - 1 ? prev + 1 : 0
         );
         break;
-      
+
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev > 0 ? prev - 1 : filteredClients.length - 1
         );
         break;
-      
+
       case 'Enter':
         e.preventDefault();
         if (selectedIndex >= 0 && selectedIndex < filteredClients.length) {
           navigateToClient(filteredClients[selectedIndex]);
         }
         break;
-      
+
       case 'Escape':
         e.preventDefault();
         setIsOpen(false);
@@ -178,7 +178,7 @@ export default function ClientSearchBar({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current && 
+        dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node) &&
         searchInputRef.current &&
         !searchInputRef.current.contains(event.target as Node)
@@ -205,24 +205,24 @@ export default function ClientSearchBar({
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <svg
-            className="h-5 w-5 text-gray-400"
+            className="h-5 w-5 text-gray-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
         </div>
-        
+
         <input
           ref={searchInputRef}
           type="text"
-          className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 pl-10 w-full"
+          className="bg-bg-secondary border border-gray-200 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-blue-600 rounded-lg px-4 py-2 pl-10 w-full"
           placeholder={placeholder}
           value={searchQuery}
           onChange={handleSearchChange}
@@ -230,10 +230,10 @@ export default function ClientSearchBar({
           onFocus={handleFocus}
           disabled={isLoading}
         />
-        
+
         {isLoading && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <span className="loading loading-spinner loading-sm text-accent-purple"></span>
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
@@ -242,7 +242,7 @@ export default function ClientSearchBar({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 w-full mt-1 card-elevated border border-white/10 rounded-lg shadow-xl max-h-80 overflow-y-auto"
+          className="absolute z-50 w-full mt-1 card border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto"
         >
           {filteredClients.length > 0 ? (
             <div className="py-1">
@@ -250,7 +250,7 @@ export default function ClientSearchBar({
                 <div
                   key={client.id}
                   className={`px-4 py-3 cursor-pointer transition-colors ${
-                    index === selectedIndex ? 'bg-accent-purple/20 text-white border-l-2 border-accent-purple' : 'text-gray-300 hover:bg-white/5'
+                    index === selectedIndex ? 'bg-blue-600/20 text-gray-900 border-l-2 border-blue-600' : 'text-gray-600 hover:bg-gray-50'
                   }`}
                   onClick={() => navigateToClient(client)}
                   onMouseEnter={() => setSelectedIndex(index)}
@@ -258,18 +258,18 @@ export default function ClientSearchBar({
                   <div className="flex items-center justify-between">
                     <div>
                       <div className={`font-medium ${
-                        index === selectedIndex ? 'text-white' : 'text-gray-200'
+                        index === selectedIndex ? 'text-gray-900' : 'text-gray-800'
                       }`}>
                         {client.first_name} {client.last_name}
                       </div>
                       <div className={`text-sm ${
-                        index === selectedIndex ? 'text-gray-300' : 'text-gray-400'
+                        index === selectedIndex ? 'text-gray-600' : 'text-gray-500'
                       }`}>
                         {client.email}
                       </div>
                     </div>
                     <div className={`text-xs ${
-                      index === selectedIndex ? 'text-accent-purple' : 'text-gray-500'
+                      index === selectedIndex ? 'text-blue-600' : 'text-gray-500'
                     }`}>
                       View Reports →
                     </div>
@@ -278,7 +278,7 @@ export default function ClientSearchBar({
               ))}
             </div>
           ) : searchQuery.trim() && (
-            <div className="px-4 py-3 text-gray-400 text-center">
+            <div className="px-4 py-3 text-gray-500 text-center">
                No clients found matching &ldquo;{searchQuery}&rdquo;
              </div>
           )}
@@ -286,4 +286,4 @@ export default function ClientSearchBar({
       )}
     </div>
   );
-} 
+}

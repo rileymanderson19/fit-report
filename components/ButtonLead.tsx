@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import apiClient from "@/libs/api";
 
 // This component is used to collect the emails from the landing page
@@ -45,18 +45,18 @@ const ButtonLead = ({ extraStyle }: { extraStyle?: string }) => {
         ref={inputRef}
         autoComplete="email"
         placeholder="tom@cruise.com"
-        className="input input-bordered w-full placeholder:opacity-60"
+        className="input-field w-full placeholder:opacity-60"
         onChange={(e) => setEmail(e.target.value)}
       />
 
       <button
-        className="btn btn-primary btn-block"
+        className="btn-primary px-6 py-2.5 rounded-lg font-medium w-full"
         type="submit"
         disabled={isDisabled}
       >
         Join waitlist
         {isLoading ? (
-          <span className="loading loading-spinner loading-xs"></span>
+          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block ml-2"></div>
         ) : (
           <svg
             xmlns="http://www.w3.org/2000/svg"

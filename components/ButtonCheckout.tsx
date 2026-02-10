@@ -5,7 +5,7 @@ import apiClient from "@/libs/api";
 import config from "@/config";
 import { createClient } from "@/libs/supabase/client";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 // This component is used to create Stripe Checkout Sessions
 // It calls the /api/stripe/create-checkout route with the priceId, successUrl and cancelUrl
@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 const ButtonCheckout = ({
   priceId,
   mode = "subscription",
-  className = "btn btn-primary btn-block",
+  className = "btn-primary px-6 py-2.5 rounded-lg font-medium w-full",
 }: {
   priceId: string;
   mode?: "payment" | "subscription";
@@ -89,7 +89,7 @@ const ButtonCheckout = ({
       disabled={isLoading}
     >
       {isLoading ? (
-        <span className="loading loading-spinner loading-xs"></span>
+        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
       ) : (
         <svg
           className="w-5 h-5 fill-primary-content group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-200"

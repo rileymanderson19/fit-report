@@ -216,7 +216,7 @@ export default function PublicReportPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="mt-4 text-gray-500 text-sm">Loading report...</p>
         </div>
       </div>
@@ -263,8 +263,8 @@ export default function PublicReportPage() {
 
   const { report, client, brand } = data;
   const clientName = `${client.first_name} ${client.last_name}`;
-  const primaryColor = brand?.primary_color || '#8B5CF6';
-  const accentColor = brand?.accent_color || '#7C3AED';
+  const primaryColor = brand?.primary_color || '#2563EB';
+  const accentColor = brand?.accent_color || '#1D4ED8';
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);

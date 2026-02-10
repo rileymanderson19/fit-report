@@ -100,76 +100,73 @@ export default function AccountPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <div className="flex justify-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-        </div>
+      <div className="flex justify-center py-16">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-display font-bold gradient-text">Account</h1>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-display font-bold text-gray-900">Account</h1>
+        <p className="text-sm text-gray-500 mt-1">Manage your profile and account settings</p>
       </div>
 
-      <div className="card-elevated p-6 rounded-lg max-w-xl">
-        <h2 className="text-xl font-semibold text-white mb-6">Profile Information</h2>
+      <div className="card p-6 max-w-xl">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Profile Information</h2>
 
-        <div className="space-y-4">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Email</span>
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Email
             </label>
             <input
               type="email"
               value={email}
-              className="input input-bordered w-full bg-base-200"
+              className="input-field opacity-60 cursor-not-allowed"
               disabled
             />
-            <label className="label">
-              <span className="label-text-alt text-gray-500">
-                Email cannot be changed
-              </span>
-            </label>
+            <p className="text-xs text-gray-400 mt-1.5">
+              Email cannot be changed
+            </p>
           </div>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">First Name</span>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              First Name
             </label>
             <input
               type="text"
               value={firstName}
               onChange={(e) => handleFirstNameChange(e.target.value)}
               placeholder="John"
-              className="input input-bordered w-full"
+              className="input-field"
             />
           </div>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Last Name</span>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Last Name
             </label>
             <input
               type="text"
               value={lastName}
               onChange={(e) => handleLastNameChange(e.target.value)}
               placeholder="Doe"
-              className="input input-bordered w-full"
+              className="input-field"
             />
           </div>
 
-          <div className="pt-4">
+          <div className="pt-2">
             <button
               onClick={handleSave}
-              className="btn btn-primary"
+              className="btn-primary px-6 py-2.5 rounded-lg"
               disabled={isSaving}
             >
               {isSaving ? (
                 <>
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Saving...
                 </>
               ) : (

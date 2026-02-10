@@ -72,7 +72,7 @@ export const metadata: Metadata = {
 		maximumScale: 5,
 		userScalable: true,
 	},
-	themeColor: "#1f1b2e",
+	themeColor: "#2563EB",
 };
 
 export default function RootLayout({
@@ -81,7 +81,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en" className="scroll-smooth">
+		<html lang="en" data-theme="fitreport" className="scroll-smooth">
 			<head>
 				<Script
 					defer

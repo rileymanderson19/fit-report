@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { InviteForm } from "@/components/admin/InviteForm";
 import { InvitesTable } from "@/components/admin/InvitesTable";
 import { toast } from "sonner";
+import { Copy } from "lucide-react";
 
 interface Invite {
   id: string;
@@ -72,10 +73,10 @@ export default function AdminPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-display font-bold text-white mb-2">
+        <h2 className="text-2xl font-display font-bold text-gray-900 mb-2">
           Invite Management
         </h2>
-        <p className="text-gray-400">
+        <p className="text-gray-500">
           Create and manage coach invitations for FitReport.
         </p>
       </div>
@@ -83,15 +84,15 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Invite Form */}
         <div className="lg:col-span-1">
-          <div className="card-elevated rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">
+          <div className="card p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Create New Invite
             </h3>
             <InviteForm onSuccess={handleInviteCreated} />
 
             {lastInviteUrl && (
-              <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                <p className="text-sm text-green-400 font-medium mb-2">
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-700 font-medium mb-2">
                   Invite created successfully!
                 </p>
                 <div className="flex items-center gap-2">
@@ -99,16 +100,17 @@ export default function AdminPage() {
                     type="text"
                     readOnly
                     value={lastInviteUrl}
-                    className="input input-sm input-bordered flex-1 text-xs"
+                    className="input-field text-sm flex-1"
                   />
                   <button
                     onClick={() => copyInviteUrl(lastInviteUrl)}
-                    className="btn btn-sm btn-primary"
+                    className="btn-primary px-3 py-2.5 rounded-lg text-sm font-medium inline-flex items-center gap-1.5"
                   >
+                    <Copy className="w-3.5 h-3.5" />
                     Copy
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-gray-500 mt-2">
                   Share this URL with the coach. It expires in 48 hours.
                 </p>
               </div>
@@ -118,13 +120,13 @@ export default function AdminPage() {
 
         {/* Invites Table */}
         <div className="lg:col-span-2">
-          <div className="card-elevated rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">
+          <div className="card p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
               All Invites
             </h3>
             {isLoading ? (
               <div className="flex justify-center py-8">
-                <span className="loading loading-spinner loading-md"></span>
+                <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : (
               <InvitesTable invites={invites} onRevoke={handleRevoke} />

@@ -80,7 +80,7 @@ export function TrainerNotes({ dailyData, weeklyAverages, clientName, isScreensh
     if (weeklyAverages.length >= 2) {
       const latest = weeklyAverages[weeklyAverages.length - 1];
       const previous = weeklyAverages[weeklyAverages.length - 2];
-      
+
       const weightChange = latest.avgWeight - previous.avgWeight;
       if (Math.abs(weightChange) > 2) {
         const direction = weightChange > 0 ? 'gained' : 'lost';
@@ -103,15 +103,15 @@ export function TrainerNotes({ dailyData, weeklyAverages, clientName, isScreensh
   };
 
   return (
-    <div className="card bg-base-200/50 shadow-lg">
-      <div className="card-body">
+    <div className="card bg-gray-50 shadow-lg">
+      <div className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="card-title text-xl flex items-center gap-2">
-            📝 Trainer Notes & Coaching Suggestions
+          <h3 className="text-xl font-semibold flex items-center gap-2">
+            Trainer Notes & Coaching Suggestions
           </h3>
           {!isScreenshotMode && (
             <button
-              className="btn btn-sm btn-outline"
+              className="btn-secondary px-3 py-1.5 rounded-lg text-sm font-medium"
               onClick={() => setShowAISuggestions(!showAISuggestions)}
             >
               {showAISuggestions ? 'Hide' : 'Show'} AI Suggestions
@@ -123,15 +123,15 @@ export function TrainerNotes({ dailyData, weeklyAverages, clientName, isScreensh
         {(showAISuggestions || isScreenshotMode) && generateCoachingSuggestions.length > 0 && (
           <div className="mb-6">
             <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
-              🤖 AI Coaching Insights
+              AI Coaching Insights
             </h4>
             <div className="space-y-3">
               {generateCoachingSuggestions.map((suggestion, index) => (
-                <div key={index} className="alert alert-info">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-blue-600 shrink-0 w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
-                  <span className="text-sm">{suggestion}</span>
+                  <span className="text-sm text-gray-700">{suggestion}</span>
                 </div>
               ))}
             </div>
@@ -141,13 +141,13 @@ export function TrainerNotes({ dailyData, weeklyAverages, clientName, isScreensh
         {/* Manual Trainer Notes */}
         <div>
           <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
-            ✍️ Personal Trainer Notes
+            Personal Trainer Notes
           </h4>
-          
+
           {!isScreenshotMode ? (
             <div className="space-y-4">
               <textarea
-                className="textarea textarea-bordered w-full h-32"
+                className="input-field w-full h-32"
                 placeholder={`Add your personal notes and coaching observations for ${clientName}...
 
 Examples:
@@ -158,20 +158,20 @@ Examples:
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
-              
+
               <div className="flex justify-between items-center">
-                <div className="text-sm text-base-content/60">
+                <div className="text-sm text-gray-500">
                   {notes.length} characters
                 </div>
                 <div className="flex gap-2">
                   <button
-                    className="btn btn-sm btn-ghost"
+                    className="btn-ghost px-3 py-1.5 rounded-lg text-sm font-medium"
                     onClick={() => setNotes('')}
                   >
                     Clear
                   </button>
                   <button
-                    className="btn btn-sm btn-primary"
+                    className="btn-primary px-3 py-1.5 rounded-lg text-sm font-medium"
                     onClick={handleSaveNotes}
                     disabled={!notes.trim()}
                   >
@@ -182,13 +182,13 @@ Examples:
             </div>
           ) : (
             // Display mode for screenshots
-            <div className="bg-base-100 p-4 rounded-lg border">
+            <div className="bg-white p-4 rounded-lg border">
               {notes.trim() ? (
                 <div className="whitespace-pre-wrap text-sm">
                   {notes}
                 </div>
               ) : (
-                <div className="text-base-content/60 italic text-sm">
+                <div className="text-gray-500 italic text-sm">
                   No additional trainer notes for this period.
                 </div>
               )}
@@ -202,7 +202,7 @@ Examples:
             <h5 className="font-medium mb-2">Quick Actions:</h5>
             <div className="flex flex-wrap gap-2">
               {[
-                'Great progress this week! 💪',
+                'Great progress this week!',
                 'Focus on consistency moving forward',
                 'Excellent adherence to nutrition plan',
                 'Consider increasing training intensity',
@@ -211,7 +211,7 @@ Examples:
               ].map((quickNote, index) => (
                 <button
                   key={index}
-                  className="btn btn-xs btn-outline"
+                  className="btn-secondary px-2 py-1 rounded text-xs font-medium"
                   onClick={() => setNotes(prev => prev ? `${prev}\n\n• ${quickNote}` : `• ${quickNote}`)}
                 >
                   {quickNote}
@@ -222,8 +222,8 @@ Examples:
         )}
 
         {/* Report Summary for Trainer */}
-        <div className="mt-6 p-4 bg-primary/10 rounded-lg">
-          <h5 className="font-semibold mb-2">📊 Quick Report Summary</h5>
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+          <h5 className="font-semibold mb-2">Quick Report Summary</h5>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
             <div>
               <strong>Period:</strong> {dailyData.length} days
@@ -242,4 +242,4 @@ Examples:
       </div>
     </div>
   );
-} 
+}

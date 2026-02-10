@@ -33,49 +33,49 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-gray-100">
       {/* Admin Header */}
-      <header className="bg-base-100 border-b border-base-300">
+      <header className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/dashboard" className="text-sm text-gray-400 hover:text-white">
+              <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-900">
                 ← Back to Dashboard
               </Link>
-              <div className="h-6 w-px bg-base-300" />
+              <div className="h-6 w-px bg-gray-200" />
               <h1 className="text-xl font-display font-bold">
-                <span className="text-accent-purple">Admin</span> Panel
+                <span className="text-blue-600">Admin</span> Panel
               </h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-400">
+              <span className="text-sm text-gray-500">
                 {profile.email || user.email}
               </span>
-              <div className="badge badge-primary badge-sm">Admin</div>
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Admin</div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Admin Navigation */}
-      <nav className="bg-base-100 border-b border-base-300">
+      <nav className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4">
           <div className="flex gap-6">
             <Link
               href="/admin"
-              className="py-3 px-1 border-b-2 border-transparent hover:border-accent-purple text-gray-400 hover:text-white transition-colors"
+              className="py-3 px-1 border-b-2 border-transparent hover:border-blue-600 text-gray-500 hover:text-gray-900 transition-colors"
             >
               Invites
             </Link>
             <Link
               href="/admin/users"
-              className="py-3 px-1 border-b-2 border-transparent hover:border-accent-purple text-gray-400 hover:text-white transition-colors"
+              className="py-3 px-1 border-b-2 border-transparent hover:border-blue-600 text-gray-500 hover:text-gray-900 transition-colors"
             >
               Users
             </Link>
             <Link
               href="/admin/audit"
-              className="py-3 px-1 border-b-2 border-transparent hover:border-accent-purple text-gray-400 hover:text-white transition-colors"
+              className="py-3 px-1 border-b-2 border-transparent hover:border-blue-600 text-gray-500 hover:text-gray-900 transition-colors"
             >
               Audit Log
             </Link>

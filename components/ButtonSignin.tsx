@@ -36,11 +36,7 @@ const ButtonSignin = ({
     return (
       <Link
         href={config.auth.callbackUrl}
-        className={`group relative inline-flex items-center justify-center px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
-          extraStyle?.includes('btn-primary')
-            ? 'btn-gradient hover:scale-105'
-            : 'glass border border-white/10 hover:border-accent-purple/50'
-        }`}
+        className="btn-primary inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-200"
       >
         {user?.user_metadata?.avatar_url ? (
           <img
@@ -52,20 +48,19 @@ const ButtonSignin = ({
             height={24}
           />
         ) : (
-          <span className="w-6 h-6 flex justify-center items-center rounded-full bg-accent-purple/20 text-accent-purple text-sm font-semibold">
+          <span className="w-6 h-6 flex justify-center items-center rounded-full bg-white/20 text-white text-sm font-semibold">
             {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0)}
           </span>
         )}
+        <span>Dashboard</span>
       </Link>
     );
   }
 
   return (
     <Link
-      className={`group relative inline-flex items-center justify-center px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
-        extraStyle?.includes('btn-primary')
-          ? 'btn-gradient hover:scale-105'
-          : 'glass border border-white/10 hover:border-accent-purple/50 text-white'
+      className={`inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 ${
+        extraStyle || 'btn-secondary px-5 py-2.5'
       }`}
       href={config.auth.loginUrl}
     >

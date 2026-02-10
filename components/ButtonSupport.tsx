@@ -21,7 +21,7 @@ const ButtonSupport = () => {
 
   return (
     <button
-      className="btn btn-sm"
+      className="btn-ghost px-3 py-1.5 rounded-lg text-sm font-medium"
       onClick={handleClick}
       data-tooltip-id="tooltip"
       data-tooltip-content="Talk to support"

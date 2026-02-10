@@ -35,10 +35,10 @@ type GoalFilter = 'all' | 'fat_loss' | 'maintenance' | 'muscle_gain' | 'none';
 type SortOption = 'attention' | 'alpha' | 'newest';
 
 const STATUS_CONFIG: Record<ManualStatus, { label: string; icon: typeof CheckCircle2; color: string; bg: string; border: string; dot: string }> = {
-  on_track: { label: 'On Track', icon: CheckCircle2, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30', dot: 'bg-green-400' },
-  watch: { label: 'Watch', icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', dot: 'bg-yellow-400' },
-  needs_attention: { label: 'Needs Attention', icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30', dot: 'bg-red-400' },
-  new: { label: 'New', icon: Star, color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30', dot: 'bg-blue-400' },
+  on_track: { label: 'On Track', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', dot: 'bg-green-500' },
+  watch: { label: 'Watch', icon: AlertTriangle, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', dot: 'bg-yellow-500' },
+  needs_attention: { label: 'Needs Attention', icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500' },
+  new: { label: 'New', icon: Star, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', dot: 'bg-blue-500' },
 };
 
 const STATUS_OPTIONS: ManualStatus[] = ['on_track', 'watch', 'needs_attention', 'new'];
@@ -46,10 +46,10 @@ const STATUS_OPTIONS: ManualStatus[] = ['on_track', 'watch', 'needs_attention', 
 type GoalType = 'fat_loss' | 'maintenance' | 'muscle_gain' | null;
 
 const GOAL_CONFIG: Record<string, { label: string; icon: typeof Flame; color: string; bg: string; border: string; dot: string }> = {
-  fat_loss: { label: 'Fat Loss', icon: Flame, color: 'text-orange-400', bg: 'bg-orange-500/20', border: 'border-orange-500/30', dot: 'bg-orange-400' },
-  maintenance: { label: 'Maintenance', icon: Scale, color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30', dot: 'bg-blue-400' },
-  muscle_gain: { label: 'Muscle Gain', icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30', dot: 'bg-green-400' },
-  none: { label: 'Not Set', icon: Scale, color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30', dot: 'bg-gray-500' },
+  fat_loss: { label: 'Fat Loss', icon: Flame, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', dot: 'bg-orange-500' },
+  maintenance: { label: 'Maintenance', icon: Scale, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', dot: 'bg-blue-500' },
+  muscle_gain: { label: 'Muscle Gain', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', dot: 'bg-green-500' },
+  none: { label: 'Not Set', icon: Scale, color: 'text-gray-500', bg: 'bg-gray-50', border: 'border-gray-200', dot: 'bg-gray-400' },
 };
 
 const GOAL_OPTIONS: { value: GoalType; key: string }[] = [
@@ -71,13 +71,11 @@ export default function ClientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Dropdown state
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
   const [goalDropdownId, setGoalDropdownId] = useState<string | null>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const goalDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Import state
   const [trainerizeClients, setTrainerizeClients] = useState<TrainerizeClient[]>([]);
   const [importSearchQuery, setImportSearchQuery] = useState('');
   const [selectedImportIds, setSelectedImportIds] = useState<string[]>([]);
@@ -85,17 +83,14 @@ export default function ClientsPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [isFetchingTrainerize, setIsFetchingTrainerize] = useState(false);
 
-  // Delete state
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Edit state
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState('');
   const [editingGoal, setEditingGoal] = useState<Client['goal']>(null);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
 
-  // Load clients
   const fetchClients = useCallback(async () => {
     try {
       const { data: profile } = await supabase.auth.getUser();
@@ -133,7 +128,6 @@ export default function ClientsPage() {
     fetchClients();
   }, [fetchClients]);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
@@ -147,7 +141,6 @@ export default function ClientsPage() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  // Compute stats from client data
   const stats = {
     total: clients.length,
     onTrack: clients.filter(c => c.status === 'on_track').length,
@@ -156,7 +149,6 @@ export default function ClientsPage() {
     new: clients.filter(c => c.status === 'new').length,
   };
 
-  // Filter and sort
   const filteredClients = clients
     .filter(client => {
       const matchesSearch = searchQuery === '' ||
@@ -181,10 +173,8 @@ export default function ClientsPage() {
   const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
   const currentClients = filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Update client status
   const updateClientStatus = async (clientId: string, newStatus: ManualStatus) => {
     setStatusDropdownId(null);
-    // Optimistic update
     setClients(prev => prev.map(c => c.id === clientId ? { ...c, status: newStatus } : c));
 
     try {
@@ -197,11 +187,10 @@ export default function ClientsPage() {
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Failed to update status');
-      fetchClients(); // Revert on error
+      fetchClients();
     }
   };
 
-  // Update client goal
   const updateClientGoal = async (clientId: string, newGoal: GoalType) => {
     setGoalDropdownId(null);
     setClients(prev => prev.map(c => c.id === clientId ? { ...c, goal: newGoal } : c));
@@ -220,7 +209,6 @@ export default function ClientsPage() {
     }
   };
 
-  // Import handlers
   const fetchTrainerizeClients = async () => {
     setIsFetchingTrainerize(true);
     try {
@@ -347,17 +335,16 @@ export default function ClientsPage() {
     client.email.toLowerCase().includes(importSearchQuery.toLowerCase())
   );
 
-  // Helpers
   const getInitials = (first: string, last: string) =>
     `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
 
   const avatarColors = [
-    'bg-purple-500/20 text-purple-300',
-    'bg-blue-500/20 text-blue-300',
-    'bg-emerald-500/20 text-emerald-300',
-    'bg-amber-500/20 text-amber-300',
-    'bg-rose-500/20 text-rose-300',
-    'bg-cyan-500/20 text-cyan-300',
+    'bg-purple-100 text-purple-600',
+    'bg-blue-100 text-blue-600',
+    'bg-emerald-100 text-emerald-600',
+    'bg-amber-100 text-amber-600',
+    'bg-rose-100 text-rose-600',
+    'bg-cyan-100 text-cyan-600',
   ];
 
   const getAvatarColor = (name: string) => {
@@ -368,24 +355,24 @@ export default function ClientsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <span className="loading loading-spinner loading-lg text-accent-purple" />
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold gradient-text">Clients</h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <h1 className="text-2xl font-display font-bold text-gray-900">Clients</h1>
+          <p className="text-gray-500 text-sm mt-1">
             Manage and monitor your {stats.total} client{stats.total !== 1 ? 's' : ''}
           </p>
         </div>
         <button
-          className={`btn-gradient text-sm px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${isFetchingTrainerize ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className="btn-primary text-sm px-4 py-2.5 rounded-lg flex items-center gap-2"
           onClick={fetchTrainerizeClients}
           disabled={isFetchingTrainerize}
         >
@@ -403,8 +390,8 @@ export default function ClientsPage() {
             { status: 'needs_attention' as ManualStatus, count: stats.needsAttention },
             { status: 'new' as ManualStatus, count: stats.new },
           ]).map(({ status, count }) => {
-            const config = STATUS_CONFIG[status];
-            const Icon = config.icon;
+            const cfg = STATUS_CONFIG[status];
+            const Icon = cfg.icon;
             const isActive = statusFilter === status;
             return (
               <button
@@ -413,15 +400,15 @@ export default function ClientsPage() {
                   setStatusFilter(isActive ? 'all' : status);
                   setCurrentPage(1);
                 }}
-                className={`card-elevated p-4 text-left transition-all ${isActive ? `ring-1 ${config.border}` : 'hover:bg-white/5'}`}
+                className={`card p-4 text-left transition-all ${isActive ? `ring-2 ${cfg.border} ring-current/20` : 'hover:shadow-md hover:border-gray-300'}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${config.bg}`}>
-                    <Icon className={`h-5 w-5 ${config.color}`} />
+                  <div className={`p-2 rounded-lg ${cfg.bg}`}>
+                    <Icon className={`h-5 w-5 ${cfg.color}`} />
                   </div>
                   <div>
-                    <span className={`text-2xl font-bold ${config.color}`}>{count}</span>
-                    <p className="text-xs text-gray-400">{config.label}</p>
+                    <span className={`text-2xl font-bold ${cfg.color}`}>{count}</span>
+                    <p className="text-xs text-gray-500">{cfg.label}</p>
                   </div>
                 </div>
               </button>
@@ -431,66 +418,63 @@ export default function ClientsPage() {
       )}
 
       {/* Search + filters bar */}
-      <div className="card-elevated p-3 mb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              className="bg-white/5 border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-accent-purple/50 rounded-lg pl-9 pr-3 py-2 w-full"
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-            />
-          </div>
-
-          <select
-            className="bg-white/5 border border-white/10 text-gray-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-accent-purple/50"
-            value={goalFilter}
-            onChange={(e) => { setGoalFilter(e.target.value as GoalFilter); setCurrentPage(1); }}
-          >
-            <option value="all">All Goals</option>
-            <option value="fat_loss">Fat Loss</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="muscle_gain">Muscle Gain</option>
-            <option value="none">No Goal Set</option>
-          </select>
-
-          <select
-            className="bg-white/5 border border-white/10 text-gray-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-accent-purple/50"
-            value={sortOption}
-            onChange={(e) => setSortOption(e.target.value as SortOption)}
-          >
-            <option value="attention">Needs Attention First</option>
-            <option value="alpha">Alphabetical</option>
-            <option value="newest">Newest First</option>
-          </select>
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            className="input-field pl-9 text-sm"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          />
         </div>
+
+        <select
+          className="input-field w-auto text-sm"
+          value={goalFilter}
+          onChange={(e) => { setGoalFilter(e.target.value as GoalFilter); setCurrentPage(1); }}
+        >
+          <option value="all">All Goals</option>
+          <option value="fat_loss">Fat Loss</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="muscle_gain">Muscle Gain</option>
+          <option value="none">No Goal Set</option>
+        </select>
+
+        <select
+          className="input-field w-auto text-sm"
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value as SortOption)}
+        >
+          <option value="attention">Needs Attention First</option>
+          <option value="alpha">Alphabetical</option>
+          <option value="newest">Newest First</option>
+        </select>
       </div>
 
       {/* Client table */}
-      <div className="card-elevated overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Client</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Goal</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Status</th>
-                <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-4 py-3">Actions</th>
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Client</th>
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Goal</th>
+                <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Status</th>
+                <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-gray-100">
               {currentClients.map((client) => {
-                const config = STATUS_CONFIG[client.status];
+                const cfg = STATUS_CONFIG[client.status];
                 const fullName = `${client.first_name} ${client.last_name}`;
 
                 return (
                   <tr
                     key={client.id}
-                    className="hover:bg-white/[0.03] transition-colors"
+                    className="hover:bg-gray-50 transition-colors"
                   >
-                    {/* Client name + email */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${getAvatarColor(fullName)}`}>
@@ -499,16 +483,16 @@ export default function ClientsPage() {
                         <div className="min-w-0">
                           <Link
                             href={`/dashboard/clients/${client.id}/reports`}
-                            className="font-medium text-white hover:text-accent-purple transition-colors text-sm block truncate"
+                            className="font-medium text-gray-900 hover:text-blue-600 transition-colors text-sm block truncate"
                           >
                             {fullName}
                           </Link>
-                          <p className="text-xs text-gray-500 truncate">{client.email}</p>
+                          <p className="text-xs text-gray-400 truncate">{client.email}</p>
                         </div>
                       </div>
                     </td>
 
-                    {/* Goal — clickable dropdown */}
+                    {/* Goal dropdown */}
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <div className="relative" ref={goalDropdownId === client.id ? goalDropdownRef : undefined}>
                         {(() => {
@@ -520,7 +504,7 @@ export default function ClientsPage() {
                                 setGoalDropdownId(goalDropdownId === client.id ? null : client.id);
                                 setStatusDropdownId(null);
                               }}
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:ring-1 hover:ring-white/20 ${gc.bg} ${gc.color} border ${gc.border}`}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:shadow-sm ${gc.bg} ${gc.color} border ${gc.border}`}
                             >
                               <GoalIcon className="h-3 w-3" />
                               {gc.label}
@@ -530,7 +514,7 @@ export default function ClientsPage() {
                         })()}
 
                         {goalDropdownId === client.id && (
-                          <div className="absolute top-full left-0 mt-1 w-44 rounded-lg border border-white/10 shadow-xl z-50" style={{ backgroundColor: '#13111C' }}>
+                          <div className="absolute top-full left-0 mt-1 w-44 bg-white rounded-lg border border-gray-200 shadow-lg z-50">
                             {GOAL_OPTIONS.map(({ value, key }) => {
                               const gc = GOAL_CONFIG[key];
                               const GoalIcon = gc.icon;
@@ -539,14 +523,14 @@ export default function ClientsPage() {
                                 <button
                                   key={key}
                                   onClick={() => updateClientGoal(client.id, value)}
-                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-white/5 first:rounded-t-lg last:rounded-b-lg ${
-                                    isSelected ? 'bg-white/5' : ''
+                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
+                                    isSelected ? 'bg-gray-50' : ''
                                   }`}
                                 >
                                   <GoalIcon className={`h-3 w-3 ${gc.color}`} />
                                   <span className={gc.color}>{gc.label}</span>
                                   {isSelected && (
-                                    <CheckCircle2 className="h-3 w-3 ml-auto text-accent-purple" />
+                                    <CheckCircle2 className="h-3 w-3 ml-auto text-blue-600" />
                                   )}
                                 </button>
                               );
@@ -556,7 +540,7 @@ export default function ClientsPage() {
                       </div>
                     </td>
 
-                    {/* Status — clickable dropdown */}
+                    {/* Status dropdown */}
                     <td className="px-4 py-3">
                       <div className="relative" ref={statusDropdownId === client.id ? statusDropdownRef : undefined}>
                         <button
@@ -564,29 +548,29 @@ export default function ClientsPage() {
                             setStatusDropdownId(statusDropdownId === client.id ? null : client.id);
                             setGoalDropdownId(null);
                           }}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:ring-1 hover:ring-white/20 ${config.bg} ${config.color} border ${config.border}`}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:shadow-sm ${cfg.bg} ${cfg.color} border ${cfg.border}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
-                          {config.label}
+                          <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                          {cfg.label}
                           <ChevronDown className="h-3 w-3 opacity-50" />
                         </button>
 
                         {statusDropdownId === client.id && (
-                          <div className="absolute top-full left-0 mt-1 w-44 rounded-lg border border-white/10 shadow-xl z-50" style={{ backgroundColor: '#13111C' }}>
+                          <div className="absolute top-full left-0 mt-1 w-44 bg-white rounded-lg border border-gray-200 shadow-lg z-50">
                             {STATUS_OPTIONS.map(s => {
                               const sc = STATUS_CONFIG[s];
                               return (
                                 <button
                                   key={s}
                                   onClick={() => updateClientStatus(client.id, s)}
-                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-white/5 first:rounded-t-lg last:rounded-b-lg ${
-                                    client.status === s ? 'bg-white/5' : ''
+                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
+                                    client.status === s ? 'bg-gray-50' : ''
                                   }`}
                                 >
                                   <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
                                   <span className={sc.color}>{sc.label}</span>
                                   {client.status === s && (
-                                    <CheckCircle2 className="h-3 w-3 ml-auto text-accent-purple" />
+                                    <CheckCircle2 className="h-3 w-3 ml-auto text-blue-600" />
                                   )}
                                 </button>
                               );
@@ -601,13 +585,13 @@ export default function ClientsPage() {
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           href={`/dashboard/clients/${client.id}/reports`}
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-accent-purple hover:bg-white/5 transition-all"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
                           title="View Reports"
                         >
                           <Eye className="h-4 w-4" />
                         </Link>
                         <button
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-accent-purple hover:bg-white/5 transition-all"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
                           onClick={() => {
                             setEditingClientId(client.id);
                             setEditingNotes(client.notes || '');
@@ -618,7 +602,7 @@ export default function ClientsPage() {
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/5 transition-all"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all"
                           onClick={() => setDeletingClientId(client.id)}
                           title="Delete Client"
                         >
@@ -635,25 +619,35 @@ export default function ClientsPage() {
           {/* Empty state */}
           {filteredClients.length === 0 && (
             <div className="p-12 text-center">
-              <Users className="h-10 w-10 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400 text-sm">
+              <Users className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm mb-4">
                 {clients.length === 0
-                  ? 'No clients imported yet. Click "Import Clients" to get started.'
+                  ? 'No clients imported yet.'
                   : 'No clients match your current filters.'}
               </p>
+              {clients.length === 0 && (
+                <button
+                  className="btn-primary text-sm px-4 py-2 rounded-lg inline-flex items-center gap-2"
+                  onClick={fetchTrainerizeClients}
+                  disabled={isFetchingTrainerize}
+                >
+                  <Upload className="h-4 w-4" />
+                  Import Clients
+                </button>
+              )}
             </div>
           )}
         </div>
 
         {/* Pagination footer */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
             <p className="text-xs text-gray-500">
               Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredClients.length)} of {filteredClients.length}
             </p>
             <div className="flex items-center gap-1">
               <button
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 onClick={() => setCurrentPage(p => p - 1)}
                 disabled={currentPage === 1}
               >
@@ -664,8 +658,8 @@ export default function ClientsPage() {
                   key={page}
                   className={`min-w-[28px] h-7 rounded-lg text-xs font-medium transition-all ${
                     page === currentPage
-                      ? 'bg-accent-purple/20 text-accent-purple border border-accent-purple/30'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                   }`}
                   onClick={() => setCurrentPage(page)}
                 >
@@ -673,7 +667,7 @@ export default function ClientsPage() {
                 </button>
               ))}
               <button
-                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 onClick={() => setCurrentPage(p => p + 1)}
                 disabled={currentPage === totalPages}
               >
@@ -687,28 +681,29 @@ export default function ClientsPage() {
       {/* Delete Confirmation Modal */}
       {deletingClientId && (
         <>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setDeletingClientId(null)} />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50" onClick={() => setDeletingClientId(null)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <div className="card-elevated max-w-md w-full p-6 pointer-events-auto" onClick={e => e.stopPropagation()}>
-              <h3 className="font-bold text-lg text-white mb-2">Confirm Delete</h3>
-              <p className="text-gray-300 text-sm">
+            <div className="card max-w-md w-full p-6 pointer-events-auto" onClick={e => e.stopPropagation()}>
+              <h3 className="font-bold text-lg text-gray-900 mb-2">Confirm Delete</h3>
+              <p className="text-gray-600 text-sm">
                 Are you sure you want to delete {clients.find(c => c.id === deletingClientId)?.first_name} {clients.find(c => c.id === deletingClientId)?.last_name}?
                 This will also delete all their reports. This action cannot be undone.
               </p>
               <div className="flex justify-end gap-2 mt-4">
                 <button
-                  className="glass border border-white/10 hover:border-white/20 px-4 py-2 rounded-lg text-sm transition-all"
+                  className="btn-secondary text-sm"
                   onClick={() => setDeletingClientId(null)}
                   disabled={isDeleting}
                 >
                   Cancel
                 </button>
                 <button
-                  className="glass border border-red-500/50 hover:border-red-500 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2"
+                  className="btn-danger text-sm flex items-center gap-2"
                   onClick={confirmDelete}
                   disabled={isDeleting}
                 >
-                  {isDeleting ? <span className="loading loading-spinner loading-sm" /> : 'Delete'}
+                  {isDeleting && <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                  Delete
                 </button>
               </div>
             </div>
@@ -719,25 +714,25 @@ export default function ClientsPage() {
       {/* Edit Notes Modal */}
       {editingClientId && (
         <>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => setEditingClientId(null)} />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50" onClick={() => setEditingClientId(null)} />
           <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 pointer-events-none">
-            <div className="card-elevated max-w-lg w-full p-6 pointer-events-auto" onClick={e => e.stopPropagation()}>
+            <div className="card max-w-lg w-full p-6 pointer-events-auto" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-base text-white">
+                <h3 className="font-bold text-base text-gray-900">
                   Edit Client Details
                 </h3>
-                <button onClick={() => setEditingClientId(null)} className="text-gray-400 hover:text-white">
+                <button onClick={() => setEditingClientId(null)} className="text-gray-400 hover:text-gray-600">
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <p className="text-sm text-gray-300 mb-4">
+              <p className="text-sm text-gray-500 mb-4">
                 {clients.find(c => c.id === editingClientId)?.first_name} {clients.find(c => c.id === editingClientId)?.last_name}
               </p>
 
               <div className="mb-3">
-                <label className="text-xs text-gray-400 mb-1.5 block">Goal</label>
+                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Goal</label>
                 <select
-                  className="bg-bg-secondary border border-white/10 text-white text-sm rounded-lg px-3 py-2 w-full focus:outline-none focus:border-accent-purple"
+                  className="input-field text-sm"
                   value={editingGoal || ''}
                   onChange={(e) => setEditingGoal(e.target.value as Client['goal'])}
                 >
@@ -749,9 +744,9 @@ export default function ClientsPage() {
               </div>
 
               <div className="mb-4">
-                <label className="text-xs text-gray-400 mb-1.5 block">Notes</label>
+                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Notes</label>
                 <textarea
-                  className="bg-bg-secondary border border-white/10 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-3 py-2 w-full min-h-[120px] resize-y"
+                  className="input-field text-sm min-h-[120px] resize-y"
                   placeholder="Enter client notes/context here..."
                   value={editingNotes}
                   onChange={(e) => setEditingNotes(e.target.value)}
@@ -760,17 +755,17 @@ export default function ClientsPage() {
 
               <div className="flex justify-end gap-2">
                 <button
-                  className="glass border border-white/10 hover:border-white/20 text-sm px-4 py-2 rounded-lg transition-all"
+                  className="btn-secondary text-sm"
                   onClick={() => setEditingClientId(null)}
                 >
                   Cancel
                 </button>
                 <button
-                  className={`btn-gradient text-sm px-4 py-2 rounded-lg flex items-center gap-2 ${isSavingNotes ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className="btn-primary text-sm flex items-center gap-2"
                   onClick={saveClientDetails}
                   disabled={isSavingNotes}
                 >
-                  {isSavingNotes && <span className="loading loading-spinner loading-sm" />}
+                  {isSavingNotes && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                   Save
                 </button>
               </div>
@@ -782,97 +777,94 @@ export default function ClientsPage() {
       {/* Import Clients Modal */}
       {isModalOpen && (
         <>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={() => { setIsModalOpen(false); setSelectedImportIds([]); setImportSearchQuery(''); }} />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50" onClick={() => { setIsModalOpen(false); setSelectedImportIds([]); setImportSearchQuery(''); }} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <div className="card-elevated w-full max-w-5xl max-h-[90vh] flex flex-col pointer-events-auto" onClick={e => e.stopPropagation()}>
-              <div className="p-6">
+            <div className="card w-full max-w-2xl max-h-[90vh] flex flex-col pointer-events-auto" onClick={e => e.stopPropagation()}>
+              <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-lg text-white">Import Clients from Trainerize</h3>
-                  <button onClick={() => { setIsModalOpen(false); setSelectedImportIds([]); setImportSearchQuery(''); }} className="text-gray-400 hover:text-white">
+                  <h3 className="font-bold text-lg text-gray-900">Import Clients from Trainerize</h3>
+                  <button onClick={() => { setIsModalOpen(false); setSelectedImportIds([]); setImportSearchQuery(''); }} className="text-gray-400 hover:text-gray-600">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
                 <input
                   type="text"
                   placeholder="Search Trainerize clients..."
-                  className="bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple rounded-lg px-4 py-2 w-full"
+                  className="input-field text-sm"
                   value={importSearchQuery}
                   onChange={(e) => setImportSearchQuery(e.target.value)}
                 />
               </div>
 
-              <div className="overflow-x-auto overflow-y-auto flex-1 px-6">
-                <table className="table w-full">
+              <div className="overflow-y-auto flex-1">
+                <table className="w-full">
                   <thead>
-                    <tr>
-                      <th className="text-gray-400">
-                        <label>
-                          <input
-                            type="checkbox"
-                            className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
-                            checked={filteredTrainerizeClients.length > 0 && filteredTrainerizeClients.every(c => selectedImportIds.includes(c.id))}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                const newIds = new Set([...selectedImportIds]);
-                                filteredTrainerizeClients.forEach(c => newIds.add(c.id));
-                                setSelectedImportIds(Array.from(newIds));
-                              } else {
-                                const filteredIds = new Set(filteredTrainerizeClients.map(c => c.id));
-                                setSelectedImportIds(selectedImportIds.filter(id => !filteredIds.has(id)));
-                              }
-                            }}
-                          />
-                        </label>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <th className="text-left px-4 py-3 w-10">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          checked={filteredTrainerizeClients.length > 0 && filteredTrainerizeClients.every(c => selectedImportIds.includes(c.id))}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const newIds = new Set([...selectedImportIds]);
+                              filteredTrainerizeClients.forEach(c => newIds.add(c.id));
+                              setSelectedImportIds(Array.from(newIds));
+                            } else {
+                              const filteredIds = new Set(filteredTrainerizeClients.map(c => c.id));
+                              setSelectedImportIds(selectedImportIds.filter(id => !filteredIds.has(id)));
+                            }
+                          }}
+                        />
                       </th>
-                      <th className="text-gray-400">Name</th>
-                      <th className="text-gray-400">Email</th>
-                      <th className="text-gray-400">Status</th>
+                      <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Name</th>
+                      <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-4 py-3">Email</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-100">
                     {filteredTrainerizeClients.map((client) => (
-                      <tr key={client.id} className="hover:bg-white/5">
-                        <td>
-                          <label>
-                            <input
-                              type="checkbox"
-                              className="checkbox border-white/20 [--chkbg:theme(colors.accent-purple)] [--chkfg:white] checked:border-accent-purple"
-                              checked={selectedImportIds.includes(client.id)}
-                              onChange={() => setSelectedImportIds(prev =>
-                                prev.includes(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id]
-                              )}
-                            />
-                          </label>
+                      <tr key={client.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            checked={selectedImportIds.includes(client.id)}
+                            onChange={() => setSelectedImportIds(prev =>
+                              prev.includes(client.id) ? prev.filter(id => id !== client.id) : [...prev, client.id]
+                            )}
+                          />
                         </td>
-                        <td className="text-white">{client.first_name} {client.last_name}</td>
-                        <td className="text-gray-300">{client.email}</td>
-                        <td>
-                          <span className="text-gray-500">Not Imported</span>
-                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{client.first_name} {client.last_name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">{client.email}</td>
                       </tr>
                     ))}
                     {filteredTrainerizeClients.length === 0 && (
-                      <tr><td colSpan={4} className="text-center py-4 text-gray-400">No clients found</td></tr>
+                      <tr><td colSpan={3} className="text-center py-8 text-gray-400 text-sm">No clients found</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
 
-              <div className="flex justify-end gap-2 p-6 border-t border-white/10">
-                <button
-                  className={`btn-gradient px-6 py-3 rounded-lg font-medium ${isImporting ? 'opacity-50 cursor-not-allowed' : ''} flex items-center gap-2`}
-                  onClick={handleImportClients}
-                  disabled={isImporting || selectedImportIds.length === 0}
-                >
-                  {isImporting && <span className="loading loading-spinner loading-sm" />}
-                  Import Selected ({selectedImportIds.length})
-                </button>
-                <button
-                  className="glass border border-white/10 hover:border-white/20 px-6 py-3 rounded-lg font-medium transition-all"
-                  onClick={() => { setIsModalOpen(false); setSelectedImportIds([]); setImportSearchQuery(''); }}
-                >
-                  Close
-                </button>
+              <div className="flex items-center justify-between p-6 border-t border-gray-200">
+                <p className="text-sm text-gray-500">
+                  {selectedImportIds.length} selected
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    className="btn-secondary text-sm"
+                    onClick={() => { setIsModalOpen(false); setSelectedImportIds([]); setImportSearchQuery(''); }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn-primary text-sm flex items-center gap-2"
+                    onClick={handleImportClients}
+                    disabled={isImporting || selectedImportIds.length === 0}
+                  >
+                    {isImporting && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                    Import Selected ({selectedImportIds.length})
+                  </button>
+                </div>
               </div>
             </div>
           </div>

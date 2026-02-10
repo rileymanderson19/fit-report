@@ -40,13 +40,13 @@ function getStepIndexFromStatus(status: OnboardingStatus): number {
   switch (status) {
     case "pending":
     case "invited":
-      return 0; // Welcome
+      return 0;
     case "credentials_setup":
-      return 3; // Import Clients (after Profile and Trainerize)
+      return 3;
     case "clients_imported":
-      return 4; // Template Defaults
+      return 4;
     case "completed":
-      return 6; // Completion
+      return 6;
     default:
       return 0;
   }
@@ -84,7 +84,6 @@ export default function OnboardingPage() {
 
       setUserId(user.id);
 
-      // Check invite status via API (handles RLS and updates profile)
       const response = await fetch("/api/onboarding/check-invite");
       const data = await response.json();
 
@@ -97,20 +96,16 @@ export default function OnboardingPage() {
       const status = data.status as OnboardingStatus;
       setOnboardingStatus(status);
 
-      // If already completed, redirect to dashboard
       if (status === "completed") {
         router.push("/dashboard");
         return;
       }
 
-      // If user has no invite and status is pending, redirect to dashboard
-      // (they're not supposed to be in onboarding)
       if (status === "pending") {
         router.push("/dashboard");
         return;
       }
 
-      // Set initial step based on status
       setCurrentStep(getStepIndexFromStatus(status));
       setIsLoading(false);
     };
@@ -125,13 +120,11 @@ export default function OnboardingPage() {
       onboarding_status: newStatus,
     };
 
-    // Add completion timestamp
     if (newStatus === "completed") {
       updates.onboarding_completed_at = new Date().toISOString();
     }
 
     await supabase.from("profiles").update(updates).eq("id", userId);
-
     setOnboardingStatus(newStatus);
   };
 
@@ -168,8 +161,8 @@ export default function OnboardingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-bg-primary via-bg-secondary to-black">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -177,15 +170,15 @@ export default function OnboardingPage() {
   const CurrentStepComponent = STEPS[currentStep].component;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bg-primary via-bg-secondary to-black">
+    <div className="min-h-screen bg-gray-50">
       {/* Progress Header */}
-      <div className="fixed top-0 left-0 right-0 bg-base-100/90 backdrop-blur-sm border-b border-base-300 z-50">
+      <div className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-b border-gray-200 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-display font-bold text-white">
-              Welcome to <span className="gradient-text">FitReport</span>
+            <h1 className="text-xl font-display font-bold text-gray-900">
+              Welcome to <span className="text-blue-600">FitReport</span>
             </h1>
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-gray-500">
               Step {currentStep + 1} of {STEPS.length}
             </div>
           </div>
@@ -197,10 +190,10 @@ export default function OnboardingPage() {
                 <div
                   className={`flex-1 h-1 rounded-full transition-colors ${
                     index < currentStep
-                      ? "bg-accent-purple"
+                      ? "bg-blue-600"
                       : index === currentStep
-                      ? "bg-accent-purple/50"
-                      : "bg-base-300"
+                      ? "bg-blue-300"
+                      : "bg-gray-200"
                   }`}
                 />
                 {index < STEPS.length - 1 && (

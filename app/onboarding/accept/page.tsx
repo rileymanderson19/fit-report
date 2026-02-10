@@ -60,17 +60,17 @@ function AcceptInviteContent() {
 
   if (status === "no-token") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-200">
-        <div className="card-elevated p-8 rounded-xl max-w-md text-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="card p-8 rounded-xl max-w-md text-center">
           <div className="text-error text-5xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-display font-bold text-white mb-2">
+          <h1 className="text-2xl font-display font-bold text-gray-900 mb-2">
             Invalid Invite Link
           </h1>
-          <p className="text-gray-400 mb-6">
+          <p className="text-gray-500 mb-6">
             This invite link is missing a token. Please check the link and try
             again, or contact support.
           </p>
-          <Link href="/signin" className="btn btn-primary">
+          <Link href="/signin" className="btn-primary px-6 py-2.5 rounded-lg font-medium">
             Go to Sign In
           </Link>
         </div>
@@ -80,13 +80,13 @@ function AcceptInviteContent() {
 
   if (status === "validating") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-200">
-        <div className="card-elevated p-8 rounded-xl max-w-md text-center">
-          <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
-          <h1 className="text-2xl font-display font-bold text-white mb-2">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="card p-8 rounded-xl max-w-md text-center">
+          <div className="flex justify-center mb-4"><div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>
+          <h1 className="text-2xl font-display font-bold text-gray-900 mb-2">
             Validating Invite
           </h1>
-          <p className="text-gray-400">Please wait while we verify your invite...</p>
+          <p className="text-gray-500">Please wait while we verify your invite...</p>
         </div>
       </div>
     );
@@ -94,15 +94,15 @@ function AcceptInviteContent() {
 
   if (status === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-base-200">
-        <div className="card-elevated p-8 rounded-xl max-w-md text-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="card p-8 rounded-xl max-w-md text-center">
           <div className="text-error text-5xl mb-4">❌</div>
-          <h1 className="text-2xl font-display font-bold text-white mb-2">
+          <h1 className="text-2xl font-display font-bold text-gray-900 mb-2">
             Invite Error
           </h1>
-          <p className="text-gray-400 mb-6">{errorMessage}</p>
+          <p className="text-gray-500 mb-6">{errorMessage}</p>
           <div className="space-y-3">
-            <Link href="/signin" className="btn btn-primary w-full">
+            <Link href="/signin" className="btn-primary px-6 py-2.5 rounded-lg font-medium w-full block text-center">
               Go to Sign In
             </Link>
             <p className="text-sm text-gray-500">
@@ -116,18 +116,18 @@ function AcceptInviteContent() {
 
   // Success state
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200">
-      <div className="card-elevated p-8 rounded-xl max-w-md text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="card p-8 rounded-xl max-w-md text-center">
         <div className="text-success text-5xl mb-4">✅</div>
-        <h1 className="text-2xl font-display font-bold text-white mb-2">
+        <h1 className="text-2xl font-display font-bold text-gray-900 mb-2">
           Invite Accepted!
         </h1>
-        <p className="text-gray-400 mb-6">
+        <p className="text-gray-500 mb-6">
           Check your email for a magic link to complete your account setup.
           You&apos;ll be taken to the onboarding wizard after signing in.
         </p>
-        <div className="bg-base-300 rounded-lg p-4">
-          <p className="text-sm text-gray-400">
+        <div className="bg-gray-200 rounded-lg p-4">
+          <p className="text-sm text-gray-500">
             Didn&apos;t receive the email? Check your spam folder or contact support.
           </p>
         </div>
@@ -140,8 +140,8 @@ export default function AcceptInvitePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-base-200">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

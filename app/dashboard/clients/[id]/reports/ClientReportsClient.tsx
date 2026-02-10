@@ -10,7 +10,7 @@ const ReportVisualization = dynamic(
   {
     loading: () => (
       <div className="flex justify-center items-center h-64">
-        <span className="loading loading-spinner loading-lg text-accent-purple"></span>
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     ),
     ssr: false
@@ -24,6 +24,7 @@ import GenerateLinkModal from '@/components/GenerateLinkModal';
 import { ShareProgressModal, ShareWeeklyHighlightsCard, ShareWeightProgressChart } from '@/components/shareable';
 import { useReportAnalytics, DailyData, WeeklyAverage } from '@/hooks/useReportAnalytics';
 import { toast } from 'sonner';
+import { RefreshCw, Share2, ChevronLeft, ChevronRight, Copy, Check, Camera, X, AlertTriangle, XCircle } from 'lucide-react';
 
 
 interface Report {
@@ -501,10 +502,6 @@ export default function ClientReportsClient({
   }, [supabase, clientId, initialClient, initialLiveReportData, initialLiveReportMetadata]);
 
   // Auto-generate live report on load (but only if no cached data from server)
-  // With our caching optimizations, this will be fast:
-  // - 80-90% hit precomputed cache (sub-second)
-  // - Cold generation benefits from Trainerize response caching
-  // - Page shell already rendered, so UX is still instant
   useEffect(() => {
     if (startDate && endDate && client && !liveReportData) {
       generateLiveReport();
@@ -848,7 +845,7 @@ export default function ClientReportsClient({
     return (
       <div className="p-8">
         <div className="flex justify-center items-center h-64">
-          <span className="loading loading-spinner loading-lg text-accent-purple"></span>
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -857,9 +854,9 @@ export default function ClientReportsClient({
   if (initialError) {
     return (
       <div className="p-8">
-        <div className="glass border border-red-500/30 bg-red-500/10 p-4 rounded-lg flex items-start gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span className="text-gray-300">{initialError}</span>
+        <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex items-start gap-3">
+          <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <span className="text-red-700 text-sm">{initialError}</span>
         </div>
       </div>
     );
@@ -868,9 +865,9 @@ export default function ClientReportsClient({
   if (!client) {
     return (
       <div className="p-8">
-        <div className="glass border border-red-500/30 bg-red-500/10 p-4 rounded-lg flex items-start gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span className="text-gray-300">Client not found</span>
+        <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex items-start gap-3">
+          <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+          <span className="text-red-700 text-sm">Client not found</span>
         </div>
       </div>
     );
@@ -890,57 +887,49 @@ export default function ClientReportsClient({
       {/* Report Content */}
       <div className="space-y-6">
           {/* Report Configuration */}
-          <div className="card-elevated">
-            <div className="card-body p-6">
-              {/* Date Range */}
-              <div className="mb-6">
-                <DateRangePicker
-                  from={startDate || undefined}
-                  to={endDate || undefined}
-                  onSelect={(range) => {
-                    setStartDate(range.from || null);
-                    setEndDate(range.to || null);
-                  }}
-                  showPresets={true}
-                />
-              </div>
+          <div className="card p-6">
+            {/* Date Range */}
+            <div className="mb-6">
+              <DateRangePicker
+                from={startDate || undefined}
+                to={endDate || undefined}
+                onSelect={(range) => {
+                  setStartDate(range.from || null);
+                  setEndDate(range.to || null);
+                }}
+                showPresets={true}
+              />
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button
-                  className="btn-gradient px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 hover:scale-105 transition-transform"
-                  onClick={generateLiveReport}
-                  disabled={isGeneratingLive || !startDate || !endDate}
-                >
-                  {isGeneratingLive ? (
-                    <>
-                      <span className="loading loading-spinner loading-sm" />
-                      <span>Generating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                      </svg>
-                      <span>Generate Report</span>
-                    </>
-                  )}
-                </button>
-
-                {liveReportData && (
-                  <button
-                    className="glass border border-green-500/50 hover:border-green-500 text-white px-8 py-3 rounded-lg font-medium hover:scale-105 transition-all"
-                    onClick={() => setIsShareModalOpen(true)}
-                  >
-                    <span className="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                      </svg>
-                      Share Progress
-                    </span>
-                  </button>
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                className="btn-primary px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 hover:-translate-y-0.5 hover:shadow-md transition-all"
+                onClick={generateLiveReport}
+                disabled={isGeneratingLive || !startDate || !endDate}
+              >
+                {isGeneratingLive ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-5 h-5" />
+                    <span>Generate Report</span>
+                  </>
                 )}
-              </div>
+              </button>
+
+              {liveReportData && (
+                <button
+                  className="btn-secondary px-8 py-3 rounded-lg font-medium flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-md transition-all border-green-300 text-green-700 hover:bg-green-50"
+                  onClick={() => setIsShareModalOpen(true)}
+                >
+                  <Share2 className="w-5 h-5" />
+                  <span>Share Progress</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -950,29 +939,25 @@ export default function ClientReportsClient({
               {prevClient && (
                 <a
                   href={`/dashboard/clients/${prevClient.id}/reports`}
-                  className="glass border border-white/10 hover:border-accent-purple/50 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 flex-1 hover:scale-105 transition-all group"
+                  className="card-hover px-6 py-3 flex items-center gap-2 flex-1 group"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:-translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
+                  <ChevronLeft className="w-5 h-5 text-gray-400 group-hover:-translate-x-1 transition-transform" />
                   <div className="flex flex-col items-start">
                     <span className="text-xs text-gray-400">Previous</span>
-                    <span className="text-sm">{prevClient.first_name} {prevClient.last_name}</span>
+                    <span className="text-sm font-medium text-gray-700">{prevClient.first_name} {prevClient.last_name}</span>
                   </div>
                 </a>
               )}
               {nextClient && (
                 <a
                   href={`/dashboard/clients/${nextClient.id}/reports`}
-                  className="glass border border-white/10 hover:border-accent-purple/50 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 flex-1 hover:scale-105 transition-all group ml-auto"
+                  className="card-hover px-6 py-3 flex items-center gap-2 flex-1 group ml-auto justify-end"
                 >
                   <div className="flex flex-col items-end">
                     <span className="text-xs text-gray-400">Next</span>
-                    <span className="text-sm">{nextClient.first_name} {nextClient.last_name}</span>
+                    <span className="text-sm font-medium text-gray-700">{nextClient.first_name} {nextClient.last_name}</span>
                   </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
+                  <ChevronRight className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" />
                 </a>
               )}
             </div>
@@ -980,7 +965,7 @@ export default function ClientReportsClient({
 
           {/* Status message when no data */}
           {!liveReportData && !isGeneratingLive && (
-            <div className="glass border border-white/10 rounded-lg p-6 text-center">
+            <div className="card p-6 text-center">
               <p className="text-gray-400">
                 Click &quot;Generate Report&quot; to load data for this period
               </p>
@@ -989,260 +974,249 @@ export default function ClientReportsClient({
 
           {/* Full Report Card Section */}
           {liveReportData && startDate && endDate && client && (
-            <div className="card-elevated">
-              <div className="card-body p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-white">Full Report</h2>
-                  <button
-                    onClick={handleCopyFullReport}
-                    className="glass border border-white/20 hover:border-accent-purple/50 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
-                  >
-                    {isFullReportCopied ? (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-green-400">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                          <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                        </svg>
-                        <span>Copy to Clipboard</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <div
-                  id="full-report-card"
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden p-8"
+            <div className="card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Full Report</h2>
+                <button
+                  onClick={handleCopyFullReport}
+                  className="btn-ghost text-sm px-4 py-2 rounded-lg flex items-center gap-2"
                 >
-                  {/* Header */}
-                  <div className="mb-6">
-                    <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full mb-4" />
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900">{client.first_name} {client.last_name}</h3>
-                        <p className="text-sm text-gray-500">
-                          Progress Report: {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </p>
-                      </div>
+                  {isFullReportCopied ? (
+                    <>
+                      <Check className="w-4 h-4 text-green-600" />
+                      <span className="text-green-600">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy to Clipboard</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <div
+                id="full-report-card"
+                className="bg-white rounded-2xl shadow-lg overflow-hidden p-8 border border-gray-100"
+              >
+                {/* Header */}
+                <div className="mb-6">
+                  <div className="h-1 w-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full mb-4" />
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">{client.first_name} {client.last_name}</h3>
+                      <p className="text-sm text-gray-500">
+                        Progress Report: {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Side-by-side layout */}
-                  <div className="flex flex-col lg:flex-row gap-6 items-start">
-                    {/* Left column: Weekly Highlights */}
-                    <div className="w-full lg:w-[400px] flex-shrink-0">
-                      <ShareWeeklyHighlightsCard
-                        clientName={`${client.first_name} ${client.last_name}`}
-                        dateRangeStart={startDate.toISOString()}
-                        dateRangeEnd={endDate.toISOString()}
-                        weeklyData={fullReportWeeklyData}
-                        weightChange={fullReportWeightData.weeklyChange}
-                        isScreenshotMode={true}
-                        hideFooter={true}
-                        hideHeader={true}
-                        unitPreference="lbs"
-                      />
-                    </div>
-
-                    {/* Right column: Weight Chart */}
-                    <div className="flex-1 min-w-0 w-full">
-                      <ShareWeightProgressChart
-                        dailyData={processedData.dailyData.map(d => ({ date: d.date, weight: d.weight }))}
-                        weeklyAverages={processedData.weeklyAverages.map(w => ({
-                          weekStart: w.weekStart,
-                          avgWeight: w.avgWeight
-                        }))}
-                        clientName={`${client.first_name} ${client.last_name}`}
-                        dateRangeStart={startDate.toISOString()}
-                        dateRangeEnd={endDate.toISOString()}
-                        isScreenshotMode={true}
-                        hideFooter={true}
-                        hideHeader={true}
-                        hideWeightChange={true}
-                        unitPreference="lbs"
-                      />
-                    </div>
-                  </div>
-
                 </div>
+
+                {/* Side-by-side layout */}
+                <div className="flex flex-col lg:flex-row gap-6 items-start">
+                  {/* Left column: Weekly Highlights */}
+                  <div className="w-full lg:w-[400px] flex-shrink-0">
+                    <ShareWeeklyHighlightsCard
+                      clientName={`${client.first_name} ${client.last_name}`}
+                      dateRangeStart={startDate.toISOString()}
+                      dateRangeEnd={endDate.toISOString()}
+                      weeklyData={fullReportWeeklyData}
+                      weightChange={fullReportWeightData.weeklyChange}
+                      isScreenshotMode={true}
+                      hideFooter={true}
+                      hideHeader={true}
+                      unitPreference="lbs"
+                    />
+                  </div>
+
+                  {/* Right column: Weight Chart */}
+                  <div className="flex-1 min-w-0 w-full">
+                    <ShareWeightProgressChart
+                      dailyData={processedData.dailyData.map(d => ({ date: d.date, weight: d.weight }))}
+                      weeklyAverages={processedData.weeklyAverages.map(w => ({
+                        weekStart: w.weekStart,
+                        avgWeight: w.avgWeight
+                      }))}
+                      clientName={`${client.first_name} ${client.last_name}`}
+                      dateRangeStart={startDate.toISOString()}
+                      dateRangeEnd={endDate.toISOString()}
+                      isScreenshotMode={true}
+                      hideFooter={true}
+                      hideHeader={true}
+                      hideWeightChange={true}
+                      unitPreference="lbs"
+                    />
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
 
           {/* Progress Photos Section */}
-          <div className="card-elevated">
-            <div className="card-body p-6">
-              <div className="mb-4 flex items-start justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Progress Photos</h2>
-                  <p className="text-sm text-gray-400 mt-1">Visual progress for this report period</p>
-                </div>
-                {client?.trainerize_id && (
-                  <button
-                    className="glass border border-white/20 hover:border-accent-purple/50 text-white text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all"
-                    onClick={handleSyncAllPhotos}
-                    disabled={isSyncingAllPhotos}
-                    title="Fetch all photos from Trainerize to find the true first photo"
-                  >
-                    {isSyncingAllPhotos ? (
-                      <>
-                        <span className="loading loading-spinner loading-xs" />
-                        <span>Syncing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                        </svg>
-                        <span>Sync All Photos</span>
-                      </>
-                    )}
-                  </button>
-                )}
+          <div className="card p-6">
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Progress Photos</h2>
+                <p className="text-sm text-gray-500 mt-1">Visual progress for this report period</p>
               </div>
-
-              {isLoadingPhotos ? (
-                <div className="flex justify-center py-8">
-                  <span className="loading loading-spinner loading-lg text-accent-purple"></span>
-                </div>
-              ) : photosError ? (
-                <div className="glass border border-yellow-500/30 bg-yellow-500/10 p-4 rounded-lg flex items-start gap-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5 text-yellow-500 mt-0.5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-                  <span className="text-gray-300 text-sm">{photosError}</span>
-                </div>
-              ) : Object.keys(photoSummary.poseComparisons).length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-400">No progress photos available yet for this client.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {Object.entries(photoSummary.poseComparisons)
-                    .filter(([pose, comp]) => pose !== 'unknown' && (comp.baselinePhoto || comp.latestPhoto))
-                    .sort(([a], [b]) => {
-                      const order = ['front', 'side', 'back'];
-                      return order.indexOf(a) - order.indexOf(b);
-                    })
-                    .map(([pose, comparison]) => (
-                        <button
-                          key={pose}
-                          className="glass border border-white/10 rounded-lg p-3 cursor-pointer hover:border-accent-purple/40 transition-all text-left"
-                          onClick={() => setSelectedPoseComparison(comparison)}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-semibold text-accent-purple uppercase tracking-wide">
-                              {pose}
-                            </span>
-                            {comparison.baselinePhoto?.isManualBaseline && (
-                              <span
-                                className="text-[10px] text-gray-500 hover:text-red-400 underline"
-                                onClick={(e) => { e.stopPropagation(); handleClearBaseline(pose); }}
-                                role="button"
-                              >
-                                Reset
-                              </span>
-                            )}
-                          </div>
-
-                          {/* 3-column grid */}
-                          <div className="grid grid-cols-3 gap-2">
-                            {/* Initial (baseline) */}
-                            <div>
-                              <p className="text-[10px] text-gray-400 text-center mb-1">Initial</p>
-                              {comparison.baselinePhoto ? (
-                                <div className="w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-lg">
-                                  <img
-                                    src={comparison.baselinePhoto.url}
-                                    alt={`${pose} initial`}
-                                    className="w-full h-full object-contain"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
-                                  <span className="text-[10px] text-gray-500">No photo</span>
-                                </div>
-                              )}
-                              <p className="text-[10px] text-gray-400 text-center mt-1">
-                                {comparison.baselinePhoto ? new Date(comparison.baselinePhoto.takenAt).toLocaleDateString() : '—'}
-                              </p>
-                            </div>
-
-                            {/* Second Latest */}
-                            <div>
-                              <p className="text-[10px] text-gray-400 text-center mb-1">Previous</p>
-                              {comparison.secondLatestPhoto ? (
-                                <div className="w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-lg">
-                                  <img
-                                    src={comparison.secondLatestPhoto.url}
-                                    alt={`${pose} previous`}
-                                    className="w-full h-full object-contain"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
-                                  <span className="text-[10px] text-gray-500">No photo</span>
-                                </div>
-                              )}
-                              <p className="text-[10px] text-gray-400 text-center mt-1">
-                                {comparison.secondLatestPhoto ? new Date(comparison.secondLatestPhoto.takenAt).toLocaleDateString() : '—'}
-                              </p>
-                            </div>
-
-                            {/* Latest */}
-                            <div>
-                              <p className="text-[10px] text-gray-400 text-center mb-1">Latest</p>
-                              {comparison.latestPhoto ? (
-                                <div className="w-full aspect-[3/4] overflow-hidden bg-black/40 rounded-lg">
-                                  <img
-                                    src={comparison.latestPhoto.url}
-                                    alt={`${pose} latest`}
-                                    className="w-full h-full object-contain"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
-                                  <span className="text-[10px] text-gray-500">No photo</span>
-                                </div>
-                              )}
-                              <p className="text-[10px] text-green-400 text-center mt-1">
-                                {comparison.latestPhoto ? new Date(comparison.latestPhoto.takenAt).toLocaleDateString() : '—'}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                    ))}
-                </div>
+              {client?.trainerize_id && (
+                <button
+                  className="btn-ghost text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                  onClick={handleSyncAllPhotos}
+                  disabled={isSyncingAllPhotos}
+                  title="Fetch all photos from Trainerize to find the true first photo"
+                >
+                  {isSyncingAllPhotos ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                      <span>Syncing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Sync All Photos</span>
+                    </>
+                  )}
+                </button>
               )}
             </div>
+
+            {isLoadingPhotos ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : photosError ? (
+              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                <span className="text-yellow-700 text-sm">{photosError}</span>
+              </div>
+            ) : Object.keys(photoSummary.poseComparisons).length === 0 ? (
+              <div className="text-center py-8">
+                <Camera className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-400">No progress photos available yet for this client.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.entries(photoSummary.poseComparisons)
+                  .filter(([pose, comp]) => pose !== 'unknown' && (comp.baselinePhoto || comp.latestPhoto))
+                  .sort(([a], [b]) => {
+                    const order = ['front', 'side', 'back'];
+                    return order.indexOf(a) - order.indexOf(b);
+                  })
+                  .map(([pose, comparison]) => (
+                      <button
+                        key={pose}
+                        className="bg-gray-50 border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all text-left"
+                        onClick={() => setSelectedPoseComparison(comparison)}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                            {pose}
+                          </span>
+                          {comparison.baselinePhoto?.isManualBaseline && (
+                            <span
+                              className="text-[10px] text-gray-400 hover:text-red-500 underline"
+                              onClick={(e) => { e.stopPropagation(); handleClearBaseline(pose); }}
+                              role="button"
+                            >
+                              Reset
+                            </span>
+                          )}
+                        </div>
+
+                        {/* 3-column grid */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {/* Initial (baseline) */}
+                          <div>
+                            <p className="text-[10px] text-gray-400 text-center mb-1">Initial</p>
+                            {comparison.baselinePhoto ? (
+                              <div className="w-full aspect-[3/4] overflow-hidden bg-gray-100 rounded-lg">
+                                <img
+                                  src={comparison.baselinePhoto.url}
+                                  alt={`${pose} initial`}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className="aspect-[3/4] bg-gray-100 rounded-lg flex items-center justify-center">
+                                <span className="text-[10px] text-gray-400">No photo</span>
+                              </div>
+                            )}
+                            <p className="text-[10px] text-gray-400 text-center mt-1">
+                              {comparison.baselinePhoto ? new Date(comparison.baselinePhoto.takenAt).toLocaleDateString() : '—'}
+                            </p>
+                          </div>
+
+                          {/* Second Latest */}
+                          <div>
+                            <p className="text-[10px] text-gray-400 text-center mb-1">Previous</p>
+                            {comparison.secondLatestPhoto ? (
+                              <div className="w-full aspect-[3/4] overflow-hidden bg-gray-100 rounded-lg">
+                                <img
+                                  src={comparison.secondLatestPhoto.url}
+                                  alt={`${pose} previous`}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className="aspect-[3/4] bg-gray-100 rounded-lg flex items-center justify-center">
+                                <span className="text-[10px] text-gray-400">No photo</span>
+                              </div>
+                            )}
+                            <p className="text-[10px] text-gray-400 text-center mt-1">
+                              {comparison.secondLatestPhoto ? new Date(comparison.secondLatestPhoto.takenAt).toLocaleDateString() : '—'}
+                            </p>
+                          </div>
+
+                          {/* Latest */}
+                          <div>
+                            <p className="text-[10px] text-gray-400 text-center mb-1">Latest</p>
+                            {comparison.latestPhoto ? (
+                              <div className="w-full aspect-[3/4] overflow-hidden bg-gray-100 rounded-lg">
+                                <img
+                                  src={comparison.latestPhoto.url}
+                                  alt={`${pose} latest`}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className="aspect-[3/4] bg-gray-100 rounded-lg flex items-center justify-center">
+                                <span className="text-[10px] text-gray-400">No photo</span>
+                              </div>
+                            )}
+                            <p className="text-[10px] text-green-600 text-center mt-1">
+                              {comparison.latestPhoto ? new Date(comparison.latestPhoto.takenAt).toLocaleDateString() : '—'}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                  ))}
+              </div>
+            )}
           </div>
 
           {/* Photo Comparison Lightbox */}
           {selectedPoseComparison && (
-            <dialog className="modal modal-open" onClick={() => setSelectedPoseComparison(null)}>
-              <div className="modal-box max-w-6xl bg-bg-secondary p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setSelectedPoseComparison(null)}>
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+              <div className="relative bg-white rounded-2xl shadow-xl max-w-6xl w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-white uppercase tracking-wide">
+                  <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">
                     {selectedPoseComparison.pose}
                   </h3>
                   <button
-                    className="glass border border-white/20 text-white w-8 h-8 rounded-full flex items-center justify-center hover:border-accent-purple transition-all"
+                    className="text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
                     onClick={() => setSelectedPoseComparison(null)}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {/* Initial */}
                   <div>
-                    <p className="text-xs text-gray-400 text-center mb-2">Initial</p>
+                    <p className="text-xs text-gray-500 text-center mb-2">Initial</p>
                     {selectedPoseComparison.baselinePhoto ? (
-                      <div className="aspect-[3/4] overflow-hidden rounded-lg bg-black/40">
+                      <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
                         <img
                           src={selectedPoseComparison.baselinePhoto.url}
                           alt={`${selectedPoseComparison.pose} initial`}
@@ -1250,19 +1224,19 @@ export default function ClientReportsClient({
                         />
                       </div>
                     ) : (
-                      <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
-                        <span className="text-sm text-gray-500">No photo</span>
+                      <div className="aspect-[3/4] bg-gray-100 rounded-lg flex items-center justify-center">
+                        <span className="text-sm text-gray-400">No photo</span>
                       </div>
                     )}
-                    <p className="text-xs text-gray-400 text-center mt-2">
+                    <p className="text-xs text-gray-500 text-center mt-2">
                       {selectedPoseComparison.baselinePhoto ? new Date(selectedPoseComparison.baselinePhoto.takenAt).toLocaleDateString() : '—'}
                     </p>
                   </div>
                   {/* Previous */}
                   <div>
-                    <p className="text-xs text-gray-400 text-center mb-2">Previous</p>
+                    <p className="text-xs text-gray-500 text-center mb-2">Previous</p>
                     {selectedPoseComparison.secondLatestPhoto ? (
-                      <div className="aspect-[3/4] overflow-hidden rounded-lg bg-black/40">
+                      <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
                         <img
                           src={selectedPoseComparison.secondLatestPhoto.url}
                           alt={`${selectedPoseComparison.pose} previous`}
@@ -1270,19 +1244,19 @@ export default function ClientReportsClient({
                         />
                       </div>
                     ) : (
-                      <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
-                        <span className="text-sm text-gray-500">No photo</span>
+                      <div className="aspect-[3/4] bg-gray-100 rounded-lg flex items-center justify-center">
+                        <span className="text-sm text-gray-400">No photo</span>
                       </div>
                     )}
-                    <p className="text-xs text-gray-400 text-center mt-2">
+                    <p className="text-xs text-gray-500 text-center mt-2">
                       {selectedPoseComparison.secondLatestPhoto ? new Date(selectedPoseComparison.secondLatestPhoto.takenAt).toLocaleDateString() : '—'}
                     </p>
                   </div>
                   {/* Latest */}
                   <div>
-                    <p className="text-xs text-gray-400 text-center mb-2">Latest</p>
+                    <p className="text-xs text-gray-500 text-center mb-2">Latest</p>
                     {selectedPoseComparison.latestPhoto ? (
-                      <div className="aspect-[3/4] overflow-hidden rounded-lg bg-black/40">
+                      <div className="aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
                         <img
                           src={selectedPoseComparison.latestPhoto.url}
                           alt={`${selectedPoseComparison.pose} latest`}
@@ -1290,265 +1264,258 @@ export default function ClientReportsClient({
                         />
                       </div>
                     ) : (
-                      <div className="aspect-[3/4] bg-black/20 rounded-lg flex items-center justify-center">
-                        <span className="text-sm text-gray-500">No photo</span>
+                      <div className="aspect-[3/4] bg-gray-100 rounded-lg flex items-center justify-center">
+                        <span className="text-sm text-gray-400">No photo</span>
                       </div>
                     )}
-                    <p className="text-xs text-green-400 text-center mt-2">
+                    <p className="text-xs text-green-600 text-center mt-2">
                       {selectedPoseComparison.latestPhoto ? new Date(selectedPoseComparison.latestPhoto.takenAt).toLocaleDateString() : '—'}
                     </p>
                   </div>
                 </div>
               </div>
-              <form method="dialog" className="modal-backdrop">
-                <button onClick={() => setSelectedPoseComparison(null)}>close</button>
-              </form>
-            </dialog>
+            </div>
           )}
 
           {/* Period Trends Section */}
           {liveReportData && startDate && endDate && (
-            <div className="card-elevated">
-              <div className="card-body p-6">
-                <h2 className="text-xl font-bold text-white mb-4">
-                  Period Trends
-                  <span className="text-sm font-normal text-gray-400 ml-2">
-                    ({startDate.toLocaleDateString()} – {endDate.toLocaleDateString()})
-                  </span>
-                </h2>
-                {(() => {
-                  const weeks = splitIntoWeeks(startDate, endDate);
-                  const formatSteps = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : Math.round(n).toString();
+            <div className="card p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Period Trends
+                <span className="text-sm font-normal text-gray-400 ml-2">
+                  ({startDate.toLocaleDateString()} – {endDate.toLocaleDateString()})
+                </span>
+              </h2>
+              {(() => {
+                const weeks = splitIntoWeeks(startDate, endDate);
+                const formatSteps = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : Math.round(n).toString();
 
-                  // Exclude today's partial data for non-weight metrics
-                  const todayStr = new Date().toISOString().split('T')[0];
-                  const nutritionData = (liveReportData?.nutritionData?.nutrition || []).filter((n: any) => new Date(n.date).toISOString().split('T')[0] !== todayStr);
-                  const healthData = (liveReportData?.healthData?.healthData || []).filter((h: any) => new Date(h.date).toISOString().split('T')[0] !== todayStr);
+                // Exclude today's partial data for non-weight metrics
+                const todayStr = new Date().toISOString().split('T')[0];
+                const nutritionData = (liveReportData?.nutritionData?.nutrition || []).filter((n: any) => new Date(n.date).toISOString().split('T')[0] !== todayStr);
+                const healthData = (liveReportData?.healthData?.healthData || []).filter((h: any) => new Date(h.date).toISOString().split('T')[0] !== todayStr);
 
-                  const metrics: Array<{
-                    key: string;
-                    label: string;
-                    unit: string;
-                    decimals: number;
-                    data: Array<{ date: string; value: number }>;
-                    goodDirection: 'up' | 'down' | null;
-                    format?: (n: number) => string;
-                  }> = [
-                    { key: 'weight', label: 'Weight', unit: ' lb', decimals: 1,
-                      data: (liveReportData?.bodyStats?.bodyStats || []).map((w: any) => ({ date: w.date, value: w.weight || 0 })),
-                      goodDirection: 'down' },
-                    { key: 'calories', label: 'Calories', unit: '', decimals: 0,
-                      data: nutritionData.map((n: any) => ({ date: n.date, value: n.calories || 0 })),
-                      goodDirection: null },
-                    { key: 'protein', label: 'Protein', unit: 'g', decimals: 0,
-                      data: nutritionData.map((n: any) => ({ date: n.date, value: n.proteinGrams || 0 })),
-                      goodDirection: 'up' },
-                    { key: 'carbs', label: 'Carbs', unit: 'g', decimals: 0,
-                      data: nutritionData.map((n: any) => ({ date: n.date, value: n.carbsGrams || 0 })),
-                      goodDirection: null },
-                    { key: 'fats', label: 'Fats', unit: 'g', decimals: 0,
-                      data: nutritionData.map((n: any) => ({ date: n.date, value: n.fatGrams || 0 })),
-                      goodDirection: null },
-                    { key: 'steps', label: 'Steps', unit: '', decimals: 0,
-                      data: healthData.map((h: any) => ({ date: h.date, value: h.data?.steps || 0 })),
-                      goodDirection: 'up', format: formatSteps },
-                  ];
+                const metrics: Array<{
+                  key: string;
+                  label: string;
+                  unit: string;
+                  decimals: number;
+                  data: Array<{ date: string; value: number }>;
+                  goodDirection: 'up' | 'down' | null;
+                  format?: (n: number) => string;
+                }> = [
+                  { key: 'weight', label: 'Weight', unit: ' lb', decimals: 1,
+                    data: (liveReportData?.bodyStats?.bodyStats || []).map((w: any) => ({ date: w.date, value: w.weight || 0 })),
+                    goodDirection: 'down' },
+                  { key: 'calories', label: 'Calories', unit: '', decimals: 0,
+                    data: nutritionData.map((n: any) => ({ date: n.date, value: n.calories || 0 })),
+                    goodDirection: null },
+                  { key: 'protein', label: 'Protein', unit: 'g', decimals: 0,
+                    data: nutritionData.map((n: any) => ({ date: n.date, value: n.proteinGrams || 0 })),
+                    goodDirection: 'up' },
+                  { key: 'carbs', label: 'Carbs', unit: 'g', decimals: 0,
+                    data: nutritionData.map((n: any) => ({ date: n.date, value: n.carbsGrams || 0 })),
+                    goodDirection: null },
+                  { key: 'fats', label: 'Fats', unit: 'g', decimals: 0,
+                    data: nutritionData.map((n: any) => ({ date: n.date, value: n.fatGrams || 0 })),
+                    goodDirection: null },
+                  { key: 'steps', label: 'Steps', unit: '', decimals: 0,
+                    data: healthData.map((h: any) => ({ date: h.date, value: h.data?.steps || 0 })),
+                    goodDirection: 'up', format: formatSteps },
+                ];
 
-                  // Pre-compute week averages for each metric
-                  const metricWeekData = metrics.map(m => ({
-                    ...m,
-                    weekAvgs: weeks.map(w => calculateWeekAvg(m.data, w.start, w.end)),
-                  }));
+                // Pre-compute week averages for each metric
+                const metricWeekData = metrics.map(m => ({
+                  ...m,
+                  weekAvgs: weeks.map(w => calculateWeekAvg(m.data, w.start, w.end)),
+                }));
 
-                  const formatVal = (m: typeof metrics[0], v: number | null) => {
-                    if (v === null) return '—';
-                    if (m.format) return m.format(v);
-                    if (m.decimals > 0) return v.toFixed(m.decimals) + m.unit;
-                    return Math.round(v).toLocaleString() + m.unit;
-                  };
+                const formatVal = (m: typeof metrics[0], v: number | null) => {
+                  if (v === null) return '—';
+                  if (m.format) return m.format(v);
+                  if (m.decimals > 0) return v.toFixed(m.decimals) + m.unit;
+                  return Math.round(v).toLocaleString() + m.unit;
+                };
 
-                  return (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-white/10">
-                            <th className="text-left py-2 pr-4 text-xs text-gray-500 uppercase tracking-wide font-medium"></th>
-                            {metrics.map(m => (
-                              <th key={m.key} className="text-center py-2 px-2 text-xs text-gray-500 uppercase tracking-wide font-medium">
-                                {m.label}
-                              </th>
+                return (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-2 pr-4 text-xs text-gray-400 uppercase tracking-wide font-medium"></th>
+                          {metrics.map(m => (
+                            <th key={m.key} className="text-center py-2 px-2 text-xs text-gray-400 uppercase tracking-wide font-medium">
+                              {m.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {weeks.map((week, wi) => (
+                          <tr key={wi} className="border-b border-gray-100">
+                            <td className="py-2.5 pr-4">
+                              <p className="text-xs text-gray-600 font-semibold">
+                                {weeks.length <= 3 ? `Week ${wi + 1}` : `Wk ${wi + 1}`}
+                              </p>
+                              <p className="text-[10px] text-gray-400">{week.label}</p>
+                            </td>
+                            {metricWeekData.map(m => (
+                              <td key={m.key} className="py-2.5 px-2 text-center text-sm text-gray-900 font-medium">
+                                {formatVal(m, m.weekAvgs[wi])}
+                              </td>
                             ))}
                           </tr>
-                        </thead>
-                        <tbody>
-                          {weeks.map((week, wi) => (
-                            <tr key={wi} className="border-b border-white/5">
-                              <td className="py-2.5 pr-4">
-                                <p className="text-xs text-gray-400 font-semibold">
-                                  {weeks.length <= 3 ? `Week ${wi + 1}` : `Wk ${wi + 1}`}
-                                </p>
-                                <p className="text-[10px] text-gray-500">{week.label}</p>
+                        ))}
+                        {/* Avg summary row */}
+                        <tr className="border-t border-gray-200">
+                          <td className="py-2.5 pr-4 text-xs text-gray-500 uppercase tracking-wide font-semibold">Avg</td>
+                          {metricWeekData.map(m => {
+                            const nonNull = m.weekAvgs.filter((v): v is number => v !== null);
+                            const avg = nonNull.length > 0 ? nonNull.reduce((s, v) => s + v, 0) / nonNull.length : null;
+                            return (
+                              <td key={m.key} className="py-2.5 px-2 text-center text-sm text-gray-500 font-medium">
+                                {formatVal(m, avg)}
                               </td>
-                              {metricWeekData.map(m => (
-                                <td key={m.key} className="py-2.5 px-2 text-center text-sm text-white font-medium">
-                                  {formatVal(m, m.weekAvgs[wi])}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                          {/* Avg summary row */}
-                          <tr className="border-t border-white/10">
-                            <td className="py-2.5 pr-4 text-xs text-gray-400 uppercase tracking-wide font-semibold">Avg</td>
-                            {metricWeekData.map(m => {
-                              const nonNull = m.weekAvgs.filter((v): v is number => v !== null);
-                              const avg = nonNull.length > 0 ? nonNull.reduce((s, v) => s + v, 0) / nonNull.length : null;
-                              return (
-                                <td key={m.key} className="py-2.5 px-2 text-center text-sm text-gray-400 font-medium">
-                                  {formatVal(m, avg)}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                          {/* Δ absolute change row */}
-                          <tr>
-                            <td className="py-2.5 pr-4 text-xs text-gray-400 uppercase tracking-wide font-semibold">Δ</td>
-                            {metricWeekData.map(m => {
-                              const firstVal = m.weekAvgs.find(v => v !== null);
-                              const lastVal = [...m.weekAvgs].reverse().find(v => v !== null);
-                              if (firstVal == null || lastVal == null) {
-                                return <td key={m.key} className="py-2.5 px-2 text-center text-sm text-gray-400 font-medium">—</td>;
-                              }
-                              const diff = lastVal - firstVal;
-                              const direction = diff > 0.01 ? 'up' : diff < -0.01 ? 'down' : 'stable';
-                              const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
-                              let colorClass = 'text-gray-400';
-                              if (m.goodDirection && direction !== 'stable') {
-                                colorClass = direction === m.goodDirection ? 'text-green-400' : 'text-orange-400';
-                              }
-                              const absDiff = Math.abs(diff);
-                              let formatted: string;
-                              if (m.format) formatted = m.format(absDiff);
-                              else if (m.decimals > 0) formatted = absDiff.toFixed(m.decimals) + m.unit;
-                              else formatted = Math.round(absDiff).toLocaleString() + m.unit;
-                              return (
-                                <td key={m.key} className={`py-2.5 px-2 text-center text-sm font-medium ${colorClass}`}>
-                                  {`${arrow} ${formatted}`}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  );
-                })()}
-              </div>
+                            );
+                          })}
+                        </tr>
+                        {/* delta absolute change row */}
+                        <tr>
+                          <td className="py-2.5 pr-4 text-xs text-gray-500 uppercase tracking-wide font-semibold">Change</td>
+                          {metricWeekData.map(m => {
+                            const firstVal = m.weekAvgs.find(v => v !== null);
+                            const lastVal = [...m.weekAvgs].reverse().find(v => v !== null);
+                            if (firstVal == null || lastVal == null) {
+                              return <td key={m.key} className="py-2.5 px-2 text-center text-sm text-gray-400 font-medium">—</td>;
+                            }
+                            const diff = lastVal - firstVal;
+                            const direction = diff > 0.01 ? 'up' : diff < -0.01 ? 'down' : 'stable';
+                            const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
+                            let colorClass = 'text-gray-400';
+                            if (m.goodDirection && direction !== 'stable') {
+                              colorClass = direction === m.goodDirection ? 'text-green-600' : 'text-orange-500';
+                            }
+                            const absDiff = Math.abs(diff);
+                            let formatted: string;
+                            if (m.format) formatted = m.format(absDiff);
+                            else if (m.decimals > 0) formatted = absDiff.toFixed(m.decimals) + m.unit;
+                            else formatted = Math.round(absDiff).toLocaleString() + m.unit;
+                            return (
+                              <td key={m.key} className={`py-2.5 px-2 text-center text-sm font-medium ${colorClass}`}>
+                                {`${arrow} ${formatted}`}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
           {/* Recent Workouts Section - Grouped by workout type */}
           {liveReportData?.workoutData?.workouts?.length > 0 && (
-            <div className="card-elevated">
-              <div className="card-body p-6">
-                <h2 className="text-xl font-bold text-white mb-4">Recent Workouts</h2>
-                {(() => {
-                  // Group workouts by name and take last 2 sessions of each
-                  const workoutsByType = new Map<string, any[]>();
-                  for (const workout of liveReportData.workoutData.workouts) {
-                    const name = workout.workoutName || workout.title || workout.name || 'Workout';
-                    if (!workoutsByType.has(name)) {
-                      workoutsByType.set(name, []);
-                    }
-                    workoutsByType.get(name)!.push(workout);
+            <div className="card p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Workouts</h2>
+              {(() => {
+                // Group workouts by name and take last 2 sessions of each
+                const workoutsByType = new Map<string, any[]>();
+                for (const workout of liveReportData.workoutData.workouts) {
+                  const name = workout.workoutName || workout.title || workout.name || 'Workout';
+                  if (!workoutsByType.has(name)) {
+                    workoutsByType.set(name, []);
                   }
+                  workoutsByType.get(name)!.push(workout);
+                }
 
-                  // Sort each group by date (newest first), take last 2, then reverse so most recent is on right
-                  const groupedWorkouts = Array.from(workoutsByType.entries()).map(([name, sessions]) => ({
-                    name,
-                    sessions: sessions
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                      .slice(0, 2)
-                      .reverse()
-                  }));
+                // Sort each group by date (newest first), take last 2, then reverse so most recent is on right
+                const groupedWorkouts = Array.from(workoutsByType.entries()).map(([name, sessions]) => ({
+                  name,
+                  sessions: sessions
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .slice(0, 2)
+                    .reverse()
+                }));
 
-                  return (
-                    <div className="space-y-6">
-                      {groupedWorkouts.map(({ name, sessions }) => (
-                        <div key={name} className="glass border border-white/10 rounded-lg overflow-hidden">
-                          <div className="p-4 border-b border-white/10 bg-white/5">
-                            <h3 className="text-lg font-semibold text-white">{name}</h3>
-                          </div>
-                          <div className="overflow-x-auto">
-                            <table className="w-full">
-                              <thead>
-                                <tr className="border-b border-white/10 text-xs text-gray-400 uppercase">
-                                  <th className="py-2 px-4 text-left font-medium">Exercise</th>
-                                  {sessions.map((session, sIdx) => (
-                                    <th key={sIdx} className="py-2 px-4 text-right font-medium whitespace-nowrap">
-                                      {new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                    </th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {(() => {
-                                  // Get all unique exercises across sessions
-                                  const allExercises = new Map<string, any[]>();
-                                  sessions.forEach((session, sessionIdx) => {
-                                    (session.exercises || []).forEach((ex: any) => {
-                                      const exName = ex.name || ex.exerciseName;
-                                      if (!allExercises.has(exName)) {
-                                        allExercises.set(exName, new Array(sessions.length).fill(null));
-                                      }
-                                      allExercises.get(exName)![sessionIdx] = ex;
-                                    });
-                                  });
-
-                                  return Array.from(allExercises.entries()).map(([exName, exercisesBySessions]) => (
-                                    <tr key={exName} className="border-b border-white/5">
-                                      <td className="py-3 px-4 text-gray-300 font-medium">{exName}</td>
-                                      {exercisesBySessions.map((exercise, sIdx) => (
-                                        <td key={sIdx} className="py-3 px-4 text-right">
-                                          {exercise ? (
-                                            exercise.stats && exercise.stats.length > 0 ? (
-                                              <div className="space-y-1">
-                                                {exercise.stats.map((stat: any, statIdx: number) => (
-                                                  <div key={statIdx} className="text-gray-300 whitespace-nowrap text-sm">
-                                                    {stat.reps && <span>{stat.reps}</span>}
-                                                    {stat.weight && <span> × {stat.weight} lbs</span>}
-                                                    {stat.time && !stat.reps && <span>{stat.time}s</span>}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            ) : exercise.sets && exercise.sets.length > 0 ? (
-                                              <div className="space-y-1">
-                                                {exercise.sets.map((set: any, setIdx: number) => (
-                                                  <div key={setIdx} className="text-gray-300 whitespace-nowrap text-sm">
-                                                    {set.reps && <span>{set.reps}</span>}
-                                                    {set.weight && <span> × {set.weight} lbs</span>}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            ) : (
-                                              <span className="text-gray-500">—</span>
-                                            )
-                                          ) : (
-                                            <span className="text-gray-600">—</span>
-                                          )}
-                                        </td>
-                                      ))}
-                                    </tr>
-                                  ));
-                                })()}
-                              </tbody>
-                            </table>
-                          </div>
+                return (
+                  <div className="space-y-6">
+                    {groupedWorkouts.map(({ name, sessions }) => (
+                      <div key={name} className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="p-4 border-b border-gray-200 bg-white">
+                          <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
                         </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-gray-200 text-xs text-gray-400 uppercase">
+                                <th className="py-2 px-4 text-left font-medium">Exercise</th>
+                                {sessions.map((session, sIdx) => (
+                                  <th key={sIdx} className="py-2 px-4 text-right font-medium whitespace-nowrap">
+                                    {new Date(session.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(() => {
+                                // Get all unique exercises across sessions
+                                const allExercises = new Map<string, any[]>();
+                                sessions.forEach((session, sessionIdx) => {
+                                  (session.exercises || []).forEach((ex: any) => {
+                                    const exName = ex.name || ex.exerciseName;
+                                    if (!allExercises.has(exName)) {
+                                      allExercises.set(exName, new Array(sessions.length).fill(null));
+                                    }
+                                    allExercises.get(exName)![sessionIdx] = ex;
+                                  });
+                                });
+
+                                return Array.from(allExercises.entries()).map(([exName, exercisesBySessions]) => (
+                                  <tr key={exName} className="border-b border-gray-100">
+                                    <td className="py-3 px-4 text-gray-700 font-medium">{exName}</td>
+                                    {exercisesBySessions.map((exercise, sIdx) => (
+                                      <td key={sIdx} className="py-3 px-4 text-right">
+                                        {exercise ? (
+                                          exercise.stats && exercise.stats.length > 0 ? (
+                                            <div className="space-y-1">
+                                              {exercise.stats.map((stat: any, statIdx: number) => (
+                                                <div key={statIdx} className="text-gray-600 whitespace-nowrap text-sm">
+                                                  {stat.reps && <span>{stat.reps}</span>}
+                                                  {stat.weight && <span> × {stat.weight} lbs</span>}
+                                                  {stat.time && !stat.reps && <span>{stat.time}s</span>}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          ) : exercise.sets && exercise.sets.length > 0 ? (
+                                            <div className="space-y-1">
+                                              {exercise.sets.map((set: any, setIdx: number) => (
+                                                <div key={setIdx} className="text-gray-600 whitespace-nowrap text-sm">
+                                                  {set.reps && <span>{set.reps}</span>}
+                                                  {set.weight && <span> × {set.weight} lbs</span>}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          ) : (
+                                            <span className="text-gray-400">—</span>
+                                          )
+                                        ) : (
+                                          <span className="text-gray-300">—</span>
+                                        )}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ));
+                              })()}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -1564,4 +1531,4 @@ export default function ClientReportsClient({
       />
     </div>
   );
-} 
+}

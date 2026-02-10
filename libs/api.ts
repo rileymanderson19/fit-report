@@ -1,5 +1,5 @@
 import axios from "axios";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import config from "@/config";
 
 // use this to interact with our own API (/app/api folder) from the front-end side

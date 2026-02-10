@@ -1,48 +1,70 @@
 import Link from "next/link";
 import { ReactNode } from "react";
+import { LayoutDashboard, Users, FileText, Settings, Link2, X } from "lucide-react";
 import ButtonAccount from "./ButtonAccount";
 
 interface SidebarItemProps {
   href: string;
+  icon: ReactNode;
   children: ReactNode;
   isActive?: boolean;
 }
 
-const SidebarItem = ({ href, children, isActive = false }: SidebarItemProps) => {
+const SidebarItem = ({ href, icon, children, isActive = false }: SidebarItemProps) => {
   return (
     <Link
       href={href}
-      className={`relative flex items-center px-6 py-3 rounded-lg transition-all duration-200 group ${
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 text-sm ${
         isActive
-          ? "bg-gradient-to-r from-primary-start to-accent-purple text-white font-medium shadow-lg"
-          : "text-gray-300 hover:text-white hover:bg-bg-elevated"
+          ? "bg-white/10 text-white font-medium border-l-[3px] border-blue-400 ml-0 pl-[9px]"
+          : "text-gray-400 hover:text-gray-200 hover:bg-white/5 border-l-[3px] border-transparent ml-0 pl-[9px]"
       }`}
     >
-      {isActive && (
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-start to-accent-purple opacity-20 blur-sm rounded-lg -z-10" />
-      )}
+      {icon}
       {children}
     </Link>
   );
 };
 
-export default function Sidebar({ currentPath = "" }: { currentPath?: string }) {
+export default function Sidebar({
+  currentPath = "",
+  onClose,
+}: {
+  currentPath?: string;
+  onClose?: () => void;
+}) {
   return (
-    <aside className="w-64 h-screen bg-gradient-to-b from-bg-secondary to-bg-tertiary border-r border-white/10 flex flex-col shadow-2xl relative">
-      {/* Background glow */}
-      <div className="absolute inset-0 bg-gradient-to-b from-accent-purple/5 to-transparent pointer-events-none" />
-
-      <div className="relative z-10 p-6 border-b border-white/10">
+    <aside className="w-64 h-screen bg-gray-900 border-r border-gray-800 flex flex-col">
+      <div className="p-5 border-b border-gray-800 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 group">
-          <span className="text-2xl font-display font-bold text-white hover:text-accent-purple transition-colors">
+          <span className="text-xl font-display font-bold text-white">
             FitReport
           </span>
         </Link>
+        {/* Close button — only visible on mobile */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+            aria-label="Close navigation"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
-      <div className="relative z-10 flex-1 py-6 px-3 space-y-2">
+      <nav className="flex-1 py-4 px-3 space-y-1">
+        <SidebarItem
+          href="/dashboard"
+          icon={<LayoutDashboard className="w-4 h-4" />}
+          isActive={currentPath === "/dashboard" || currentPath === ""}
+        >
+          Dashboard
+        </SidebarItem>
+
         <SidebarItem
           href="/dashboard/clients"
+          icon={<Users className="w-4 h-4" />}
           isActive={currentPath.startsWith("/dashboard/clients")}
         >
           Clients
@@ -50,14 +72,15 @@ export default function Sidebar({ currentPath = "" }: { currentPath?: string }) 
 
         <SidebarItem
           href="/dashboard/text-reports"
+          icon={<FileText className="w-4 h-4" />}
           isActive={currentPath.startsWith("/dashboard/text-reports")}
         >
           Text Reports
         </SidebarItem>
 
-
         <SidebarItem
           href="/dashboard/report-config"
+          icon={<Settings className="w-4 h-4" />}
           isActive={currentPath.startsWith("/dashboard/report-config")}
         >
           Report Settings
@@ -65,15 +88,16 @@ export default function Sidebar({ currentPath = "" }: { currentPath?: string }) 
 
         <SidebarItem
           href="/dashboard/trainerize"
+          icon={<Link2 className="w-4 h-4" />}
           isActive={currentPath.startsWith("/dashboard/trainerize")}
         >
-          Trainerize Configuration
+          Trainerize
         </SidebarItem>
-      </div>
+      </nav>
 
-      <div className="relative z-10 mt-auto border-t border-white/10 p-6">
+      <div className="mt-auto border-t border-gray-800 p-4">
         <ButtonAccount />
       </div>
     </aside>
   );
-} 
+}

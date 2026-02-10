@@ -3,57 +3,41 @@
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/libs/supabase/client";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import config from "@/config";
 import { useRouter, useSearchParams } from "next/navigation";
 import apiClient from "@/libs/api";
+import { ArrowLeft, Mail, Eye, EyeOff } from "lucide-react";
 
 // Helper function to get the correct redirect URL for authentication
 const getAuthRedirectURL = () => {
-  // In production, always use the configured site URL
   if (process.env.NODE_ENV === 'production') {
-    const url = config.siteUrl + "/api/auth/callback";
-    console.log("Using production redirect URL:", url);
-    return url;
+    return config.siteUrl + "/api/auth/callback";
   }
-  
-  // In development, use window.location.origin if available, otherwise fallback to config
-  if (typeof window !== 'undefined') {
-    const origin = window.location.origin;
-    // In development, use the origin
-    if (origin) {
-      const url = origin + "/api/auth/callback";
-      console.log("Using development redirect URL:", url);
-      return url;
-    }
+  if (typeof window !== 'undefined' && window.location.origin) {
+    return window.location.origin + "/api/auth/callback";
   }
-  
-  // Final fallback to config
-  const url = config.siteUrl + "/api/auth/callback";
-  console.log("Using fallback redirect URL:", url);
-  return url;
+  return config.siteUrl + "/api/auth/callback";
 };
 
-// This a login/singup page for Supabase Auth.
-// Successfull login redirects to /api/auth/callback where the Code Exchange is processed (see app/api/auth/callback/route.js).
 function LoginContent() {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isDisabled, setIsDisabled] = useState<boolean>(false);
+  const [magicLinkSent, setMagicLinkSent] = useState<boolean>(false);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
 
-  // Get URL parameters
   const priceId = searchParams.get("priceId");
   const returnUrl = searchParams.get("returnUrl");
   const initialMode = searchParams.get("mode");
 
   useEffect(() => {
-    // Set initial mode if provided in URL
     if (initialMode === "signup") {
       setMode("signup");
     }
@@ -61,7 +45,6 @@ function LoginContent() {
 
   const handleStripeCheckout = async () => {
     try {
-      console.log("Starting Stripe checkout with priceId:", priceId);
       const { url }: { url: string } = await apiClient.post(
         "/stripe/create-checkout",
         {
@@ -73,7 +56,6 @@ function LoginContent() {
       );
 
       if (url) {
-        console.log("Redirecting to Stripe checkout:", url);
         window.location.href = url;
       } else {
         throw new Error("No URL returned from checkout endpoint");
@@ -86,9 +68,7 @@ function LoginContent() {
 
   const handleAuth = async (
     e: any,
-    options: {
-      type: string;
-    }
+    options: { type: string }
   ) => {
     e?.preventDefault();
     setIsLoading(true);
@@ -105,7 +85,7 @@ function LoginContent() {
           },
         });
 
-        toast.success("Check your emails!");
+        setMagicLinkSent(true);
         setIsDisabled(true);
       } else if (type === "email" && mode === "signup") {
         if (!password) {
@@ -113,8 +93,7 @@ function LoginContent() {
           setIsLoading(false);
           return;
         }
-        
-        console.log("Starting email signup");
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -126,10 +105,7 @@ function LoginContent() {
           },
         });
 
-        console.log("Signup response:", { data, error });
-
         if (error) {
-          console.error("Signup error:", error);
           toast.error(error.message);
         } else if (data?.user) {
           if (data.user.identities?.length === 0) {
@@ -139,13 +115,12 @@ function LoginContent() {
             if (data.user.confirmed_at || data.user.email_confirmed_at) {
               toast.success("Account created successfully!");
               if (priceId) {
-                console.log("Account created, proceeding to checkout");
                 await handleStripeCheckout();
               } else {
                 router.push(config.auth.callbackUrl);
               }
             } else {
-              toast.success("Please check your email to confirm your account!");
+              setMagicLinkSent(true);
               setIsDisabled(true);
             }
           }
@@ -156,19 +131,16 @@ function LoginContent() {
           setIsLoading(false);
           return;
         }
-        
-        console.log("Starting email signin");
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) {
-          console.error("Signin error:", error);
           toast.error(error.message);
         } else if (data?.user) {
           if (priceId) {
-            console.log("Signed in, proceeding to checkout");
             await handleStripeCheckout();
           } else {
             router.push(config.auth.callbackUrl);
@@ -183,134 +155,217 @@ function LoginContent() {
     }
   };
 
-  return (
-    <main className="min-h-screen w-full bg-gradient-to-b from-bg-primary via-bg-secondary to-black text-white relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent-purple/20 rounded-full blur-[120px] animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-violet/20 rounded-full blur-[120px] animate-pulse-glow delay-1000" />
-      </div>
-
-      <div className="relative z-10 p-8 md:p-24">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 glass border border-white/10 hover:border-accent-purple/50 px-4 py-2 rounded-lg text-white transition-all duration-200 hover:scale-105">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="w-5 h-5"
+  // Magic link / confirmation email sent state
+  if (magicLinkSent) {
+    return (
+      <main className="min-h-screen w-full bg-gray-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="card p-8 md:p-10">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Mail className="w-8 h-8 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-gray-900 mb-3">
+              Check your email
+            </h2>
+            <p className="text-gray-500 mb-6">
+              We sent a {mode === "signin" ? "sign-in link" : "confirmation link"} to{" "}
+              <span className="font-medium text-gray-700">{email}</span>
+            </p>
+            <p className="text-sm text-gray-400 mb-8">
+              Click the link in the email to {mode === "signin" ? "sign in" : "confirm your account"}. Check your spam folder if you don&apos;t see it.
+            </p>
+            <button
+              onClick={() => {
+                setMagicLinkSent(false);
+                setIsDisabled(false);
+              }}
+              className="btn-ghost text-sm"
             >
-              <path
-                fillRule="evenodd"
-                d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Home
+              Try a different email
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen w-full bg-gray-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        {/* Back to home */}
+        <div className="text-center mb-8">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
           </Link>
         </div>
 
-        <div className="glass border border-white/10 justify-center mx-auto max-w-[200px] mb-8 p-1 rounded-lg flex">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl md:text-3xl font-display font-bold tracking-tight text-gray-900 mb-2">
+            {mode === "signin" ? "Welcome back" : "Create your account"}
+          </h1>
+          <p className="text-gray-500">
+            {mode === "signin"
+              ? "Sign in to your FitReport account"
+              : "Get started with FitReport today"}
+          </p>
+        </div>
+
+        {/* Mode toggle */}
+        <div className="bg-gray-100 mx-auto max-w-[220px] mb-8 p-1 rounded-lg flex">
           <button
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded transition-all duration-200 ${mode === "signin" ? "bg-gradient-to-r from-primary-start to-accent-purple text-white" : "text-gray-400 hover:text-white"}`}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+              mode === "signin"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
             onClick={() => setMode("signin")}
           >
             Sign in
           </button>
           <button
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded transition-all duration-200 ${mode === "signup" ? "bg-gradient-to-r from-primary-start to-accent-purple text-white" : "text-gray-400 hover:text-white"}`}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+              mode === "signup"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
             onClick={() => setMode("signup")}
           >
             Sign up
           </button>
         </div>
 
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold tracking-tight text-center mb-12">
-          {mode === "signin" ? "Sign in to" : "Sign up for"} <span className="gradient-text">{config.appName}</span>
-        </h1>
+        {/* Form card */}
+        <div className="card p-8 md:p-10">
+          <form
+            className="space-y-5"
+            onSubmit={(e) =>
+              handleAuth(e, {
+                type: mode === "signin" && !password ? "magic_link" : "email",
+              })
+            }
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Email
+              </label>
+              <input
+                required
+                type="email"
+                value={email}
+                autoComplete="email"
+                placeholder="you@example.com"
+                className="input-field"
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-        <div className="max-w-xl mx-auto">
-          <div className="card-elevated p-8 md:p-10 rounded-2xl">
-            <form
-              className="space-y-6"
-              onSubmit={(e) => handleAuth(e, { type: mode === "signin" && !password ? "magic_link" : "email" })}
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Email
-                </label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Password{" "}
+                {mode === "signin" && (
+                  <span className="text-xs text-gray-400 font-normal">
+                    (optional for magic link)
+                  </span>
+                )}
+              </label>
+              <div className="relative">
                 <input
-                  required
-                  type="email"
-                  value={email}
-                  autoComplete="email"
-                  placeholder="tom@cruise.com"
-                  className="w-full px-4 py-3 rounded-lg bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple transition-colors"
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Password {mode === "signin" && <span className="text-xs text-gray-500">(optional for magic link)</span>}
-                </label>
-                <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
-                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  autoComplete={
+                    mode === "signin" ? "current-password" : "new-password"
+                  }
                   placeholder="Enter your password"
-                  className="w-full px-4 py-3 rounded-lg bg-bg-secondary border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-accent-purple transition-colors"
+                  className="input-field pr-10"
                   onChange={(e) => setPassword(e.target.value)}
                 />
-              </div>
-
-              <button
-                className="w-full btn-gradient py-3 px-6 rounded-lg font-semibold text-white transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                disabled={isLoading || isDisabled}
-                type="submit"
-              >
-                {isLoading && (
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                {password && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 )}
-                {mode === "signin" ? "Sign in" : "Sign up"}
-              </button>
+              </div>
+            </div>
 
-              {mode === "signin" && !password && (
-                <p className="text-center text-xs text-gray-400">
-                  Leave password empty to receive a magic link via email
-                </p>
+            <button
+              className="w-full btn-primary py-3 px-6 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || isDisabled}
+              type="submit"
+            >
+              {isLoading && (
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
               )}
+              {mode === "signin"
+                ? password
+                  ? "Sign in"
+                  : "Send magic link"
+                : "Create account"}
+            </button>
 
-              {mode === "signin" && (
-                <p className="text-center text-sm text-gray-300">
-                  Don&apos;t have an account?{" "}
-                  <button
-                    type="button"
-                    className="text-accent-purple hover:text-primary-start transition-colors font-medium"
-                    onClick={() => setMode("signup")}
-                  >
-                    Sign up
-                  </button>
-                </p>
-              )}
+            {mode === "signin" && !password && (
+              <p className="text-center text-xs text-gray-400">
+                Leave password empty to receive a sign-in link via email
+              </p>
+            )}
 
-              {mode === "signup" && (
-                <p className="text-center text-sm text-gray-300">
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    className="text-accent-purple hover:text-primary-start transition-colors font-medium"
-                    onClick={() => setMode("signin")}
-                  >
-                    Sign in
-                  </button>
-                </p>
-              )}
-            </form>
-          </div>
+            {mode === "signin" && (
+              <p className="text-center text-sm text-gray-500">
+                Don&apos;t have an account?{" "}
+                <button
+                  type="button"
+                  className="text-blue-600 hover:text-blue-700 transition-colors font-medium"
+                  onClick={() => setMode("signup")}
+                >
+                  Sign up
+                </button>
+              </p>
+            )}
+
+            {mode === "signup" && (
+              <p className="text-center text-sm text-gray-500">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  className="text-blue-600 hover:text-blue-700 transition-colors font-medium"
+                  onClick={() => setMode("signin")}
+                >
+                  Sign in
+                </button>
+              </p>
+            )}
+          </form>
         </div>
       </div>
     </main>
@@ -319,7 +374,13 @@ function LoginContent() {
 
 export default function Login() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center">
+          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
       <LoginContent />
     </Suspense>
   );

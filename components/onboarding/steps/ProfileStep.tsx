@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { createClient } from "@/libs/supabase/client";
 import { toast } from "sonner";
+import { ArrowRight } from "lucide-react";
 
 interface ProfileStepProps {
   onNext: (newStatus?: string) => void;
@@ -51,9 +52,7 @@ export function ProfileStep({ onNext, onBack }: ProfileStepProps) {
 
       if (error) throw error;
 
-      // Notify other components (like ButtonAccount) to refresh
       window.dispatchEvent(new CustomEvent("profile-updated"));
-
       toast.success("Profile saved!");
 
       setTimeout(() => {
@@ -68,77 +67,67 @@ export function ProfileStep({ onNext, onBack }: ProfileStepProps) {
   };
 
   return (
-    <div className="card-elevated rounded-2xl p-8 md:p-12">
+    <div className="card p-8 md:p-12">
       <div className="text-center mb-8">
-        <div className="text-6xl mb-6">👋</div>
-        <h2 className="text-3xl font-display font-bold text-white mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
+          <span className="text-3xl">👋</span>
+        </div>
+        <h2 className="text-3xl font-display font-bold text-gray-900 mb-4">
           What&apos;s your name?
         </h2>
-        <p className="text-xl text-gray-300 max-w-xl mx-auto">
+        <p className="text-xl text-gray-500 max-w-xl mx-auto">
           Let&apos;s personalize your experience.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-6">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">First Name</span>
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            First Name
           </label>
           <input
             type="text"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             placeholder="John"
-            className="input input-bordered w-full"
+            className="input-field"
             disabled={isLoading}
             autoFocus
           />
         </div>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Last Name (optional)</span>
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            Last Name (optional)
           </label>
           <input
             type="text"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             placeholder="Doe"
-            className="input input-bordered w-full"
+            className="input-field"
             disabled={isLoading}
           />
         </div>
 
         <div className="flex gap-3 pt-4">
-          <button type="button" onClick={onBack} className="btn btn-ghost">
+          <button type="button" onClick={onBack} className="btn-ghost px-4 py-2.5 rounded-lg font-medium">
             Back
           </button>
           <button
             type="submit"
-            className="btn btn-primary flex-1"
+            className="btn-primary flex-1 px-6 py-2.5 rounded-lg font-medium inline-flex items-center justify-center gap-2"
             disabled={isLoading || !firstName.trim()}
           >
             {isLoading ? (
               <>
-                <span className="loading loading-spinner loading-sm"></span>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Saving...
               </>
             ) : (
               <>
                 Continue
-                <svg
-                  className="w-5 h-5 ml-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                <ArrowRight className="w-5 h-5" />
               </>
             )}
           </button>

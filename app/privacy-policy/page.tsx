@@ -1,29 +1,7 @@
 import Link from "next/link";
 import { getSEOTags } from "@/libs/seo";
 import config from "@/config";
-
-// CHATGPT PROMPT TO GENERATE YOUR PRIVACY POLICY — replace with your own data 👇
-
-// 1. Go to https://chat.openai.com/
-// 2. Copy paste bellow
-// 3. Replace the data with your own (if needed)
-// 4. Paste the answer from ChatGPT directly in the <pre> tag below
-
-// You are an excellent lawyer.
-
-// I need your help to write a simple privacy policy for my website. Here is some context:
-// - Website: https://shipfa.st
-// - Name: ShipFast
-// - Description: A JavaScript code boilerplate to help entrepreneurs launch their startups faster
-// - User data collected: name, email and payment information
-// - Non-personal data collection: web cookies
-// - Purpose of Data Collection: Order processing
-// - Data sharing: we do not share the data with any other parties
-// - Children's Privacy: we do not collect any data from children
-// - Updates to the Privacy Policy: users will be updated by email
-// - Contact information: marc@shipfa.st
-
-// Please write a simple privacy policy for my site. Add the current date.  Do not add or explain your reasoning. Answer:
+import { ArrowLeft } from "lucide-react";
 
 export const metadata = getSEOTags({
   title: `Privacy Policy | ${config.appName}`,
@@ -32,87 +10,93 @@ export const metadata = getSEOTags({
 
 const PrivacyPolicy = () => {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-bg-primary via-bg-secondary to-black text-white relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent-purple/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-violet/10 rounded-full blur-[120px]" />
-      </div>
-
-      <div className="relative z-10 max-w-4xl mx-auto p-5 md:p-10">
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto p-5 md:p-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 glass border border-white/10 hover:border-accent-purple/50 px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 mb-8"
+          className="btn-secondary px-4 py-2 rounded-lg font-medium inline-flex items-center gap-2 mb-8"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              fillRule="evenodd"
-              d="M15 10a.75.75 0 01-.75.75H7.612l2.158 1.96a.75.75 0 11-1.04 1.08l-3.5-3.25a.75.75 0 010-1.08l3.5-3.25a.75.75 0 111.04 1.08L7.612 9.25h6.638A.75.75 0 0115 10z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <ArrowLeft className="w-4 h-4" />
           Back
         </Link>
 
-        <div className="card-elevated p-8 md:p-12 rounded-2xl">
-          <h1 className="text-3xl md:text-4xl font-display font-bold mb-8">
-            Privacy Policy for <span className="gradient-text">{config.appName}</span>
+        <div className="card p-8 md:p-12">
+          <h1 className="text-3xl md:text-4xl font-display font-bold mb-8 text-gray-900">
+            Privacy Policy for <span className="text-blue-600">{config.appName}</span>
           </h1>
 
-          <pre
-            className="leading-relaxed whitespace-pre-wrap font-sans text-gray-300"
-          >
-          {`Last Updated: 2023-08-25
+          <div className="prose prose-lg max-w-none text-gray-600 space-y-6">
+            <p className="text-sm text-gray-400">Last Updated: January 15, 2025</p>
 
-Thank you for visiting ShipFast ("we," "us," or "our"). This Privacy Policy outlines how we collect, use, and protect your personal and non-personal information when you use our website located at https://shipfa.st (the "Website").
+            <section>
+              <p>
+                Thank you for visiting FitReport (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;). This Privacy Policy outlines how we collect, use, and protect your personal and non-personal information when you use our website and services (the &quot;Service&quot;).
+              </p>
+              <p>
+                By accessing or using the Service, you agree to the terms of this Privacy Policy. If you do not agree with the practices described in this policy, please do not use the Service.
+              </p>
+            </section>
 
-By accessing or using the Website, you agree to the terms of this Privacy Policy. If you do not agree with the practices described in this policy, please do not use the Website.
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">1. Information We Collect</h2>
 
-1. Information We Collect
+              <h3 className="text-lg font-semibold text-gray-900">1.1 Personal Data</h3>
+              <p>We collect the following personal information from you:</p>
+              <ul className="list-disc list-inside space-y-2">
+                <li><strong>Name:</strong> We collect your name to personalize your experience and communicate with you effectively.</li>
+                <li><strong>Email:</strong> We collect your email address to send you important information regarding your account, updates, and communication.</li>
+                <li><strong>Payment Information:</strong> We collect payment details to process your subscription securely. However, we do not store your payment information on our servers. Payments are processed by Stripe.</li>
+                <li><strong>Trainerize Credentials:</strong> We collect your Trainerize login credentials to access client training data on your behalf. These credentials are stored securely and encrypted.</li>
+              </ul>
 
-1.1 Personal Data
+              <h3 className="text-lg font-semibold text-gray-900 mt-4">1.2 Non-Personal Data</h3>
+              <p>
+                We may use web cookies and similar technologies to collect non-personal information such as your IP address, browser type, device information, and browsing patterns. This information helps us enhance your browsing experience, analyze trends, and improve our services.
+              </p>
+            </section>
 
-We collect the following personal information from you:
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">2. Purpose of Data Collection</h2>
+              <p>
+                We collect and use your personal data to provide the FitReport service, including generating fitness progress reports for your clients, processing your subscription, providing customer support, and keeping you updated about the status of your account.
+              </p>
+            </section>
 
-Name: We collect your name to personalize your experience and communicate with you effectively.
-Email: We collect your email address to send you important information regarding your orders, updates, and communication.
-Payment Information: We collect payment details to process your orders securely. However, we do not store your payment information on our servers. Payments are processed by trusted third-party payment processors.
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">3. Data Sharing</h2>
+              <p>
+                We do not share your personal data with any third parties except as required for service operation (e.g., sharing payment information with Stripe for processing). We do not sell, trade, or rent your personal information to others.
+              </p>
+            </section>
 
-1.2 Non-Personal Data
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">4. Children&apos;s Privacy</h2>
+              <p>
+                FitReport is not intended for children under the age of 13. We do not knowingly collect personal information from children. If you are a parent or guardian and believe that your child has provided us with personal information, please contact us at the email address provided below.
+              </p>
+            </section>
 
-We may use web cookies and similar technologies to collect non-personal information such as your IP address, browser type, device information, and browsing patterns. This information helps us to enhance your browsing experience, analyze trends, and improve our services.
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">5. Updates to the Privacy Policy</h2>
+              <p>
+                We may update this Privacy Policy from time to time to reflect changes in our practices or for other operational, legal, or regulatory reasons. Any updates will be posted on this page, and we may notify you via email about significant changes.
+              </p>
+            </section>
 
-2. Purpose of Data Collection
+            <section>
+              <h2 className="text-xl font-display font-bold text-gray-900">6. Contact Information</h2>
+              <p>
+                If you have any questions, concerns, or requests related to this Privacy Policy, you can contact us at:
+              </p>
+              <p>
+                Email: <a href="mailto:riley@rileymanderson.com" className="text-blue-600 hover:text-blue-700">riley@rileymanderson.com</a>
+              </p>
+            </section>
 
-We collect and use your personal data for the sole purpose of order processing. This includes processing your orders, sending order confirmations, providing customer support, and keeping you updated about the status of your orders.
-
-3. Data Sharing
-
-We do not share your personal data with any third parties except as required for order processing (e.g., sharing your information with payment processors). We do not sell, trade, or rent your personal information to others.
-
-4. Children's Privacy
-
-ShipFast is not intended for children under the age of 13. We do not knowingly collect personal information from children. If you are a parent or guardian and believe that your child has provided us with personal information, please contact us at the email address provided below.
-
-5. Updates to the Privacy Policy
-
-We may update this Privacy Policy from time to time to reflect changes in our practices or for other operational, legal, or regulatory reasons. Any updates will be posted on this page, and we may notify you via email about significant changes.
-
-6. Contact Information
-
-If you have any questions, concerns, or requests related to this Privacy Policy, you can contact us at:
-
-Email: marc@shipfa.st
-
-For all other inquiries, please visit our Contact Us page on the Website.
-
-By using ShipFast, you consent to the terms of this Privacy Policy.`}
-          </pre>
+            <p className="text-sm text-gray-400 pt-4 border-t border-gray-200">
+              By using FitReport, you consent to the terms of this Privacy Policy.
+            </p>
+          </div>
         </div>
       </div>
     </main>
