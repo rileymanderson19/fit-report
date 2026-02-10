@@ -28,11 +28,6 @@ export default function DocsPage() {
       description: 'Explore advanced FitReport features and integrations',
       docs: [
         {
-          title: 'Scheduled Reports (Coming Soon)',
-          description: 'Automate report generation with scheduled reports',
-          href: '/docs/scheduled-reports-prd',
-        },
-        {
           title: 'DataFast Setup',
           description: 'Connect FitReport with DataFast for enhanced analytics',
           href: '/docs/datafast-setup',

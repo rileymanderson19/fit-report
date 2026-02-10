@@ -55,12 +55,6 @@ export default function Sidebar({ currentPath = "" }: { currentPath?: string }) 
           Text Reports
         </SidebarItem>
 
-        <SidebarItem
-          href="/dashboard/schedules"
-          isActive={currentPath.startsWith("/dashboard/schedules")}
-        >
-          Scheduled Reports
-        </SidebarItem>
 
         <SidebarItem
           href="/dashboard/report-config"

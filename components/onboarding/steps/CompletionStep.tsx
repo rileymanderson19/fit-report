@@ -38,15 +38,6 @@ export function CompletionStep({ onComplete }: CompletionStepProps) {
           <li className="flex items-start gap-3">
             <span className="text-accent-purple text-xl">✓</span>
             <div>
-              <span className="font-medium text-white">Schedule Weekly Reports</span>
-              <p className="text-sm text-gray-400">
-                Set up automated reports to send to clients on a regular basis.
-              </p>
-            </div>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="text-accent-purple text-xl">✓</span>
-            <div>
               <span className="font-medium text-white">Customize Templates</span>
               <p className="text-sm text-gray-400">
                 Adjust report settings from the dashboard to match your coaching

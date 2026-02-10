@@ -17,7 +17,6 @@ export default function DocsLayout({
     {
       category: 'Advanced Features',
       links: [
-        { href: '/docs/scheduled-reports-prd', title: 'Scheduled Reports' },
         { href: '/docs/datafast-setup', title: 'DataFast Setup' },
       ],
     },
