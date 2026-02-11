@@ -5,6 +5,9 @@ export async function middleware(request: NextRequest) {
   // Update session (handles auth)
   const response = await updateSession(request);
 
+  // Pass pathname to server components for sidebar active state
+  response.headers.set('x-pathname', request.nextUrl.pathname);
+
   // Add security headers
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');

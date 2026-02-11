@@ -223,22 +223,20 @@ export default function TrainerizeConfigPage() {
 
   if (isInitializing) {
     return (
-      <div className="p-8">
-        <div className="flex items-center justify-center min-h-[200px]">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        </div>
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="p-8 max-w-2xl">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Link2 className="w-6 h-6 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900 font-display">Trainerize</h1>
+    <div className="max-w-2xl">
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-1">
+          <Link2 className="w-5 h-5 text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-900 font-display">Trainerize</h1>
         </div>
-        <p className="text-gray-500">Configure your Trainerize integration settings</p>
+        <p className="text-gray-500 text-sm">Configure your Trainerize integration settings</p>
 
         {/* Connection Status */}
         {verificationStatus !== "idle" && (

@@ -51,7 +51,7 @@ export default function DashboardShell({
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 flex-1 lg:ml-64 pt-14 lg:pt-0 p-4 sm:p-6 lg:p-8 text-gray-900">
+      <div className="relative z-10 flex-1 lg:ml-64 pt-14 lg:pt-8 p-4 sm:p-6 lg:p-8 text-gray-900">
         {children}
       </div>
     </div>

@@ -258,30 +258,26 @@ export default function ReportConfigPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-8 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!config) {
     return (
-      <div className="container mx-auto px-8 py-8">
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-red-600">Error Loading Configuration</h2>
-          <p className="text-gray-500 mt-2">Unable to load your report configuration. Please try refreshing the page.</p>
-        </div>
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold text-red-600">Error Loading Configuration</h2>
+        <p className="text-gray-500 mt-2">Unable to load your report configuration. Please try refreshing the page.</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-8 py-8 max-w-5xl">
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-gray-900 font-display">Report Settings</h1>
-        <p className="text-gray-500 mt-2">
+    <div className="max-w-5xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 font-display">Report Settings</h1>
+        <p className="text-gray-500 text-sm mt-1">
           Customize your brand and report defaults
         </p>
       </div>

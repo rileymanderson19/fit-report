@@ -38,10 +38,11 @@ export default async function Dashboard() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-display font-bold text-gray-900">
-          Dashboard
-        </h1>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-1">Overview and getting started</p>
+        </div>
       </div>
 
       <div className="card p-8 md:p-10">
