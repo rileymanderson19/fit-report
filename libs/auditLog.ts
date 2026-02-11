@@ -96,6 +96,9 @@ export const AuditActions = {
   TRAINERIZE_CREDENTIALS_SAVED: "trainerize.credentials_saved",
   TRAINERIZE_CLIENTS_IMPORTED: "trainerize.clients_imported",
 
+  // Admin setup actions
+  ADMIN_SETUP_ACCOUNT_CREATED: "admin.setup.account_created",
+
   // Report actions
   REPORT_GENERATED: "report.generated",
   REPORT_SENT: "report.sent",

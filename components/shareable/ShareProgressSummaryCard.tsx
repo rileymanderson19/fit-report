@@ -39,8 +39,8 @@ export default function ShareProgressSummaryCard({
   unitPreference = 'lbs',
   brand
 }: ShareProgressSummaryCardProps) {
-  const primaryColor = brand?.primary_color || '#8B5CF6';
-  const accentColor = brand?.accent_color || '#7C3AED';
+  const primaryColor = brand?.primary_color || '#2563EB';
+  const accentColor = brand?.accent_color || '#1D4ED8';
   // Unit conversion helpers
   const convertWeight = (lbs: number): number => unitPreference === 'kg' ? lbs * 0.453592 : lbs;
   const weightUnit = unitPreference === 'kg' ? 'kg' : 'lbs';

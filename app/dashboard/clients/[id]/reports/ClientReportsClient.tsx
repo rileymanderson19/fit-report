@@ -18,6 +18,7 @@ const ReportVisualization = dynamic(
 );
 import { SevenDayReference } from '@/components/SevenDayReference';
 import { DateRangePicker } from '@/components/DateRangePicker';
+import { useBrandConfig } from '@/hooks/useBrandConfig';
 import ClientSearchBar from '@/components/ClientSearchBar';
 import SendReportModal from '@/components/SendReportModal';
 import GenerateLinkModal from '@/components/GenerateLinkModal';
@@ -116,6 +117,7 @@ export default function ClientReportsClient({
   initialLiveReportMetadata = null
 }: ClientReportsClientProps) {
   const supabase = createClient();
+  const { brand } = useBrandConfig();
   const mountTimeRef = React.useRef<number>(performance.now());
 
   // Live report state
@@ -1000,7 +1002,7 @@ export default function ClientReportsClient({
               >
                 {/* Header */}
                 <div className="mb-6">
-                  <div className="h-1 w-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full mb-4" />
+                  <div className="h-1 w-16 rounded-full mb-4" style={{ background: `linear-gradient(to right, ${brand?.primary_color || '#2563EB'}, ${brand?.accent_color || '#1D4ED8'})` }} />
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-2xl font-bold text-gray-900">{client.first_name} {client.last_name}</h3>
@@ -1025,6 +1027,7 @@ export default function ClientReportsClient({
                       hideFooter={true}
                       hideHeader={true}
                       unitPreference="lbs"
+                      brand={brand}
                     />
                   </div>
 
@@ -1044,6 +1047,7 @@ export default function ClientReportsClient({
                       hideHeader={true}
                       hideWeightChange={true}
                       unitPreference="lbs"
+                      brand={brand}
                     />
                   </div>
                 </div>

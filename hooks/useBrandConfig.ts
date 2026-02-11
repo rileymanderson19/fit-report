@@ -15,8 +15,8 @@ export interface BrandConfig {
 const DEFAULT_BRAND: BrandConfig = {
   logo_url: null,
   business_name: null,
-  primary_color: '#8B5CF6',
-  accent_color: '#7C3AED',
+  primary_color: '#2563EB',
+  accent_color: '#1D4ED8',
   footer_text: null,
   show_fitreport_badge: true,
 };

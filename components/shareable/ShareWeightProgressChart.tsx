@@ -54,7 +54,7 @@ export default function ShareWeightProgressChart({
   unitPreference = 'lbs',
   brand
 }: ShareWeightProgressChartProps) {
-  const primaryColor = brand?.primary_color || '#A855F7';
+  const primaryColor = brand?.primary_color || '#2563EB';
   // Unit conversion helpers
   const convertWeight = (lbs: number): number => unitPreference === 'kg' ? lbs * 0.453592 : lbs;
   const weightUnit = unitPreference === 'kg' ? 'kg' : 'lbs';
@@ -148,7 +148,7 @@ export default function ShareWeightProgressChart({
         {!hideHeader && (
           <div
             className="h-1 w-16 rounded-full mb-4"
-            style={{ background: `linear-gradient(to right, ${primaryColor}, ${brand?.accent_color || '#7C3AED'})` }}
+            style={{ background: `linear-gradient(to right, ${primaryColor}, ${brand?.accent_color || '#1D4ED8'})` }}
           />
         )}
         <div className="flex justify-between items-start">

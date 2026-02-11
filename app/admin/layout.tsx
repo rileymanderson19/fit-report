@@ -62,6 +62,12 @@ export default async function AdminLayout({
         <div className="container mx-auto px-4">
           <div className="flex gap-6">
             <Link
+              href="/admin/setup"
+              className="py-3 px-1 border-b-2 border-transparent hover:border-blue-600 text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              Setup
+            </Link>
+            <Link
               href="/admin"
               className="py-3 px-1 border-b-2 border-transparent hover:border-blue-600 text-gray-500 hover:text-gray-900 transition-colors"
             >

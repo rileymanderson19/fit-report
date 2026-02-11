@@ -42,7 +42,7 @@ export default function ShareWeeklyHighlightsCard({
   unitPreference = 'lbs',
   brand
 }: ShareWeeklyHighlightsCardProps) {
-  const primaryColor = brand?.primary_color || '#8B5CF6';
+  const primaryColor = brand?.primary_color || '#2563EB';
   // Unit conversion helpers
   const convertWeight = (lbs: number): number => unitPreference === 'kg' ? lbs * 0.453592 : lbs;
   const weightUnit = unitPreference === 'kg' ? 'kg' : 'lbs';
@@ -78,7 +78,7 @@ export default function ShareWeeklyHighlightsCard({
       {/* Header */}
       {!hideHeader && (
         <div className="mb-6">
-          <div className="h-1 w-16 rounded-full mb-4" style={{ background: `linear-gradient(to right, ${primaryColor}, ${brand?.accent_color || '#7C3AED'})` }} />
+          <div className="h-1 w-16 rounded-full mb-4" style={{ background: `linear-gradient(to right, ${primaryColor}, ${brand?.accent_color || '#1D4ED8'})` }} />
           <h2 className="text-xl font-bold text-gray-900">Weekly Highlights</h2>
           <p className="text-sm text-gray-500">
             {formatDate(dateRangeStart)} - {formatDate(dateRangeEnd)}
@@ -90,7 +90,7 @@ export default function ShareWeeklyHighlightsCard({
       <div className="space-y-4">
         {/* Weight Change per Week */}
         {weightChange !== undefined && weightChange !== 0 && (
-          <div className="rounded-xl p-4" style={{ background: `linear-gradient(to bottom right, ${primaryColor}10, ${brand?.accent_color || '#7C3AED'}10)` }}>
+          <div className="rounded-xl p-4" style={{ background: `linear-gradient(to bottom right, ${primaryColor}10, ${brand?.accent_color || '#1D4ED8'}10)` }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {weightChange < 0 ? (

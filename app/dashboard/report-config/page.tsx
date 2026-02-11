@@ -486,13 +486,45 @@ export default function ReportConfigPage() {
             <span className="text-xs text-gray-400">Preview of how your brand appears in reports</span>
           </div>
 
-          <button
-            onClick={saveBrandSettings}
-            disabled={brandSaving}
-            className="btn-primary px-6 py-2.5 rounded-lg font-medium"
-          >
-            {brandSaving ? "Saving..." : "Save Brand Settings"}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={saveBrandSettings}
+              disabled={brandSaving}
+              className="btn-primary px-6 py-2.5 rounded-lg font-medium"
+            >
+              {brandSaving ? "Saving..." : "Save Brand Settings"}
+            </button>
+            <button
+              onClick={async () => {
+                setLocalBrand(prev => ({
+                  ...prev,
+                  primary_color: '#2563EB',
+                  accent_color: '#1D4ED8',
+                }));
+                setBrandSaving(true);
+                setBrandMessage("");
+                try {
+                  await updateBrand({
+                    business_name: localBrand.business_name || null,
+                    primary_color: '#2563EB',
+                    accent_color: '#1D4ED8',
+                    footer_text: localBrand.footer_text || null,
+                    show_fitreport_badge: localBrand.show_fitreport_badge ?? true,
+                  });
+                  setBrandMessage("Colors reset to defaults!");
+                  setTimeout(() => setBrandMessage(""), 3000);
+                } catch {
+                  setBrandMessage("Error resetting colors");
+                } finally {
+                  setBrandSaving(false);
+                }
+              }}
+              disabled={brandSaving}
+              className="btn-ghost px-4 py-2.5 rounded-lg font-medium text-sm"
+            >
+              Reset Colors
+            </button>
+          </div>
         </div>
       </section>
 

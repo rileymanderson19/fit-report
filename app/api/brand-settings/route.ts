@@ -32,8 +32,8 @@ export async function GET() {
     brand: data || {
       logo_url: null,
       business_name: null,
-      primary_color: "#8B5CF6",
-      accent_color: "#7C3AED",
+      primary_color: "#2563EB",
+      accent_color: "#1D4ED8",
       footer_text: null,
       show_fitreport_badge: true,
     },
@@ -66,8 +66,8 @@ export async function POST(req: NextRequest) {
 
   const brandData = {
     business_name: business_name || null,
-    primary_color: primary_color || "#8B5CF6",
-    accent_color: accent_color || "#7C3AED",
+    primary_color: primary_color || "#2563EB",
+    accent_color: accent_color || "#1D4ED8",
     footer_text: footer_text || null,
     show_fitreport_badge: show_fitreport_badge ?? true,
     updated_at: new Date().toISOString(),

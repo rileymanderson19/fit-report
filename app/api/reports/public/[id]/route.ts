@@ -100,8 +100,8 @@ export async function GET(
     const brand = brandConfig ? {
       logo_url: brandConfig.logo_url || null,
       business_name: brandConfig.business_name || null,
-      primary_color: brandConfig.primary_color || '#8B5CF6',
-      accent_color: brandConfig.accent_color || '#7C3AED',
+      primary_color: brandConfig.primary_color || '#2563EB',
+      accent_color: brandConfig.accent_color || '#1D4ED8',
       footer_text: brandConfig.footer_text || null,
       show_fitreport_badge: brandConfig.show_fitreport_badge !== false,
     } : null;
