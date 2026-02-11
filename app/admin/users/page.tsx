@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { Copy, Link2, RefreshCw, Users } from "lucide-react";
+import { Copy, Link2, RefreshCw, Trash2, Users } from "lucide-react";
 
 interface UserProfile {
   id: string;
@@ -22,6 +22,8 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [generatingLinkFor, setGeneratingLinkFor] = useState<string | null>(null);
   const [loginLink, setLoginLink] = useState<{ userId: string; link: string } | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -63,6 +65,26 @@ export default function AdminUsersPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");
+  };
+
+  const deleteUser = async (userId: string) => {
+    setDeletingUserId(userId);
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to delete user");
+      toast.success("User deleted");
+      setConfirmDeleteId(null);
+      setLoginLink(null);
+      fetchUsers();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete user");
+    } finally {
+      setDeletingUserId(null);
+    }
   };
 
   const formatDate = (dateString: string | null) => {
@@ -182,18 +204,49 @@ export default function AdminUsersPage() {
                         {formatDate(user.invited_at || user.onboarding_completed_at)}
                       </td>
                       <td className="py-3 px-4">
-                        <button
-                          onClick={() => generateLoginLink(user.id)}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1"
-                          disabled={generatingLinkFor === user.id}
-                        >
-                          {generatingLinkFor === user.id ? (
-                            <div className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => generateLoginLink(user.id)}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1"
+                            disabled={generatingLinkFor === user.id}
+                          >
+                            {generatingLinkFor === user.id ? (
+                              <div className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Link2 className="w-3.5 h-3.5" />
+                            )}
+                            Login Link
+                          </button>
+                          {confirmDeleteId === user.id ? (
+                            <span className="inline-flex items-center gap-2">
+                              <button
+                                onClick={() => deleteUser(user.id)}
+                                className="text-sm text-red-600 hover:text-red-700 font-medium"
+                                disabled={deletingUserId === user.id}
+                              >
+                                {deletingUserId === user.id ? (
+                                  <div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  "Confirm"
+                                )}
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="text-sm text-gray-400 hover:text-gray-600 font-medium"
+                              >
+                                Cancel
+                              </button>
+                            </span>
                           ) : (
-                            <Link2 className="w-3.5 h-3.5" />
+                            <button
+                              onClick={() => setConfirmDeleteId(user.id)}
+                              className="text-sm text-gray-400 hover:text-red-600 font-medium inline-flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
                           )}
-                          Login Link
-                        </button>
+                        </div>
                       </td>
                     </tr>
                     {/* Show login link inline below the row */}
