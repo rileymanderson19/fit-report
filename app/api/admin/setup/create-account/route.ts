@@ -91,23 +91,45 @@ export async function POST(request: NextRequest) {
   }
 
   // Step 1: Create auth user
-  const { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-    email: normalizedEmail,
-    email_confirm: true,
-    user_metadata: {
-      full_name: `${firstName} ${lastName || ""}`.trim(),
-    },
-  });
+  let newUserId: string;
+  {
+    const createPayload = {
+      email: normalizedEmail,
+      email_confirm: true,
+      user_metadata: {
+        full_name: `${firstName} ${lastName || ""}`.trim(),
+      },
+    };
 
-  if (createUserError || !authData.user) {
-    console.error("Error creating auth user:", createUserError);
-    return NextResponse.json(
-      { error: createUserError?.message || "Failed to create user account" },
-      { status: 500 }
-    );
+    let { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser(createPayload);
+
+    // Handle orphaned auth user (exists in auth.users but not in profiles)
+    if (createUserError?.message?.includes("already been registered")) {
+      const listResult = await supabaseAdmin.auth.admin.listUsers();
+      const orphanedUser = listResult.data?.users?.find((u: { email?: string }) => u.email === normalizedEmail);
+
+      if (orphanedUser) {
+        // Clean up the orphaned auth user's clients first
+        await supabaseAdmin.from("clients").delete().eq("trainer_id", orphanedUser.id);
+        await supabaseAdmin.auth.admin.deleteUser(orphanedUser.id);
+
+        // Retry creation
+        const retry = await supabaseAdmin.auth.admin.createUser(createPayload);
+        authData = retry.data;
+        createUserError = retry.error;
+      }
+    }
+
+    if (createUserError || !authData?.user) {
+      console.error("Error creating auth user:", createUserError);
+      return NextResponse.json(
+        { error: createUserError?.message || "Failed to create user account" },
+        { status: 500 }
+      );
+    }
+
+    newUserId = authData.user.id;
   }
-
-  const newUserId = authData.user.id;
 
   // Step 2: Update profile with all data
   const { error: profileError } = await supabaseAdmin
