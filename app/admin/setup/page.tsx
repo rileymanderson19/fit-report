@@ -428,11 +428,11 @@ export default function AdminSetupPage() {
                 <button
                   type="button"
                   onClick={fetchTrainerList}
-                  className="btn-secondary px-4 py-2.5 rounded-lg font-medium whitespace-nowrap"
+                  className="btn-primary px-4 py-2.5 rounded-lg font-medium whitespace-nowrap"
                   disabled={isLoadingTrainerList || isVerifying || !tzUsername || !tzPassword}
                 >
                   {isLoadingTrainerList ? (
-                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     "Find ID"
                   )}
@@ -487,12 +487,12 @@ export default function AdminSetupPage() {
               {verificationStatus !== "success" && (
                 <button
                   onClick={verifyCredentials}
-                  className="btn-secondary px-6 py-2.5 rounded-lg font-medium inline-flex items-center gap-2"
+                  className="btn-primary px-6 py-2.5 rounded-lg font-medium inline-flex items-center gap-2"
                   disabled={isVerifying || !tzUsername || !tzPassword || !trainerId}
                 >
                   {isVerifying ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       Verifying...
                     </>
                   ) : (
