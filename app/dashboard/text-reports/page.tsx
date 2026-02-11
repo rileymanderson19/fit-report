@@ -277,7 +277,7 @@ export default function TestTextReportPage() {
     filteredClients.every(c => selectedClientIds.has(c.id));
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-display font-bold text-gray-900">Client Check-In Reports</h1>
         <p className="text-gray-500 text-sm mt-1">Generate text-based check-in reports for your clients</p>

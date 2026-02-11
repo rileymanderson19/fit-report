@@ -8,8 +8,7 @@ import { createClient } from "@/libs/supabase/client";
 import Link from "next/link";
 import { Settings, LogOut, ChevronRight } from "lucide-react";
 
-// A button to show user account info and actions (settings, logout)
-const ButtonAccount = () => {
+const ButtonAccount = ({ collapsed = false }: { collapsed?: boolean }) => {
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -39,7 +38,6 @@ const ButtonAccount = () => {
     getUser();
   }, [supabase, fetchProfile]);
 
-  // Listen for profile updates from other components
   useEffect(() => {
     const handleProfileUpdate = (event: Event) => {
       const customEvent = event as CustomEvent<{ fullName?: string }>;
@@ -61,34 +59,51 @@ const ButtonAccount = () => {
     window.location.href = "/";
   };
 
+  const displayName = profile?.full_name
+    ? profile.full_name.split(' ')[0]
+    : user?.email?.split('@')[0] || 'Account';
+
+  const avatarInitial = profile?.full_name?.charAt(0) || user?.email?.charAt(0);
+
   return (
     <div className="relative">
       <Popover>
         {() => (
           <>
-            <Popover.Button className="w-full flex items-center gap-3 hover:bg-white/10 rounded-lg p-2 transition-colors">
+            <Popover.Button
+              className={`w-full flex items-center gap-3 hover:bg-white/10 rounded-lg p-2 transition-all duration-200 ${
+                collapsed ? "justify-center" : ""
+              }`}
+              title={collapsed ? displayName : undefined}
+            >
               {user?.user_metadata?.avatar_url ? (
                 <img
                   src={user?.user_metadata?.avatar_url}
                   alt={"Profile picture"}
-                  className="w-8 h-8 rounded-full"
+                  className="w-8 h-8 rounded-full flex-shrink-0"
                   referrerPolicy="no-referrer"
                   width={32}
                   height={32}
                 />
               ) : (
-                <div className="w-8 h-8 bg-blue-600 text-white flex justify-center items-center rounded-full capitalize text-sm font-medium">
-                  {profile?.full_name?.charAt(0) || user?.email?.charAt(0)}
+                <div className="w-8 h-8 bg-blue-600 text-white flex justify-center items-center rounded-full capitalize text-sm font-medium flex-shrink-0">
+                  {avatarInitial}
                 </div>
               )}
-              <div className="font-medium text-gray-200 text-left text-sm">
-                {profile?.full_name
-                  ? profile.full_name.split(' ')[0]
-                  : user?.email?.split('@')[0] || 'Account'}
-              </div>
-              <div className="ml-auto text-gray-500">
-                <ChevronRight className="w-4 h-4" />
-              </div>
+
+              {/* Name + chevron with fade transition */}
+              <span
+                className={`flex items-center gap-3 min-w-0 flex-1 whitespace-nowrap transition-all duration-300 ${
+                  collapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
+                }`}
+              >
+                <span className="font-medium text-gray-200 text-left text-sm truncate">
+                  {displayName}
+                </span>
+                <span className="ml-auto text-gray-500">
+                  <ChevronRight className="w-4 h-4" />
+                </span>
+              </span>
             </Popover.Button>
             <Transition
               enter="transition duration-100 ease-out"
@@ -100,7 +115,6 @@ const ButtonAccount = () => {
             >
               <Popover.Panel className="absolute left-full bottom-0 ml-2 z-50">
                 <div className="overflow-hidden rounded-xl shadow-lg border border-gray-200 bg-white min-w-[200px]">
-                  {/* User info header */}
                   <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
                     <p className="font-medium text-gray-900 truncate text-sm">
                       {profile?.full_name || user?.email?.split('@')[0] || 'Account'}
@@ -108,7 +122,6 @@ const ButtonAccount = () => {
                     <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                   </div>
 
-                  {/* Menu items */}
                   <div className="p-1.5">
                     <Link
                       href="/dashboard/account"

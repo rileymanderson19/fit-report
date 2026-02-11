@@ -1,18 +1,39 @@
 "use client";
 
-import { ReactNode, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { ReactNode, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Link from "next/link";
 
 export default function DashboardShell({
   children,
-  currentPath = "",
 }: {
   children: ReactNode;
   currentPath?: string;
 }) {
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved === "true") setCollapsed(true);
+
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      localStorage.setItem("sidebar-collapsed", String(!prev));
+      return !prev;
+    });
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50 relative">
@@ -40,18 +61,23 @@ export default function DashboardShell({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <Sidebar
-          currentPath={currentPath}
+          currentPath={pathname}
           onClose={() => setSidebarOpen(false)}
+          collapsed={collapsed}
+          onToggleCollapse={toggleCollapsed}
         />
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 flex-1 lg:ml-64 pt-14 lg:pt-8 p-4 sm:p-6 lg:p-8 text-gray-900">
+      <div
+        className="relative z-10 flex-1 pt-14 lg:pt-8 p-4 sm:p-6 lg:p-8 text-gray-900 transition-[margin] duration-300 ease-in-out"
+        style={{ marginLeft: isDesktop ? (collapsed ? 64 : 256) : 0 }}
+      >
         {children}
       </div>
     </div>
