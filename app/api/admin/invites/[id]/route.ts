@@ -82,7 +82,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Fetch the invite first to check if it can be revoked
+  // Fetch the invite
   const { data: invite, error: fetchError } = await supabase
     .from("invites")
     .select("*")
@@ -93,6 +93,41 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Invite not found" }, { status: 404 });
   }
 
+  const permanent = request.nextUrl.searchParams.get("permanent") === "true";
+
+  if (permanent) {
+    // Permanently delete the invite record
+    const { error: deleteError } = await supabase
+      .from("invites")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.error("Error deleting invite:", deleteError);
+      return NextResponse.json(
+        { error: "Failed to delete invite" },
+        { status: 500 }
+      );
+    }
+
+    const requestMeta = getRequestMetadata(request);
+    await logAuditEvent({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: AuditActions.INVITE_REVOKED,
+      resourceType: "invite",
+      resourceId: id,
+      details: {
+        invitedEmail: invite.email,
+        action: "deleted",
+      },
+      ...requestMeta,
+    });
+
+    return NextResponse.json({ success: true });
+  }
+
+  // Revoke — only for pending invites
   if (invite.status !== "pending") {
     return NextResponse.json(
       { error: `Cannot revoke invite with status '${invite.status}'` },
@@ -100,7 +135,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     );
   }
 
-  // Revoke the invite
   const { error: updateError } = await supabase
     .from("invites")
     .update({ status: "revoked" })
@@ -114,7 +148,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     );
   }
 
-  // Log the audit event
   const requestMeta = getRequestMetadata(request);
   await logAuditEvent({
     actorId: user.id,

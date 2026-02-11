@@ -38,15 +38,10 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Fetch all invites with inviter info
+  // Fetch all invites
   const { data: invites, error } = await supabase
     .from("invites")
-    .select(
-      `
-      *,
-      inviter:profiles!invites_invited_by_fkey(email)
-    `
-    )
+    .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {

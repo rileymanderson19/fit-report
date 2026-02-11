@@ -79,12 +79,6 @@ export default async function AdminLayout({
             >
               Users
             </Link>
-            <Link
-              href="/admin/audit"
-              className="py-3 px-1 border-b-2 border-transparent hover:border-blue-600 text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              Audit Log
-            </Link>
           </div>
         </div>
       </nav>

@@ -15,9 +15,10 @@ interface Invite {
 interface InvitesTableProps {
   invites: Invite[];
   onRevoke: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function InvitesTable({ invites, onRevoke }: InvitesTableProps) {
+export function InvitesTable({ invites, onRevoke, onDelete }: InvitesTableProps) {
   if (invites.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -93,15 +94,23 @@ export function InvitesTable({ invites, onRevoke }: InvitesTableProps) {
                   : formatDate(invite.expires_at)}
               </td>
               <td className="py-3 px-4">
-                {invite.status === "pending" &&
-                  new Date(invite.expires_at) > new Date() && (
-                    <button
-                      onClick={() => onRevoke(invite.id)}
-                      className="text-sm text-red-600 hover:text-red-700 font-medium"
-                    >
-                      Revoke
-                    </button>
-                  )}
+                <div className="flex items-center gap-3">
+                  {invite.status === "pending" &&
+                    new Date(invite.expires_at) > new Date() && (
+                      <button
+                        onClick={() => onRevoke(invite.id)}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Revoke
+                      </button>
+                    )}
+                  <button
+                    onClick={() => onDelete(invite.id)}
+                    className="text-sm text-gray-400 hover:text-red-600 font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

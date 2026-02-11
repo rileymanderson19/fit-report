@@ -60,7 +60,9 @@ export default function AdminSetupPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [sendLoginLink, setSendLoginLink] = useState(true);
   const [loginLink, setLoginLink] = useState("");
+  const [loginLinkError, setLoginLinkError] = useState("");
   const [createdUserId, setCreatedUserId] = useState("");
+  const [isRegeneratingLink, setIsRegeneratingLink] = useState(false);
 
   // Step indicators
   const steps: { key: Step; label: string; icon: React.ReactNode }[] = [
@@ -234,6 +236,7 @@ export default function AdminSetupPage() {
 
       setCreatedUserId(data.userId);
       setLoginLink(data.loginLink || "");
+      setLoginLinkError(data.loginLinkError || "");
       setStep("success");
       toast.success("Account created successfully!");
     } catch (error) {
@@ -260,7 +263,9 @@ export default function AdminSetupPage() {
     setClientsFetched(false);
     setSendLoginLink(true);
     setLoginLink("");
+    setLoginLinkError("");
     setCreatedUserId("");
+    setIsRegeneratingLink(false);
   };
 
   const copyToClipboard = (text: string) => {
@@ -693,7 +698,7 @@ export default function AdminSetupPage() {
                 </code>
                 <button
                   onClick={() => copyToClipboard(loginLink)}
-                  className="btn-secondary p-2 rounded-lg shrink-0"
+                  className="btn-primary p-2 rounded-lg shrink-0"
                   title="Copy link"
                 >
                   <Copy className="w-4 h-4" />
@@ -702,6 +707,51 @@ export default function AdminSetupPage() {
               <p className="text-xs text-gray-400 mt-2">
                 Share this link with the coach so they can log in.
               </p>
+            </div>
+          )}
+
+          {!loginLink && loginLinkError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
+              <p className="text-sm text-red-700 font-medium mb-1">Login link could not be generated</p>
+              <p className="text-xs text-red-600">{loginLinkError}</p>
+            </div>
+          )}
+
+          {!loginLink && createdUserId && (
+            <div className="mb-6">
+              <button
+                onClick={async () => {
+                  setIsRegeneratingLink(true);
+                  try {
+                    const response = await fetch(`/api/admin/users/${createdUserId}/login-link`, {
+                      method: "POST",
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || "Failed to generate link");
+                    setLoginLink(data.loginLink);
+                    setLoginLinkError("");
+                    toast.success("Login link generated");
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Failed to generate link");
+                  } finally {
+                    setIsRegeneratingLink(false);
+                  }
+                }}
+                className="btn-primary px-5 py-2.5 rounded-lg font-medium inline-flex items-center gap-2"
+                disabled={isRegeneratingLink}
+              >
+                {isRegeneratingLink ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="w-4 h-4" />
+                    Generate Login Link
+                  </>
+                )}
+              </button>
             </div>
           )}
 

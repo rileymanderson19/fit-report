@@ -65,6 +65,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/admin/invites/${id}?permanent=true`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete invite");
+      }
+
+      toast.success("Invite deleted");
+      fetchInvites();
+    } catch (error) {
+      console.error("Error deleting invite:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete invite"
+      );
+    }
+  };
+
   const copyInviteUrl = (url: string) => {
     navigator.clipboard.writeText(url);
     toast.success("Invite URL copied to clipboard");
@@ -129,7 +150,7 @@ export default function AdminPage() {
                 <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : (
-              <InvitesTable invites={invites} onRevoke={handleRevoke} />
+              <InvitesTable invites={invites} onRevoke={handleRevoke} onDelete={handleDelete} />
             )}
           </div>
         </div>

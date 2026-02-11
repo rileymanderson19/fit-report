@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
 
   // Step 4: Generate login link if requested
   let loginLink: string | undefined;
+  let loginLinkError: string | undefined;
   if (sendLoginLink) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
@@ -177,9 +178,12 @@ export async function POST(request: NextRequest) {
 
     if (linkError) {
       console.error("Error generating login link:", linkError);
-      // Account still created — admin can resend login link later
+      loginLinkError = linkError.message;
     } else {
       loginLink = linkData?.properties?.action_link;
+      if (!loginLink) {
+        loginLinkError = "Link generated but action_link was empty";
+      }
     }
   }
 
@@ -206,5 +210,6 @@ export async function POST(request: NextRequest) {
     email: normalizedEmail,
     clientsImported: importedClientCount,
     loginLink,
+    loginLinkError,
   });
 }
