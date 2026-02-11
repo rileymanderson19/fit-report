@@ -170,13 +170,13 @@ export default function AccountPage() {
   }
 
   return (
-    <div>
+    <div className="max-w-xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-display font-bold text-gray-900">Account</h1>
         <p className="text-sm text-gray-500 mt-1">Manage your profile and account settings</p>
       </div>
 
-      <div className="card p-6 max-w-xl">
+      <div className="card p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-6">Profile Information</h2>
 
         <div className="space-y-5">
@@ -240,7 +240,7 @@ export default function AccountPage() {
         </div>
       </div>
 
-      <div className="card p-6 max-w-xl mt-6">
+      <div className="card p-6 mt-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Password</h2>
         <p className="text-sm text-gray-500 mb-6">
           {hasPassword
