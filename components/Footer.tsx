@@ -44,12 +44,14 @@ const Footer = () => {
                     Support
                   </a>
                 )}
-                <Link
-                  href="/#pricing"
+                <a
+                  href="https://calendly.com/fitreport/demo"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
                 >
-                  Pricing
-                </Link>
+                  Schedule a Call
+                </a>
               </div>
             </div>
 

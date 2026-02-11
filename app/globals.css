@@ -116,7 +116,7 @@ progress::-webkit-progress-value {
 
   /* Secondary Button (white, bordered) */
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 hover:border-gray-400 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm;
+    @apply bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 hover:border-gray-400 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm;
   }
 
   /* Danger Button */

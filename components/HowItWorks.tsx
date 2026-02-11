@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Link2, Users, FileText } from "lucide-react";
+import { Key, Link2, FileText } from "lucide-react";
 
 const colorMap = {
   blue: {
@@ -26,35 +26,32 @@ const colorMap = {
 
 const steps = [
   {
-    title: "Connect Your Account",
-    description: "Link FitReport to your existing Trainerize account with our secure one-click integration.",
+    title: "Get Your API Key",
+    description: "Send a quick request to Trainerize support \u2014 we\u2019ll give you the exact email template. Most coaches get access within a few days.",
     number: "01",
-    icon: Link2,
+    icon: Key,
     color: "blue" as const,
   },
   {
-    title: "Import Your Clients",
-    description: "Import your clients from Trainerize.",
+    title: "Connect Your Account",
+    description: "Paste your API key into FitReport and your full client roster syncs automatically. No manual entry, no CSV uploads.",
     number: "02",
-    icon: Users,
+    icon: Link2,
     color: "teal" as const,
   },
   {
-    title: "Generate Reports",
-    description: "Generate enhanced reports to provide better insights to your clients, and save you time.",
+    title: "Generate Your First Report",
+    description: "Pick a client, choose a date range, and get a branded progress report in seconds. Share it via link or download as PDF.",
     number: "03",
     icon: FileText,
     color: "indigo" as const,
   },
 ];
 
+// TODO: Replace with your actual Calendly link
+const CALENDLY_URL = "https://calendly.com/fitreport/demo";
+
 const HowItWorks = () => {
-  const handleScrollToPricing = () => {
-    const pricingSection = document.getElementById('pricing');
-    if (pricingSection) {
-      pricingSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   return (
     <section className="w-full relative">
@@ -68,10 +65,10 @@ const HowItWorks = () => {
           className="flex flex-col text-center mb-14"
         >
           <h2 className="text-4xl lg:text-5xl font-display font-bold tracking-tight mb-5 text-gray-900">
-            How It <span className="gradient-text">Works</span>
+            Up and Running in <span className="gradient-text">3 Steps</span>
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
-            Get started in minutes and see immediate improvements in your reporting workflow.
+            We handle the technical setup. You just tell us about your clients.
           </p>
         </motion.div>
 
@@ -137,12 +134,15 @@ const HowItWorks = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex justify-center mt-14"
         >
-          <button
-            onClick={handleScrollToPricing}
-            className="btn-primary px-10 py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg"
+          <a
+            href={CALENDLY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary px-10 py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center gap-2"
           >
-            Try FitReport Now →
-          </button>
+            Schedule a Call
+            <span>→</span>
+          </a>
         </motion.div>
       </div>
     </section>

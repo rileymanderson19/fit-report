@@ -40,8 +40,8 @@ export default function GridFeatures() {
           <BarChart3 className="h-7 w-7 text-blue-600" />
         </div>
       ),
-      title: "Enhanced Analytics",
-      description: "Transform Trainerize data into actionable insights with dashboards showing client progress at a glance.",
+      title: "See Every Client's Progress at a Glance",
+      description: "No more clicking through individual Trainerize profiles. One dashboard shows who's on track, who's plateauing, and who needs attention.",
     },
     {
       icon: (
@@ -49,8 +49,8 @@ export default function GridFeatures() {
           <LineChart className="h-7 w-7 text-teal-600" />
         </div>
       ),
-      title: "Progress Tracking",
-      description: "Visualize client progress over time with detailed charts and metrics that highlight improvements and identify areas needing attention.",
+      title: "Charts Your Clients Actually Understand",
+      description: "Clean, visual progress reports with body composition, strength gains, and consistency trends \u2014 designed for clients, not data analysts.",
     },
     {
       icon: (
@@ -58,8 +58,8 @@ export default function GridFeatures() {
           <Zap className="h-7 w-7 text-indigo-600" />
         </div>
       ),
-      title: "Instant Reporting",
-      description: "Generate reports for clients automatically, saving hours of manual data compilation each week.",
+      title: "Weekly Reports, Zero Manual Work",
+      description: "Hit generate and get a polished, branded report for every client. What used to take your Sunday afternoon now takes 30 seconds.",
     },
   ];
 
@@ -73,10 +73,10 @@ export default function GridFeatures() {
         className="text-center mb-14"
       >
         <h2 className="text-4xl lg:text-5xl font-display font-bold mb-5 tracking-tight text-gray-900">
-          Features <span className="gradient-text">Trainers Love</span>
+          Stop Digging Through <span className="gradient-text">Trainerize Data</span>
         </h2>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
-          FitReport transforms your Trainerize data into powerful insights, helping you deliver better results with less administrative work.
+          FitReport does the heavy lifting so you can focus on what you do best &mdash; coaching.
         </p>
       </motion.div>
 

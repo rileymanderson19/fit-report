@@ -36,23 +36,23 @@ const ButtonSignin = ({
     return (
       <Link
         href={config.auth.callbackUrl}
-        className="btn-primary inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-200"
+        className="inline-flex items-center justify-center w-9 h-9 rounded-full overflow-hidden border-2 border-gray-200 hover:border-blue-400 transition-colors"
+        title="Go to Dashboard"
       >
         {user?.user_metadata?.avatar_url ? (
           <img
             src={user?.user_metadata?.avatar_url}
             alt="Account"
-            className="w-6 h-6 rounded-full"
+            className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
-            width={24}
-            height={24}
+            width={36}
+            height={36}
           />
         ) : (
-          <span className="w-6 h-6 flex justify-center items-center rounded-full bg-white/20 text-white text-sm font-semibold">
+          <span className="w-full h-full flex justify-center items-center bg-blue-600 text-white text-sm font-semibold">
             {user?.user_metadata?.name?.charAt(0) || user?.email?.charAt(0)}
           </span>
         )}
-        <span>Dashboard</span>
       </Link>
     );
   }

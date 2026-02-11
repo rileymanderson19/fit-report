@@ -1,16 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Calendar, Check } from "lucide-react";
+
+// TODO: Replace with your actual Calendly link
+const CALENDLY_URL = "https://calendly.com/fitreport/demo";
 
 const CTA = () => {
-  const handleScrollToPricing = () => {
-    const pricingSection = document.getElementById('pricing');
-    if (pricingSection) {
-      pricingSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <section className="w-full relative">
       <motion.div
@@ -27,7 +23,7 @@ const CTA = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="font-display font-bold text-4xl lg:text-5xl tracking-tight mb-5 text-gray-900"
         >
-          <span className="gradient-text">Transform</span> how you track client progress
+          Let&apos;s Get You <span className="gradient-text">Set Up</span>
         </motion.h2>
 
         <motion.p
@@ -37,7 +33,7 @@ const CTA = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-lg text-gray-500 mb-10 max-w-2xl leading-relaxed"
         >
-          Join thousands of fitness professionals who are saving time, improving client retention, and growing their businesses with FitReport.
+          Book a 15-minute call. We&apos;ll walk you through the product, help you get API access, and have you generating reports the same week.
         </motion.p>
 
         <motion.div
@@ -46,13 +42,16 @@ const CTA = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <button
-            onClick={handleScrollToPricing}
+          <a
+            href={CALENDLY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="group btn-primary px-8 py-3.5 text-lg font-semibold rounded-lg inline-flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg"
           >
-            Start Your Free Trial
+            <Calendar className="w-5 h-5" />
+            Book a Call
             <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-          </button>
+          </a>
         </motion.div>
 
         <motion.div
@@ -62,11 +61,9 @@ const CTA = () => {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="mt-10 flex flex-wrap justify-center gap-6 text-sm text-gray-400"
         >
-          {["14-day free trial", "No credit card required", "Cancel anytime"].map((text) => (
+          {["15-minute setup call", "We handle Trainerize API access", "Generating reports within a week"].map((text) => (
             <div key={text} className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
+              <Check className="w-4 h-4 text-blue-600" />
               <span>{text}</span>
             </div>
           ))}

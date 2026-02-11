@@ -8,17 +8,20 @@ import { motion } from "framer-motion";
 import ButtonSignin from "./ButtonSignin";
 import config from "@/config";
 
+// TODO: Replace with your actual Calendly link
+const CALENDLY_URL = "https://calendly.com/fitreport/demo";
+
 const links: {
   href: string;
   label: string;
 }[] = [
   {
-    href: "/#pricing",
-    label: "Pricing",
-  },
-  {
     href: "/#how-it-works",
     label: "How It Works",
+  },
+  {
+    href: CALENDLY_URL,
+    label: "Schedule a Call",
   },
 ];
 
