@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ReactNode } from "react";
-import { LayoutDashboard, Users, FileText, Settings, Link2, X, ChevronLeft } from "lucide-react";
+import { Users, FileText, Settings, Link2, X, ChevronLeft } from "lucide-react";
 import ButtonAccount from "./ButtonAccount";
 
 interface SidebarItemProps {
@@ -102,16 +102,6 @@ export default function Sidebar({
 
       {/* Navigation */}
       <nav className={`flex-1 py-4 space-y-1 transition-all duration-300 ${collapsed ? "px-2" : "px-3"}`}>
-        <SidebarItem
-          href="/dashboard"
-          icon={<LayoutDashboard className="w-4 h-4" />}
-          isActive={currentPath === "/dashboard" || currentPath === ""}
-          collapsed={collapsed}
-          title="Dashboard"
-        >
-          Dashboard
-        </SidebarItem>
-
         <SidebarItem
           href="/dashboard/clients"
           icon={<Users className="w-4 h-4" />}
