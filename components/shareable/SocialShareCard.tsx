@@ -32,7 +32,7 @@ export default function SocialShareCard({
   avgCalories,
   avgProtein,
   avgDailySteps,
-  consistencyScore,
+  consistencyScore: _consistencyScore,
   aspectRatio = 'square',
   unitPreference = 'lbs',
   brand

@@ -167,7 +167,7 @@ export default function TestTextReportPage() {
     return data;
   };
 
-  const handleStartWorkflow = async () => {
+  const _handleStartWorkflow = async () => {
     if (selectedClientIds.size === 0) { toast.error('Please select at least one client'); return; }
     if (!dateFrom || !dateTo) { toast.error('Please set date range'); return; }
 

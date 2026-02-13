@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     const uniqueFilename = `${sanitizedFilename}.${fileExtension}`;
     
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('temp-images')
       .upload(uniqueFilename, buffer, {
         contentType: `image/${fileExtension}`,
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
 }
 
 // GET endpoint to list user's temp uploads
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const supabase = createClient();
 

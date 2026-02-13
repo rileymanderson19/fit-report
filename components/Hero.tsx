@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Calendar, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 // TODO: Replace with your actual Calendly link
 const CALENDLY_URL = "https://calendly.com/fitreport/demo";

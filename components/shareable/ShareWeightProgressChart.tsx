@@ -2,7 +2,6 @@
 
 import React from 'react';
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -42,9 +41,9 @@ interface ShareWeightProgressChartProps {
 
 export default function ShareWeightProgressChart({
   dailyData,
-  weeklyAverages,
+  weeklyAverages: _weeklyAverages,
   goalWeight,
-  clientName,
+  clientName: _clientName,
   dateRangeStart,
   dateRangeEnd,
   isScreenshotMode = false,

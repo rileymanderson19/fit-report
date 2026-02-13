@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(finalImageData.replace(/^data:image\/[a-z]+;base64,/, ''), 'base64');
     
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('temp-images')
       .upload(filename, buffer, {
         contentType: 'image/png',
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
 }
 
 // Helper function to create a simple PNG placeholder
-function createSimpleReportPlaceholder(client: any): string {
+function createSimpleReportPlaceholder(_client: any): string {
   // Create a simple 1x1 pixel PNG as a placeholder
   // This is a base64 encoded 1x1 transparent PNG
   const transparentPng = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';

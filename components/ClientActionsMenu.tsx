@@ -13,7 +13,7 @@ interface Client {
 
 interface ClientActionsMenuProps {
   client: Client;
-  onDelete: (clientId: string) => void;
+  onDelete: (_clientId: string) => void;
 }
 
 export default function ClientActionsMenu({ client, onDelete }: ClientActionsMenuProps) {

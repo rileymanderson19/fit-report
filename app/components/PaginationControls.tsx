@@ -1,7 +1,7 @@
 interface PaginationControlsProps {
   totalPages: number;
   currentPage: number;
-  onPageChange: (page: number) => void;
+  onPageChange: (_page: number) => void;
 }
 
 export function PaginationControls({ totalPages, currentPage, onPageChange }: PaginationControlsProps) {

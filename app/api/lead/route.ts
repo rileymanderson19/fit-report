@@ -1,5 +1,4 @@
 import { NextResponse, NextRequest } from "next/server";
-import { createClient } from "@/libs/supabase/server";
 import { rateLimitMiddleware, getClientIdentifier, RateLimitPresets } from "@/libs/rateLimit";
 import { LeadSchema, validateRequest } from "@/libs/validations";
 import { handleApiError } from "@/libs/errorHandler";
@@ -32,7 +31,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email } = validation.data;
+    const { email: _email } = validation.data;
 
     // Here you can add your own logic
     // For instance, sending a welcome email (use the the sendEmail helper function from /libs/resend)

@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
     const reportData = report.report_data;
     
     // Create HTML content for report capture
-    const reportHtml = generateReportHtml(reportData, client, {
+    const _reportHtml = generateReportHtml(reportData, client, {
       includeWorkouts,
       includeNutrition,
       includeProgress
@@ -169,7 +169,7 @@ export async function POST(req: NextRequest) {
     const timestamp = Date.now();
     const filename = `fitness-report-${client.first_name}-${client.last_name}-${timestamp}.${fileExtension}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('temp-images')
       .upload(filename, imageBuffer, {
         contentType,
@@ -535,7 +535,7 @@ function generateMessageFromConfig(
 }
 
 // Create a simple test image for now
-async function createTestReportImage(client: any, report: any): Promise<Buffer> {
+async function createTestReportImage(client: any, _report: any): Promise<Buffer> {
   // Create SVG content as a test image
   const svgContent = `
     <svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
@@ -592,16 +592,15 @@ async function createTestReportImage(client: any, report: any): Promise<Buffer> 
   // Convert SVG to PNG buffer using a simple method
   // For production, you'd want to use a proper image conversion library
   // But for now, we'll return the SVG as-is and let the browser handle it
-  const base64Svg = Buffer.from(svgContent).toString('base64');
-  const dataUrl = `data:image/svg+xml;base64,${base64Svg}`;
-  
+  const _base64Svg = Buffer.from(svgContent).toString('base64');
+
   // For now, return the SVG content as a buffer
   // This will work for display purposes
   return Buffer.from(svgContent, 'utf-8');
 }
 
 // Helper functions for generating HTML sections
-function generateProgressSection(reportData: any): string {
+function generateProgressSection(_reportData: any): string {
   // Simplified - you'd extract actual metrics from reportData
   return `
     <div class="section">
@@ -622,7 +621,7 @@ function generateProgressSection(reportData: any): string {
   `;
 }
 
-function generateNutritionSection(reportData: any): string {
+function generateNutritionSection(_reportData: any): string {
   return `
     <div class="section">
       <h3>Nutrition Summary</h3>
@@ -654,7 +653,7 @@ function generateNutritionSection(reportData: any): string {
   `;
 }
 
-function generateWorkoutsSection(reportData: any): string {
+function generateWorkoutsSection(_reportData: any): string {
   return `
     <div class="section">
       <h3>Workout Summary</h3>

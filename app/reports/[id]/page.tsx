@@ -6,7 +6,7 @@ import { BrandConfig } from '@/hooks/useBrandConfig';
 import { useReportAnalytics, DailyData, WeeklyAverage } from '@/hooks/useReportAnalytics';
 import ShareWeightProgressChart from '@/components/shareable/ShareWeightProgressChart';
 import ShareWeeklyHighlightsCard from '@/components/shareable/ShareWeeklyHighlightsCard';
-import { TrendingDown, TrendingUp, Minus, Dumbbell, Target, Clock } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, Target, Clock } from 'lucide-react';
 
 interface Report {
   id: string;
@@ -269,11 +269,6 @@ export default function PublicReportPage() {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const formatDateLong = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
   const totalChange = weightData.currentWeight - weightData.startWeight;

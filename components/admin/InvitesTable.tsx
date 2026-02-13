@@ -14,8 +14,8 @@ interface Invite {
 
 interface InvitesTableProps {
   invites: Invite[];
-  onRevoke: (id: string) => void;
-  onDelete: (id: string) => void;
+  onRevoke: (_id: string) => void;
+  onDelete: (_id: string) => void;
 }
 
 export function InvitesTable({ invites, onRevoke, onDelete }: InvitesTableProps) {

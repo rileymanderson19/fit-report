@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 
 interface ProfileStepProps {
-  onNext: (newStatus?: string) => void;
+  onNext: (_newStatus?: string) => void;
   onBack: () => void;
   onSkip: () => void;
   onComplete: () => void;

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 
 interface InviteFormProps {
-  onSuccess: (inviteUrl: string) => void;
+  onSuccess: (_inviteUrl: string) => void;
 }
 
 export function InviteForm({ onSuccess }: InviteFormProps) {

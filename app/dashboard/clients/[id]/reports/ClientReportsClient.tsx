@@ -1,27 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { createClient } from '@/libs/supabase/client';
 
-// Lazy-load ReportVisualization
-const ReportVisualization = dynamic(
-  () => import('@/components/ReportVisualization').then(mod => ({ default: mod.ReportVisualization })),
-  {
-    loading: () => (
-      <div className="flex justify-center items-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    ),
-    ssr: false
-  }
-);
-import { SevenDayReference } from '@/components/SevenDayReference';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { useBrandConfig } from '@/hooks/useBrandConfig';
 import ClientSearchBar from '@/components/ClientSearchBar';
-import SendReportModal from '@/components/SendReportModal';
-import GenerateLinkModal from '@/components/GenerateLinkModal';
 import { ShareProgressModal, ShareWeeklyHighlightsCard, ShareWeightProgressChart } from '@/components/shareable';
 import { useReportAnalytics, DailyData, WeeklyAverage } from '@/hooks/useReportAnalytics';
 import { toast } from 'sonner';
@@ -111,7 +95,7 @@ function calculateWeekAvg(
 export default function ClientReportsClient({
   clientId,
   initialClient = null,
-  initialReports = [],
+  initialReports: _initialReports = [],
   initialError = null,
   initialLiveReportData = null,
   initialLiveReportMetadata = null
@@ -124,12 +108,12 @@ export default function ClientReportsClient({
   const [liveReportData, setLiveReportData] = useState<any>(initialLiveReportData);
   const [liveReportMetadata, setLiveReportMetadata] = useState<any>(initialLiveReportMetadata);
   const [isGeneratingLive, setIsGeneratingLive] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [_isRefreshing, setIsRefreshing] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [minReps, setMinReps] = useState<number>(6);
-  const [maxReps, setMaxReps] = useState<number>(10);
-  const [reportTemplate, setReportTemplate] = useState<'daily' | 'enhanced'>('enhanced');
+  const [minReps, _setMinReps] = useState<number>(6);
+  const [maxReps, _setMaxReps] = useState<number>(10);
+  const [reportTemplate, _setReportTemplate] = useState<'daily' | 'enhanced'>('enhanced');
 
   // Client navigation state
   const [allClients, setAllClients] = useState<Client[]>([]);
@@ -142,7 +126,7 @@ export default function ClientReportsClient({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Progress photos state
-  const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([]);
+  const [_progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([]);
   const [photoSummary, setPhotoSummary] = useState<ProgressPhotoSummary>({ firstPhoto: null, latestPhoto: null, poseComparisons: {} });
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [photosError, setPhotosError] = useState<string | null>(null);
@@ -674,7 +658,7 @@ export default function ClientReportsClient({
   }, [client, startDate, endDate, clientId]);
 
   // Baseline photo handlers
-  const handleSetBaseline = async (photo: ProgressPhoto) => {
+  const _handleSetBaseline = async (photo: ProgressPhoto) => {
     if (!client || isSettingBaseline) return;
     setIsSettingBaseline(true);
     try {
@@ -1306,7 +1290,7 @@ export default function ClientReportsClient({
                   decimals: number;
                   data: Array<{ date: string; value: number }>;
                   goodDirection: 'up' | 'down' | null;
-                  format?: (n: number) => string;
+                  format?: (_n: number) => string;
                 }> = [
                   { key: 'weight', label: 'Weight', unit: ' lb', decimals: 1,
                     data: (liveReportData?.bodyStats?.bodyStats || []).map((w: any) => ({ date: w.date, value: w.weight || 0 })),

@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
 
     // Check for existing cache (ready or running)
     const cacheLookupStart = performance.now();
-    const { data: cacheEntries, error: cacheFetchError } = await supabase
+    const { data: cacheEntries } = await supabase
       .from('report_cache')
       .select('*')
       .eq('cache_key', cacheKey)

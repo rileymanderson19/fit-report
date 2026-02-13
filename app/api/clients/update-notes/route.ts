@@ -1,7 +1,7 @@
 import { createClient } from '@/libs/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { ClientNotesSchema, validateRequest } from '@/libs/validations';
-import { handleApiError, requireAuth } from '@/libs/errorHandler';
+import { handleApiError } from '@/libs/errorHandler';
 
 export async function POST(req: NextRequest) {
   try {

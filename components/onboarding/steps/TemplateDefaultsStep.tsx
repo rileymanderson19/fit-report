@@ -5,7 +5,7 @@ import { createClient } from "@/libs/supabase/client";
 import { toast } from "sonner";
 
 interface TemplateDefaultsStepProps {
-  onNext: (newStatus?: string) => void;
+  onNext: (_newStatus?: string) => void;
   onBack: () => void;
   onSkip: () => void;
   onComplete: () => void;

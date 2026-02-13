@@ -66,12 +66,13 @@ export const metadata: Metadata = {
 		follow: true,
 	},
 	manifest: '/manifest.json',
-	viewport: {
-		width: "device-width",
-		initialScale: 1,
-		maximumScale: 5,
-		userScalable: true,
-	},
+};
+
+export const viewport = {
+	width: "device-width",
+	initialScale: 1,
+	maximumScale: 5,
+	userScalable: true,
 	themeColor: "#2563EB",
 };
 

@@ -5,7 +5,7 @@ import { createClient } from "@/libs/supabase/server";
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     const supabase = createClient();
 

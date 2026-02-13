@@ -77,8 +77,8 @@ interface ReportVisualizationProps {
     };
     template?: 'daily' | 'weekly' | 'enhanced';
   };
-  onDeleteWorkout?: (workoutId: number) => void;
-  onDeleteExercise?: (workoutId: number, exerciseName: string) => void;
+  onDeleteWorkout?: (_workoutId: number) => void;
+  onDeleteExercise?: (_workoutId: number, _exerciseName: string) => void;
   isScreenshotMode?: boolean;
   forceTemplate?: 'daily' | 'weekly' | 'enhanced';
   clientName?: string;

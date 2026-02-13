@@ -5,7 +5,7 @@ import { Client } from '@/types/client';
 
 interface ClientSelectorProps {
   value: string | null;
-  onChange: (clientId: string | null) => void;
+  onChange: (_clientId: string | null) => void;
 }
 
 export function ClientSelector({ value, onChange }: ClientSelectorProps) {

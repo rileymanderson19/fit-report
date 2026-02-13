@@ -3,7 +3,7 @@
 import { CheckCircle, ArrowRight, FileText, Settings } from "lucide-react";
 
 interface CompletionStepProps {
-  onNext: (newStatus?: string) => void;
+  onNext: (_newStatus?: string) => void;
   onBack: () => void;
   onSkip: () => void;
   onComplete: () => void;

@@ -5,10 +5,10 @@ import { useState } from 'react';
 interface ExerciseNotesProps {
   exerciseId: number;
   initialNotes?: string;
-  onSave: (notes: string) => void;
+  onSave: (_notes: string) => void;
 }
 
-export function ExerciseNotes({ exerciseId, initialNotes = '', onSave }: ExerciseNotesProps) {
+export function ExerciseNotes({ exerciseId: _exerciseId, initialNotes = '', onSave }: ExerciseNotesProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [notes, setNotes] = useState(initialNotes);
 

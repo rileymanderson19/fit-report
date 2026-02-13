@@ -51,7 +51,7 @@ export default function ShareProgressSummaryCard({
   };
 
   const weightChange = convertWeight(weightData.currentWeight - weightData.startWeight);
-  const weightChangeAbs = Math.abs(weightChange);
+  const _weightChangeAbs = Math.abs(weightChange);
 
   const getTrendIcon = () => {
     if (weightData.trend === 'down') {

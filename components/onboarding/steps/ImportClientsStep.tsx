@@ -15,7 +15,7 @@ interface Client {
 }
 
 interface ImportClientsStepProps {
-  onNext: (newStatus?: string) => void;
+  onNext: (_newStatus?: string) => void;
   onBack: () => void;
   onSkip: () => void;
   onComplete: () => void;

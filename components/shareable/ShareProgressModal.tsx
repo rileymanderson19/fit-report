@@ -214,7 +214,7 @@ export default function ShareProgressModal({
   }, [reportData]);
 
   // Use the analytics hook
-  const { consistencyAnalysis, bestDay, dataAvailability } = useReportAnalytics(
+  const { consistencyAnalysis, bestDay: _bestDay, dataAvailability: _dataAvailability } = useReportAnalytics(
     processedData.dailyData,
     processedData.weeklyAverages
   );

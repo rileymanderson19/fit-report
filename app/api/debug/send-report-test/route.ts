@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     // Test 4: Check if report_deliveries table exists
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('report_deliveries')
         .select('id')
         .limit(1);

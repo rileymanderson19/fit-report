@@ -30,7 +30,7 @@ interface GenerateLinkModalProps {
   onClose: () => void;
   report: Report | null;
   client: Client | null;
-  onSuccess?: (linkData: LinkData) => void;
+  onSuccess?: (_linkData: LinkData) => void;
 }
 
 export default function GenerateLinkModal({

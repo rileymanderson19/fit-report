@@ -24,7 +24,7 @@ interface SendReportModalProps {
   onClose: () => void;
   report: Report | null;
   client: Client | null;
-  onSuccess?: (delivery: any) => void;
+  onSuccess?: (_delivery: any) => void;
 }
 
 // Helper function for variable substitution

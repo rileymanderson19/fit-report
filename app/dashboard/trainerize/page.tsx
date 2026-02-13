@@ -322,7 +322,7 @@ export default function TrainerizeConfigPage() {
             <button
               type="button"
               onClick={fetchTrainerList}
-              className="btn-secondary px-4 py-2.5 rounded-lg font-medium"
+              className="btn-secondary text-gray-900"
               disabled={isLoadingTrainerList || isLoading || !formData.username || !formData.password}
             >
               {isLoadingTrainerList ? 'Loading...' : 'Get Trainer ID'}

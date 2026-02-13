@@ -6,7 +6,7 @@ import { format, subDays } from 'date-fns';
 interface DateRangePickerProps {
   from: Date | undefined;
   to: Date | undefined;
-  onSelect: (range: { from: Date | undefined; to: Date | undefined }) => void;
+  onSelect: (_range: { from: Date | undefined; to: Date | undefined }) => void;
   showPresets?: boolean;
   className?: string;
 }

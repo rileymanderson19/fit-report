@@ -170,7 +170,7 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
   }, [dailyData, dataAvailability]);
 
   // Calculate trends
-  const trendAnalysis = React.useMemo(() => {
+  const _trendAnalysis = React.useMemo(() => {
     if (weeklyAverages.length < 2) return null;
 
     const latest = weeklyAverages[weeklyAverages.length - 1];
@@ -206,7 +206,7 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
   }, [weeklyAverages, dataAvailability]);
 
   // Identify key improvement areas
-  const improvementAreas = React.useMemo(() => {
+  const _improvementAreas = React.useMemo(() => {
     if (!dailyData.length) return [];
 
     const areas = [];
@@ -654,7 +654,7 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
         <div className="p-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">Weekly Progress Summary</h3>
           <div className="space-y-4">
-            {weeklyAverages.map((week, idx) => {
+            {weeklyAverages.map((week) => {
               // Parse dates consistently in local timezone
               const [startYear, startMonth, startDay] = week.weekStart.split('-').map(Number);
               const weekStart = new Date(startYear, startMonth - 1, startDay);

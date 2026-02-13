@@ -31,7 +31,7 @@ interface ShareWeeklyHighlightsCardProps {
 }
 
 export default function ShareWeeklyHighlightsCard({
-  clientName,
+  clientName: _clientName,
   dateRangeStart,
   dateRangeEnd,
   weeklyData,
@@ -52,19 +52,19 @@ export default function ShareWeeklyHighlightsCard({
   };
 
   // Calculate percentages for progress bars
-  const workoutPercent = weeklyData.workoutsScheduled > 0
+  const _workoutPercent = weeklyData.workoutsScheduled > 0
     ? (weeklyData.workoutsCompleted / weeklyData.workoutsScheduled) * 100
     : weeklyData.workoutsCompleted > 0 ? 100 : 0;
 
-  const stepsPercent = Math.min((weeklyData.avgDailySteps / weeklyData.stepsGoal) * 100, 100);
+  const _stepsPercent = Math.min((weeklyData.avgDailySteps / weeklyData.stepsGoal) * 100, 100);
 
-  const getProgressColor = (percent: number) => {
+  const _getProgressColor = (percent: number) => {
     if (percent >= 90) return 'bg-green-500';
     if (percent >= 70) return 'bg-yellow-500';
     return 'bg-orange-500';
   };
 
-  const getStatusIcon = (percent: number) => {
+  const _getStatusIcon = (percent: number) => {
     if (percent >= 90) return <CheckCircle className="w-4 h-4 text-green-500" />;
     return null;
   };

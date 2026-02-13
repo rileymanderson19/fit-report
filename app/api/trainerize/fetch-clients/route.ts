@@ -24,18 +24,6 @@ interface TrainerizeApiResponse {
   }>;
 }
 
-// Our normalized response format
-interface ClientListResponse {
-  clients: Array<{
-    id: string;
-    displayName: string;
-    firstName: string;
-    lastName: string;
-    email?: string;
-    photoUrl?: string;
-  }>;
-}
-
 export async function GET(req: NextRequest) {
   try {
     const supabase = createClient();

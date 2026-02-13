@@ -40,7 +40,7 @@ export async function POST() {
 
     // Delete old files
     const filenames = filesToDelete.map(file => file.name);
-    const { data: deleteData, error: deleteError } = await supabase.storage
+    const { error: deleteError } = await supabase.storage
       .from('temp-images')
       .remove(filenames);
 
