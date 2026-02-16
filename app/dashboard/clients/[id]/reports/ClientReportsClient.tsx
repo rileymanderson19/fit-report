@@ -485,6 +485,7 @@ export default function ClientReportsClient({
         }, 2000);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, clientId, initialClient, initialLiveReportData, initialLiveReportMetadata]);
 
   // Auto-generate live report on load (but only if no cached data from server)

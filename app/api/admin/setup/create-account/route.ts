@@ -6,6 +6,8 @@ import {
   getRequestMetadata,
   AuditActions,
 } from "@/libs/auditLog";
+import { cleanupUserReferences } from "@/libs/adminUserCleanup";
+import { sendEmail } from "@/libs/resend";
 
 function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -109,9 +111,20 @@ export async function POST(request: NextRequest) {
       const orphanedUser = listResult.data?.users?.find((u: { email?: string }) => u.email === normalizedEmail);
 
       if (orphanedUser) {
-        // Clean up the orphaned auth user's clients first
-        await supabaseAdmin.from("clients").delete().eq("trainer_id", orphanedUser.id);
-        await supabaseAdmin.auth.admin.deleteUser(orphanedUser.id);
+        // Clean up ALL FK references before deleting the orphaned user
+        const { errors: cleanupErrors } = await cleanupUserReferences(supabaseAdmin, orphanedUser.id);
+        if (cleanupErrors.length > 0) {
+          console.warn("Cleanup errors for orphaned user:", cleanupErrors);
+        }
+
+        const { error: deleteOrphanError } = await supabaseAdmin.auth.admin.deleteUser(orphanedUser.id);
+        if (deleteOrphanError) {
+          console.error("Failed to delete orphaned user after cleanup:", deleteOrphanError);
+          return NextResponse.json(
+            { error: `Failed to clean up existing account for this email. Please try again or contact support.` },
+            { status: 500 }
+          );
+        }
 
         // Retry creation
         const retry = await supabaseAdmin.auth.admin.createUser(createPayload);
@@ -205,6 +218,35 @@ export async function POST(request: NextRequest) {
       loginLink = linkData?.properties?.action_link;
       if (!loginLink) {
         loginLinkError = "Link generated but action_link was empty";
+      }
+    }
+
+    // Send welcome email with login link
+    if (loginLink) {
+      try {
+        await sendEmail({
+          to: normalizedEmail,
+          subject: "Welcome to FitReport — Your Account is Ready",
+          text: `Hi ${firstName},\n\nYour FitReport coach account has been created! Click the link below to log in:\n\n${loginLink}\n\nThis link will expire shortly. If it expires, you can request a new one from the login page.\n\nWelcome aboard!\n- The FitReport Team`,
+          html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2563EB; font-size: 24px; margin: 0;">Welcome to FitReport</h1>
+              </div>
+              <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6;">Hi ${firstName},</p>
+              <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6;">Your FitReport coach account has been created! Click the button below to log in and get started:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${loginLink}" style="background-color: #2563EB; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: 600; display: inline-block;">Log In to FitReport</a>
+              </div>
+              <p style="color: #64748b; font-size: 14px; line-height: 1.6;">This link will expire shortly. If it expires, you can request a new magic link from the <a href="${siteUrl}/signin" style="color: #2563EB;">login page</a>.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+              <p style="color: #64748b; font-size: 14px; text-align: center;">Welcome aboard!<br/>The FitReport Team</p>
+            </div>
+          `,
+        });
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Don't fail the request — the login link is still returned for the admin to share manually
       }
     }
   }

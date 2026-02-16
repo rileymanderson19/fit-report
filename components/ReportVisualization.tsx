@@ -588,6 +588,7 @@ export function ReportVisualization({
     }
 
     return weeks;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analyticsData, dateRangeStart]);
 
   if (processedDailyData.length === 0) {

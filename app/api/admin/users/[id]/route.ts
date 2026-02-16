@@ -5,6 +5,7 @@ import {
   logAuditEvent,
   getRequestMetadata,
 } from "@/libs/auditLog";
+import { cleanupUserReferences } from "@/libs/adminUserCleanup";
 
 function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -69,11 +70,11 @@ export async function DELETE(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Delete user's clients
-  await supabaseAdmin
-    .from("clients")
-    .delete()
-    .eq("trainer_id", userId);
+  // Clean up all FK references before deleting auth user
+  const { errors: cleanupErrors } = await cleanupUserReferences(supabaseAdmin, userId);
+  if (cleanupErrors.length > 0) {
+    console.warn("Non-fatal cleanup errors during user deletion:", cleanupErrors);
+  }
 
   // Delete from auth.users (cascades to profiles)
   const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);

@@ -167,6 +167,7 @@ export function EnhancedAnalytics({ dailyData, weeklyAverages, clientName, last7
       weight: weightStats,
       overallScore
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dailyData, dataAvailability]);
 
   // Calculate trends

@@ -6,6 +6,7 @@ import {
   getRequestMetadata,
   AuditActions,
 } from "@/libs/auditLog";
+import { sendEmail } from "@/libs/resend";
 
 // Default invite expiration: 48 hours
 const INVITE_EXPIRATION_HOURS = 48;
@@ -183,9 +184,39 @@ export async function POST(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const inviteUrl = `${baseUrl}/onboarding/accept?token=${token}`;
 
-  // TODO: Send email with invite link
-  // For now, return the URL in the response for manual sharing
-  console.log(`[Invite] Created invite for ${email}: ${inviteUrl}`);
+  // Send invite email
+  let emailSent = false;
+  try {
+    const coachName = metadata?.coachName;
+    const greeting = coachName ? `Hi ${coachName},` : "Hi,";
+
+    await sendEmail({
+      to: email.toLowerCase(),
+      subject: "You're Invited to FitReport",
+      text: `${greeting}\n\nYou've been invited to join FitReport as a coach!\n\nClick the link below to accept your invitation and set up your account:\n\n${inviteUrl}\n\nThis invitation expires in ${INVITE_EXPIRATION_HOURS} hours.\n\nIf you have any questions, reply to this email.\n\n- The FitReport Team`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563EB; font-size: 24px; margin: 0;">You're Invited to FitReport</h1>
+          </div>
+          <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6;">${greeting}</p>
+          <p style="color: #1a1a1a; font-size: 16px; line-height: 1.6;">You've been invited to join FitReport as a coach! Click the button below to accept your invitation and set up your account:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${inviteUrl}" style="background-color: #2563EB; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: 600; display: inline-block;">Accept Invitation</a>
+          </div>
+          <p style="color: #64748b; font-size: 14px; line-height: 1.6;">This invitation expires in ${INVITE_EXPIRATION_HOURS} hours.</p>
+          <p style="color: #64748b; font-size: 14px; line-height: 1.6;">If you have any questions, simply reply to this email.</p>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+          <p style="color: #64748b; font-size: 14px; text-align: center;">The FitReport Team</p>
+        </div>
+      `,
+      replyTo: "riley@rileymanderson.com",
+    });
+    emailSent = true;
+  } catch (emailError) {
+    console.error("Failed to send invite email:", emailError);
+    // Don't fail the request — the URL is still returned for manual sharing
+  }
 
   return NextResponse.json({
     invite: {
@@ -196,5 +227,6 @@ export async function POST(request: NextRequest) {
       created_at: invite.created_at,
     },
     inviteUrl,
+    emailSent,
   });
 }

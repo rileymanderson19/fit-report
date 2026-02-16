@@ -115,7 +115,8 @@ export default function SendReportModal({
     if (isOpen && client && !configLoaded) {
       loadTrainerConfiguration();
     }
-  }, [isOpen, client, configLoaded, loadTrainerConfiguration]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, client, configLoaded]);
 
   // Reset state when modal closes
   useEffect(() => {

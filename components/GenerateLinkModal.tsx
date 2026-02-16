@@ -60,6 +60,7 @@ export default function GenerateLinkModal({
     if (isOpen && report && client && !linkData && !isGenerating) {
       handleGenerateLink();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, report, client, linkData, isGenerating]);
 
   const handleGenerateLink = async () => {

@@ -37,6 +37,7 @@ const CrispChat = (): null => {
       }
     };
     getUser();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted]);
 
   useEffect(() => {

@@ -39,6 +39,7 @@ export default function TestMessagingPage() {
 
   useEffect(() => {
     fetchClients();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchClients = async () => {
