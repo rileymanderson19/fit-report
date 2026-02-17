@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Logo from "@/components/Logo";
 import config from "@/config";
 
 const Footer = () => {
@@ -10,14 +11,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row gap-10 md:gap-16">
           {/* Logo and Info */}
           <div className="w-full md:w-72 flex flex-col items-center md:items-start">
-            <Link
-              href="/"
-              className="flex items-center group"
-            >
-              <span className="font-display font-extrabold tracking-tight text-lg text-gray-900">
-                {config.appName}
-              </span>
-            </Link>
+            <Logo variant="full" size="md" theme="light" href="/" />
 
             <p className="mt-4 text-sm text-gray-500 text-center md:text-left">
               {config.appDescription}

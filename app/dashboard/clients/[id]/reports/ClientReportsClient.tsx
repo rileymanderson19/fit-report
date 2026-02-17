@@ -9,7 +9,7 @@ import ClientSearchBar from '@/components/ClientSearchBar';
 import { ShareProgressModal, ShareWeeklyHighlightsCard, ShareWeightProgressChart } from '@/components/shareable';
 import { useReportAnalytics, DailyData, WeeklyAverage } from '@/hooks/useReportAnalytics';
 import { toast } from 'sonner';
-import { RefreshCw, Share2, ChevronLeft, ChevronRight, Copy, Check, Camera, X, AlertTriangle, XCircle } from 'lucide-react';
+import { RefreshCw, Share2, ChevronLeft, ChevronRight, Copy, Check, Camera, X, AlertTriangle, XCircle, Sparkles, ChevronDown, Lightbulb, ArrowRight } from 'lucide-react';
 
 
 interface Report {
@@ -133,6 +133,16 @@ export default function ClientReportsClient({
   const [selectedPoseComparison, setSelectedPoseComparison] = useState<PoseComparison | null>(null);
   const [isSettingBaseline, setIsSettingBaseline] = useState(false);
   const [isSyncingAllPhotos, setIsSyncingAllPhotos] = useState(false);
+
+  // AI Coaching Notes state
+  const [coachingNotes, setCoachingNotes] = useState<{
+    summary: string;
+    keyInsights: string[];
+    actionItems: string[];
+    generatedAt: string;
+  } | null>(null);
+  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+  const [isNotesExpanded, setIsNotesExpanded] = useState(true);
 
   // Full Report copy state
   const [isFullReportCopied, setIsFullReportCopied] = useState(false);
@@ -767,6 +777,105 @@ export default function ClientReportsClient({
     }
   };
 
+  // Extract metrics from liveReportData for AI coaching notes
+  const extractMetricsForNotes = React.useCallback(() => {
+    if (!liveReportData) return null;
+    const bodyStats = liveReportData?.bodyStats?.bodyStats;
+    let latestWeight: number | null = null;
+    let weightChange: number | null = null;
+    if (Array.isArray(bodyStats)) {
+      const sorted = bodyStats.filter((s: any) => s.weight > 0).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      if (sorted.length > 0) {
+        latestWeight = sorted[sorted.length - 1].weight;
+        if (sorted.length >= 2) weightChange = sorted[sorted.length - 1].weight - sorted[0].weight;
+      }
+    }
+    const nutrition = liveReportData?.nutritionData?.nutrition;
+    let avgCalories: number | null = null;
+    let avgProtein: number | null = null;
+    if (Array.isArray(nutrition)) {
+      const withCal = nutrition.filter((n: any) => n.calories > 0);
+      if (withCal.length > 0) avgCalories = withCal.reduce((s: number, n: any) => s + n.calories, 0) / withCal.length;
+      const withProt = nutrition.filter((n: any) => n.proteinGrams > 0);
+      if (withProt.length > 0) avgProtein = withProt.reduce((s: number, n: any) => s + n.proteinGrams, 0) / withProt.length;
+    }
+    const healthData = liveReportData?.healthData?.healthData;
+    let avgDailySteps: number | null = null;
+    if (Array.isArray(healthData)) {
+      const withSteps = healthData.filter((h: any) => h.data?.steps > 0);
+      if (withSteps.length > 0) avgDailySteps = withSteps.reduce((s: number, h: any) => s + h.data.steps, 0) / withSteps.length;
+    }
+    const sleepData = liveReportData?.sleepData?.sleepData;
+    let avgSleep: number | null = null;
+    if (Array.isArray(sleepData)) {
+      const withSleep = sleepData.filter((s: any) => s.duration > 0);
+      if (withSleep.length > 0) avgSleep = withSleep.reduce((s: number, d: any) => s + d.duration, 0) / withSleep.length;
+    }
+    // Count only training sessions (those with exercises), not cardio/tracking activities
+    const workouts = liveReportData?.workoutData?.workouts;
+    let totalWorkouts = 0;
+    let scheduledWorkouts = 0;
+    let workoutDays = 0;
+    if (Array.isArray(workouts)) {
+      const trainingSessions = workouts.filter((w: any) => Array.isArray(w.exercises) && w.exercises.length > 0);
+      totalWorkouts = trainingSessions.length;
+      workoutDays = new Set(trainingSessions.map((w: any) => new Date(w.date).toISOString().split('T')[0])).size;
+
+      // Count scheduled training sessions by matching titles
+      const workoutCalendar = liveReportData?.workoutData?.workoutCalendar;
+      if (Array.isArray(workoutCalendar)) {
+        const trainingTitles = new Set(trainingSessions.map((w: any) => (w.title || '').toLowerCase()));
+        scheduledWorkouts = workoutCalendar.filter((w: any) => trainingTitles.has((w.title || '').toLowerCase())).length;
+      } else {
+        scheduledWorkouts = totalWorkouts;
+      }
+    }
+    return { latestWeight, weightChange, avgCalories, avgProtein, avgDailySteps, avgSleep, totalWorkouts, scheduledWorkouts, workoutDays };
+  }, [liveReportData]);
+
+  // Load cached coaching notes
+  React.useEffect(() => {
+    const cacheKey = `coaching-notes-${clientId}-${new Date().toISOString().split('T')[0]}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) setCoachingNotes(JSON.parse(cached));
+    } catch { /* ignore */ }
+  }, [clientId]);
+
+  const generateCoachingNotes = async () => {
+    if (!client || !liveReportData) return;
+    setIsGeneratingNotes(true);
+    try {
+      const metrics = extractMetricsForNotes();
+      const response = await fetch('/api/ai/coaching-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: client.id,
+          clientName: `${client.first_name} ${client.last_name}`,
+          goal: null,
+          notes: null,
+          metrics,
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to generate coaching notes');
+      }
+      const notes = await response.json();
+      setCoachingNotes(notes);
+      setIsNotesExpanded(true);
+      const cacheKey = `coaching-notes-${clientId}-${new Date().toISOString().split('T')[0]}`;
+      try { localStorage.setItem(cacheKey, JSON.stringify(notes)); } catch { /* ignore */ }
+      toast.success('Coaching notes generated');
+    } catch (error) {
+      console.error('Error generating coaching notes:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate coaching notes');
+    } finally {
+      setIsGeneratingNotes(false);
+    }
+  };
+
   // Copy Full Report to clipboard
   const handleCopyFullReport = async () => {
     try {
@@ -956,6 +1065,101 @@ export default function ClientReportsClient({
               <p className="text-gray-400">
                 Click &quot;Generate Report&quot; to load data for this period
               </p>
+            </div>
+          )}
+
+          {/* AI Coaching Notes */}
+          {liveReportData && client && (
+            <div className="card overflow-hidden">
+              <div
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => coachingNotes && setIsNotesExpanded(!isNotesExpanded)}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-purple-50">
+                    <Sparkles className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">AI Coaching Notes</h3>
+                  {coachingNotes && (
+                    <span className="text-[11px] text-gray-400">
+                      {new Date(coachingNotes.generatedAt).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); generateCoachingNotes(); }}
+                    disabled={isGeneratingNotes}
+                    className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all bg-purple-50 text-purple-700 hover:bg-purple-100 disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {isGeneratingNotes ? (
+                      <div className="w-3 h-3 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                    {coachingNotes ? 'Regenerate' : 'Generate'}
+                  </button>
+                  {coachingNotes && (
+                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isNotesExpanded ? 'rotate-180' : ''}`} />
+                  )}
+                </div>
+              </div>
+
+              {coachingNotes && isNotesExpanded && (
+                <div className="border-t border-gray-100 p-4 space-y-4">
+                  {/* Summary */}
+                  <p className="text-sm text-gray-700 leading-relaxed">{coachingNotes.summary}</p>
+
+                  {/* Key Insights */}
+                  {coachingNotes.keyInsights.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Key Insights</span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {coachingNotes.keyInsights.map((insight, i) => (
+                          <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                            {insight}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Action Items */}
+                  {coachingNotes.actionItems.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <ArrowRight className="h-3.5 w-3.5 text-blue-500" />
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Next Steps</span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {coachingNotes.actionItems.map((item, i) => (
+                          <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!coachingNotes && !isGeneratingNotes && (
+                <div className="border-t border-gray-100 p-4 text-center">
+                  <p className="text-xs text-gray-400">Click Generate to get AI-powered coaching insights for this client</p>
+                </div>
+              )}
+
+              {isGeneratingNotes && !coachingNotes && (
+                <div className="border-t border-gray-100 p-6 flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm text-gray-500">Analyzing client data...</span>
+                </div>
+              )}
             </div>
           )}
 

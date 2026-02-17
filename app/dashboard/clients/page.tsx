@@ -7,20 +7,23 @@ import Link from 'next/link';
 import {
   Upload, Edit2, Search, Users, CheckCircle2, AlertTriangle,
   AlertCircle, Star, Trash2, X, Eye, ChevronLeft, ChevronRight, ChevronDown,
-  Flame, Scale, TrendingUp
+  Flame, Scale, TrendingUp, Database,
+  Trophy, Clock, Activity
 } from 'lucide-react';
+import type { ClientStatusResult } from '@/lib/client-status';
 
 type ManualStatus = 'on_track' | 'watch' | 'needs_attention' | 'new';
 
-interface Client {
+interface DashboardClient {
   id: string;
   first_name: string;
   last_name: string;
   email: string;
   goal: 'fat_loss' | 'maintenance' | 'muscle_gain' | null;
   notes: string | null;
-  status: ManualStatus;
   created_at: string;
+  manual_status: ManualStatus;
+  computed: ClientStatusResult;
 }
 
 interface TrainerizeClient {
@@ -30,9 +33,10 @@ interface TrainerizeClient {
   email: string;
 }
 
-type StatusFilter = 'all' | ManualStatus;
+type StatusFilter = 'all' | ManualStatus | 'no_data';
 type GoalFilter = 'all' | 'fat_loss' | 'maintenance' | 'muscle_gain' | 'none';
-type SortOption = 'attention' | 'alpha' | 'newest';
+type SortOption = 'attention' | 'computed' | 'alpha' | 'newest';
+type GoalType = 'fat_loss' | 'maintenance' | 'muscle_gain' | null;
 
 const STATUS_CONFIG: Record<ManualStatus, { label: string; icon: typeof CheckCircle2; color: string; bg: string; border: string; dot: string }> = {
   on_track: { label: 'On Track', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', dot: 'bg-green-500' },
@@ -42,8 +46,6 @@ const STATUS_CONFIG: Record<ManualStatus, { label: string; icon: typeof CheckCir
 };
 
 const STATUS_OPTIONS: ManualStatus[] = ['on_track', 'watch', 'needs_attention', 'new'];
-
-type GoalType = 'fat_loss' | 'maintenance' | 'muscle_gain' | null;
 
 const GOAL_CONFIG: Record<string, { label: string; icon: typeof Flame; color: string; bg: string; border: string; dot: string }> = {
   fat_loss: { label: 'Fat Loss', icon: Flame, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', dot: 'bg-orange-500' },
@@ -59,17 +61,127 @@ const GOAL_OPTIONS: { value: GoalType; key: string }[] = [
   { value: null, key: 'none' },
 ];
 
+const getInitials = (first: string, last: string) =>
+  `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+
+const avatarColors = [
+  'bg-purple-100 text-purple-600',
+  'bg-blue-100 text-blue-600',
+  'bg-emerald-100 text-emerald-600',
+  'bg-amber-100 text-amber-600',
+  'bg-rose-100 text-rose-600',
+  'bg-cyan-100 text-cyan-600',
+];
+
+const getAvatarColor = (name: string) => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+};
+
+// --- Alert system ---
+interface DashboardAlert {
+  id: string;
+  type: 'weight' | 'inactivity' | 'win' | 'overdue';
+  severity: 'success' | 'warning' | 'danger';
+  clientId: string;
+  clientName: string;
+  message: string;
+}
+
+function generateAlerts(clients: DashboardClient[]): DashboardAlert[] {
+  const alerts: DashboardAlert[] = [];
+
+  for (const client of clients) {
+    const name = `${client.first_name} ${client.last_name}`;
+    const { metrics, status, lastReportDate } = client.computed;
+
+    if (status === 'no_data') continue;
+
+    // Weight spike/drop (> 3 lbs)
+    if (metrics.weightChange !== null && Math.abs(metrics.weightChange) > 3) {
+      const dir = metrics.weightChange > 0 ? 'up' : 'down';
+      const abs = Math.abs(metrics.weightChange).toFixed(1);
+      const isGood = (client.goal === 'fat_loss' && dir === 'down') ||
+                     (client.goal === 'muscle_gain' && dir === 'up');
+      alerts.push({
+        id: `weight-${client.id}`,
+        type: 'weight',
+        severity: isGood ? 'success' : 'danger',
+        clientId: client.id,
+        clientName: name,
+        message: isGood
+          ? `${client.first_name} is ${dir} ${abs} lbs — great progress!`
+          : `${client.first_name}'s weight ${dir === 'up' ? 'jumped' : 'dropped'} ${abs} lbs this period`,
+      });
+    }
+
+    // Inactivity (has data but 0 workouts)
+    if (metrics.totalWorkouts === 0) {
+      alerts.push({
+        id: `inactive-${client.id}`,
+        type: 'inactivity',
+        severity: 'warning',
+        clientId: client.id,
+        clientName: name,
+        message: `${client.first_name} hasn't logged any workouts`,
+      });
+    }
+
+    // Wins (5+ workouts or high protein)
+    if (metrics.totalWorkouts >= 5) {
+      alerts.push({
+        id: `win-workouts-${client.id}`,
+        type: 'win',
+        severity: 'success',
+        clientId: client.id,
+        clientName: name,
+        message: `${client.first_name} crushed ${metrics.totalWorkouts} workouts this period`,
+      });
+    }
+
+    // Overdue check-in (> 14 days since last report)
+    if (lastReportDate) {
+      const daysSince = Math.floor((Date.now() - new Date(lastReportDate).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSince > 14) {
+        alerts.push({
+          id: `overdue-${client.id}`,
+          type: 'overdue',
+          severity: 'warning',
+          clientId: client.id,
+          clientName: name,
+          message: `${client.first_name} hasn't been reviewed in ${daysSince} days`,
+        });
+      }
+    }
+  }
+
+  // Sort: danger first, then warning, then success
+  const severityOrder: Record<string, number> = { danger: 0, warning: 1, success: 2 };
+  alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+
+  return alerts;
+}
+
+const ALERT_STYLES: Record<string, { bg: string; border: string; text: string; icon: typeof AlertCircle }> = {
+  danger: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: AlertCircle },
+  warning: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', icon: Clock },
+  success: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', icon: Trophy },
+};
+
 export default function ClientsPage() {
   const supabase = createClient();
 
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<DashboardClient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [goalFilter, setGoalFilter] = useState<GoalFilter>('all');
   const [sortOption, setSortOption] = useState<SortOption>('attention');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 15;
+  const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
+  const [isAlertsExpanded, setIsAlertsExpanded] = useState(true);
 
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
   const [goalDropdownId, setGoalDropdownId] = useState<string | null>(null);
@@ -88,11 +200,12 @@ export default function ClientsPage() {
 
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState('');
-  const [editingGoal, setEditingGoal] = useState<Client['goal']>(null);
+  const [editingGoal, setEditingGoal] = useState<GoalType>(null);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
 
   const fetchClients = useCallback(async () => {
     try {
+      // Validate auth session first (required for RLS)
       const { data: profile } = await supabase.auth.getUser();
       if (!profile.user) throw new Error('No user found');
 
@@ -104,18 +217,30 @@ export default function ClientsPage() {
 
       if (error) throw error;
 
-      const clientList: Client[] = (data || []).map(c => ({
-        id: c.id,
-        first_name: c.first_name,
-        last_name: c.last_name,
-        email: c.email,
-        goal: c.goal,
-        notes: c.notes,
-        status: c.status || 'new',
-        created_at: c.created_at,
-      }));
+      const NO_DATA_COMPUTED: ClientStatusResult = {
+        status: 'no_data',
+        summary: '',
+        metrics: { latestWeight: null, weightChange: null, avgCalories: null, avgProtein: null, avgDailySteps: null, avgSleep: null, totalWorkouts: 0, scheduledWorkouts: 0, workoutDays: 0 },
+        lastReportDate: null,
+        reportDateRange: null,
+      };
 
-      setClients(clientList);
+      setClients((data || []).map(c => ({
+        id: c.id, first_name: c.first_name, last_name: c.last_name, email: c.email,
+        goal: c.goal, notes: c.notes, created_at: c.created_at,
+        manual_status: (c.status || 'new') as ManualStatus,
+        computed: NO_DATA_COMPUTED,
+      })));
+
+      // Background: enrich with computed metrics from dashboard API
+      fetch('/api/clients/dashboard')
+        .then(res => res.ok ? res.json() : null)
+        .then(dashData => {
+          if (dashData?.clients?.length > 0) {
+            setClients(dashData.clients);
+          }
+        })
+        .catch(() => {}); // Silently fail — basic data is already loaded
     } catch (error) {
       console.error('Error fetching clients:', error);
       toast.error('Failed to fetch clients');
@@ -124,9 +249,7 @@ export default function ClientsPage() {
     }
   }, [supabase]);
 
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+  useEffect(() => { fetchClients(); }, [fetchClients]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -143,30 +266,39 @@ export default function ClientsPage() {
 
   const stats = {
     total: clients.length,
-    onTrack: clients.filter(c => c.status === 'on_track').length,
-    watch: clients.filter(c => c.status === 'watch').length,
-    needsAttention: clients.filter(c => c.status === 'needs_attention').length,
-    new: clients.filter(c => c.status === 'new').length,
+    onTrack: clients.filter(c => c.manual_status === 'on_track').length,
+    watch: clients.filter(c => c.manual_status === 'watch').length,
+    needsAttention: clients.filter(c => c.manual_status === 'needs_attention').length,
+    new: clients.filter(c => c.manual_status === 'new').length,
+    noData: clients.filter(c => c.computed.status === 'no_data').length,
   };
+
+  const alerts = React.useMemo(() =>
+    generateAlerts(clients).filter(a => !dismissedAlertIds.has(a.id)),
+    [clients, dismissedAlertIds]
+  );
 
   const filteredClients = clients
     .filter(client => {
       const matchesSearch = searchQuery === '' ||
         `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
         client.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
+      const matchesStatus = statusFilter === 'all' ||
+        (statusFilter === 'no_data' ? client.computed.status === 'no_data' : client.manual_status === statusFilter);
       const matchesGoal = goalFilter === 'all' ||
         (goalFilter === 'none' ? client.goal === null : client.goal === goalFilter);
       return matchesSearch && matchesStatus && matchesGoal;
     })
     .sort((a, b) => {
       if (sortOption === 'attention') {
-        const priority: Record<ManualStatus, number> = { needs_attention: 0, watch: 1, new: 2, on_track: 3 };
-        return priority[a.status] - priority[b.status];
+        const p: Record<ManualStatus, number> = { needs_attention: 0, watch: 1, new: 2, on_track: 3 };
+        return p[a.manual_status] - p[b.manual_status];
       }
-      if (sortOption === 'alpha') {
-        return a.first_name.localeCompare(b.first_name);
+      if (sortOption === 'computed') {
+        const p: Record<string, number> = { needs_attention: 0, watch: 1, no_data: 2, on_track: 3 };
+        return (p[a.computed.status] ?? 4) - (p[b.computed.status] ?? 4);
       }
+      if (sortOption === 'alpha') return a.first_name.localeCompare(b.first_name);
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
@@ -175,8 +307,7 @@ export default function ClientsPage() {
 
   const updateClientStatus = async (clientId: string, newStatus: ManualStatus) => {
     setStatusDropdownId(null);
-    setClients(prev => prev.map(c => c.id === clientId ? { ...c, status: newStatus } : c));
-
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, manual_status: newStatus } : c));
     try {
       const response = await fetch('/api/clients/update-notes', {
         method: 'POST',
@@ -194,7 +325,6 @@ export default function ClientsPage() {
   const updateClientGoal = async (clientId: string, newGoal: GoalType) => {
     setGoalDropdownId(null);
     setClients(prev => prev.map(c => c.id === clientId ? { ...c, goal: newGoal } : c));
-
     try {
       const response = await fetch('/api/clients/update-notes', {
         method: 'POST',
@@ -215,15 +345,9 @@ export default function ClientsPage() {
       const response = await fetch('/api/trainerize/fetch-clients');
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to fetch clients');
-
-      const mappedClients = (data.clients || []).map((client: any) => ({
-        id: client.id,
-        first_name: client.firstName,
-        last_name: client.lastName,
-        email: client.email
-      }));
-
-      setTrainerizeClients(mappedClients);
+      setTrainerizeClients((data.clients || []).map((c: any) => ({
+        id: c.id, first_name: c.firstName, last_name: c.lastName, email: c.email,
+      })));
       setSelectedImportIds([]);
       setImportSearchQuery('');
       setIsModalOpen(true);
@@ -240,31 +364,23 @@ export default function ClientsPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
+      const selected = trainerizeClients.filter(c => selectedImportIds.includes(c.id));
+      if (selected.length === 0) throw new Error('No clients selected');
 
-      const selectedTrainerizeClients = trainerizeClients.filter(client =>
-        selectedImportIds.includes(client.id)
-      );
-
-      if (selectedTrainerizeClients.length === 0) throw new Error('No clients selected');
-
-      for (const client of selectedTrainerizeClients) {
-        const { error } = await supabase
-          .from('clients')
-          .insert({
-            trainer_id: user.id,
-            first_name: client.first_name,
-            last_name: client.last_name,
-            email: client.email,
-            trainerize_id: parseInt(client.id),
-            active: true,
-            status: 'new',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
+      for (const client of selected) {
+        const { error } = await supabase.from('clients').insert({
+          trainer_id: user.id,
+          first_name: client.first_name,
+          last_name: client.last_name,
+          email: client.email,
+          trainerize_id: parseInt(client.id),
+          active: true,
+          status: 'new',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
         if (error) throw new Error(`Failed to import ${client.first_name} ${client.last_name}: ${error.message}`);
       }
-
       toast.success('Clients imported successfully');
       setIsModalOpen(false);
       setSelectedImportIds([]);
@@ -286,7 +402,6 @@ export default function ClientsPage() {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete client');
       }
-
       setClients(prev => prev.filter(c => c.id !== deletingClientId));
       toast.success('Client deleted');
     } catch (error) {
@@ -308,17 +423,13 @@ export default function ClientsPage() {
         body: JSON.stringify({
           clientId: editingClientId,
           notes: editingNotes.trim() || null,
-          goal: editingGoal || null
+          goal: editingGoal || null,
         }),
       });
-
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to update');
-
       setClients(prev => prev.map(c =>
-        c.id === editingClientId
-          ? { ...c, notes: editingNotes.trim() || null, goal: editingGoal || null }
-          : c
+        c.id === editingClientId ? { ...c, notes: editingNotes.trim() || null, goal: editingGoal || null } : c
       ));
       toast.success('Client details updated');
       setEditingClientId(null);
@@ -330,28 +441,10 @@ export default function ClientsPage() {
     }
   };
 
-  const filteredTrainerizeClients = trainerizeClients.filter(client =>
-    `${client.first_name} ${client.last_name}`.toLowerCase().includes(importSearchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(importSearchQuery.toLowerCase())
+  const filteredTrainerizeClients = trainerizeClients.filter(c =>
+    `${c.first_name} ${c.last_name}`.toLowerCase().includes(importSearchQuery.toLowerCase()) ||
+    c.email.toLowerCase().includes(importSearchQuery.toLowerCase())
   );
-
-  const getInitials = (first: string, last: string) =>
-    `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
-
-  const avatarColors = [
-    'bg-purple-100 text-purple-600',
-    'bg-blue-100 text-blue-600',
-    'bg-emerald-100 text-emerald-600',
-    'bg-amber-100 text-amber-600',
-    'bg-rose-100 text-rose-600',
-    'bg-cyan-100 text-cyan-600',
-  ];
-
-  const getAvatarColor = (name: string) => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return avatarColors[Math.abs(hash) % avatarColors.length];
-  };
 
   if (isLoading) {
     return (
@@ -368,7 +461,10 @@ export default function ClientsPage() {
         <div>
           <h1 className="text-2xl font-display font-bold text-gray-900">Clients</h1>
           <p className="text-gray-500 text-sm mt-1">
-            Manage and monitor your {stats.total} client{stats.total !== 1 ? 's' : ''}
+            {stats.total} client{stats.total !== 1 ? 's' : ''}
+            {stats.needsAttention > 0 && (
+              <span className="text-red-600 font-medium"> &middot; {stats.needsAttention} need{stats.needsAttention === 1 ? 's' : ''} attention</span>
+            )}
           </p>
         </div>
         <button
@@ -381,34 +477,31 @@ export default function ClientsPage() {
         </button>
       </div>
 
-      {/* Stats bar */}
+      {/* Stats cards */}
       {stats.total > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           {([
-            { status: 'on_track' as ManualStatus, count: stats.onTrack },
-            { status: 'watch' as ManualStatus, count: stats.watch },
-            { status: 'needs_attention' as ManualStatus, count: stats.needsAttention },
-            { status: 'new' as ManualStatus, count: stats.new },
-          ]).map(({ status, count }) => {
-            const cfg = STATUS_CONFIG[status];
+            { key: 'on_track' as const, count: stats.onTrack, cfg: STATUS_CONFIG.on_track },
+            { key: 'watch' as const, count: stats.watch, cfg: STATUS_CONFIG.watch },
+            { key: 'needs_attention' as const, count: stats.needsAttention, cfg: STATUS_CONFIG.needs_attention },
+            { key: 'new' as const, count: stats.new, cfg: STATUS_CONFIG.new },
+            { key: 'no_data' as const, count: stats.noData, cfg: { label: 'No Data', icon: Database, color: 'text-gray-500', bg: 'bg-gray-50', border: 'border-gray-200', dot: 'bg-gray-400' } },
+          ]).map(({ key, count, cfg }) => {
             const Icon = cfg.icon;
-            const isActive = statusFilter === status;
+            const isActive = statusFilter === key;
             return (
               <button
-                key={status}
-                onClick={() => {
-                  setStatusFilter(isActive ? 'all' : status);
-                  setCurrentPage(1);
-                }}
-                className={`card p-4 text-left transition-all ${isActive ? `ring-2 ${cfg.border} ring-current/20` : 'hover:shadow-md hover:border-gray-300'}`}
+                key={key}
+                onClick={() => { setStatusFilter(isActive ? 'all' : key); setCurrentPage(1); }}
+                className={`card p-3 text-left transition-all ${isActive ? `ring-2 ${cfg.border} ring-current/20` : 'hover:shadow-md hover:border-gray-300'}`}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${cfg.bg}`}>
-                    <Icon className={`h-5 w-5 ${cfg.color}`} />
+                <div className="flex items-center gap-2.5">
+                  <div className={`p-1.5 rounded-lg ${cfg.bg}`}>
+                    <Icon className={`h-4 w-4 ${cfg.color}`} />
                   </div>
                   <div>
-                    <span className={`text-2xl font-bold ${cfg.color}`}>{count}</span>
-                    <p className="text-xs text-gray-500">{cfg.label}</p>
+                    <span className={`text-xl font-bold ${cfg.color}`}>{count}</span>
+                    <p className="text-[11px] text-gray-500 leading-tight">{cfg.label}</p>
                   </div>
                 </div>
               </button>
@@ -417,7 +510,54 @@ export default function ClientsPage() {
         </div>
       )}
 
-      {/* Search + filters bar */}
+      {/* Alerts */}
+      {alerts.length > 0 && (
+        <div className="mb-4">
+          <button
+            onClick={() => setIsAlertsExpanded(!isAlertsExpanded)}
+            className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <Activity className="h-4 w-4" />
+            <span>{alerts.length} alert{alerts.length !== 1 ? 's' : ''}</span>
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isAlertsExpanded ? 'rotate-180' : ''}`} />
+          </button>
+          {isAlertsExpanded && (
+            <div className="space-y-2">
+              {alerts.slice(0, 8).map(alert => {
+                const style = ALERT_STYLES[alert.severity];
+                const AlertIcon = style.icon;
+                return (
+                  <div
+                    key={alert.id}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg border ${style.bg} ${style.border}`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <AlertIcon className={`h-3.5 w-3.5 shrink-0 ${style.text}`} />
+                      <Link
+                        href={`/dashboard/clients/${alert.clientId}/reports`}
+                        className={`text-sm ${style.text} hover:underline truncate`}
+                      >
+                        {alert.message}
+                      </Link>
+                    </div>
+                    <button
+                      onClick={() => setDismissedAlertIds(prev => new Set([...prev, alert.id]))}
+                      className="p-0.5 text-gray-400 hover:text-gray-600 shrink-0 ml-2"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+              {alerts.length > 8 && (
+                <p className="text-xs text-gray-400 pl-1">+{alerts.length - 8} more alerts</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Search + filters */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -429,7 +569,6 @@ export default function ClientsPage() {
             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
           />
         </div>
-
         <select
           className="input-field w-auto text-sm"
           value={goalFilter}
@@ -441,13 +580,13 @@ export default function ClientsPage() {
           <option value="muscle_gain">Muscle Gain</option>
           <option value="none">No Goal Set</option>
         </select>
-
         <select
           className="input-field w-auto text-sm"
           value={sortOption}
           onChange={(e) => setSortOption(e.target.value as SortOption)}
         >
-          <option value="attention">Needs Attention First</option>
+          <option value="attention">Status: Needs Attention First</option>
+          <option value="computed">Data: Most Concerns First</option>
           <option value="alpha">Alphabetical</option>
           <option value="newest">Newest First</option>
         </select>
@@ -467,14 +606,13 @@ export default function ClientsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {currentClients.map((client) => {
-                const cfg = STATUS_CONFIG[client.status];
+                const cfg = STATUS_CONFIG[client.manual_status];
                 const fullName = `${client.first_name} ${client.last_name}`;
+                const { summary, status: computedStatus } = client.computed;
 
                 return (
-                  <tr
-                    key={client.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
+                  <tr key={client.id} className="hover:bg-gray-50/50 transition-colors group">
+                    {/* Client name + computed summary */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${getAvatarColor(fullName)}`}>
@@ -487,7 +625,13 @@ export default function ClientsPage() {
                           >
                             {fullName}
                           </Link>
-                          <p className="text-xs text-gray-400 truncate">{client.email}</p>
+                          {computedStatus !== 'no_data' ? (
+                            <p className="text-xs text-gray-400 truncate max-w-[260px]" title={summary}>
+                              {summary}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-300 truncate">{client.email}</p>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -500,10 +644,7 @@ export default function ClientsPage() {
                           const GoalIcon = gc.icon;
                           return (
                             <button
-                              onClick={() => {
-                                setGoalDropdownId(goalDropdownId === client.id ? null : client.id);
-                                setStatusDropdownId(null);
-                              }}
+                              onClick={() => { setGoalDropdownId(goalDropdownId === client.id ? null : client.id); setStatusDropdownId(null); }}
                               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:shadow-sm ${gc.bg} ${gc.color} border ${gc.border}`}
                             >
                               <GoalIcon className="h-3 w-3" />
@@ -512,7 +653,6 @@ export default function ClientsPage() {
                             </button>
                           );
                         })()}
-
                         {goalDropdownId === client.id && (
                           <div className="absolute top-full left-0 mt-1 w-44 bg-white rounded-lg border border-gray-200 shadow-lg z-50">
                             {GOAL_OPTIONS.map(({ value, key }) => {
@@ -523,15 +663,11 @@ export default function ClientsPage() {
                                 <button
                                   key={key}
                                   onClick={() => updateClientGoal(client.id, value)}
-                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
-                                    isSelected ? 'bg-gray-50' : ''
-                                  }`}
+                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${isSelected ? 'bg-gray-50' : ''}`}
                                 >
                                   <GoalIcon className={`h-3 w-3 ${gc.color}`} />
                                   <span className={gc.color}>{gc.label}</span>
-                                  {isSelected && (
-                                    <CheckCircle2 className="h-3 w-3 ml-auto text-blue-600" />
-                                  )}
+                                  {isSelected && <CheckCircle2 className="h-3 w-3 ml-auto text-blue-600" />}
                                 </button>
                               );
                             })}
@@ -544,17 +680,13 @@ export default function ClientsPage() {
                     <td className="px-4 py-3">
                       <div className="relative" ref={statusDropdownId === client.id ? statusDropdownRef : undefined}>
                         <button
-                          onClick={() => {
-                            setStatusDropdownId(statusDropdownId === client.id ? null : client.id);
-                            setGoalDropdownId(null);
-                          }}
+                          onClick={() => { setStatusDropdownId(statusDropdownId === client.id ? null : client.id); setGoalDropdownId(null); }}
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all hover:shadow-sm ${cfg.bg} ${cfg.color} border ${cfg.border}`}
                         >
                           <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                           {cfg.label}
                           <ChevronDown className="h-3 w-3 opacity-50" />
                         </button>
-
                         {statusDropdownId === client.id && (
                           <div className="absolute top-full left-0 mt-1 w-44 bg-white rounded-lg border border-gray-200 shadow-lg z-50">
                             {STATUS_OPTIONS.map(s => {
@@ -563,15 +695,11 @@ export default function ClientsPage() {
                                 <button
                                   key={s}
                                   onClick={() => updateClientStatus(client.id, s)}
-                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
-                                    client.status === s ? 'bg-gray-50' : ''
-                                  }`}
+                                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${client.manual_status === s ? 'bg-gray-50' : ''}`}
                                 >
                                   <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
                                   <span className={sc.color}>{sc.label}</span>
-                                  {client.status === s && (
-                                    <CheckCircle2 className="h-3 w-3 ml-auto text-blue-600" />
-                                  )}
+                                  {client.manual_status === s && <CheckCircle2 className="h-3 w-3 ml-auto text-blue-600" />}
                                 </button>
                               );
                             })}
@@ -582,7 +710,7 @@ export default function ClientsPage() {
 
                     {/* Actions */}
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Link
                           href={`/dashboard/clients/${client.id}/reports`}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
@@ -616,7 +744,6 @@ export default function ClientsPage() {
             </tbody>
           </table>
 
-          {/* Empty state */}
           {filteredClients.length === 0 && (
             <div className="p-12 text-center">
               <Users className="h-10 w-10 text-gray-300 mx-auto mb-3" />
@@ -639,7 +766,6 @@ export default function ClientsPage() {
           )}
         </div>
 
-        {/* Pagination footer */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
             <p className="text-xs text-gray-500">
@@ -690,18 +816,10 @@ export default function ClientsPage() {
                 This will also delete all their reports. This action cannot be undone.
               </p>
               <div className="flex justify-end gap-2 mt-4">
-                <button
-                  className="btn-secondary text-sm"
-                  onClick={() => setDeletingClientId(null)}
-                  disabled={isDeleting}
-                >
+                <button className="btn-secondary text-sm" onClick={() => setDeletingClientId(null)} disabled={isDeleting}>
                   Cancel
                 </button>
-                <button
-                  className="btn-danger text-sm flex items-center gap-2"
-                  onClick={confirmDelete}
-                  disabled={isDeleting}
-                >
+                <button className="btn-danger text-sm flex items-center gap-2" onClick={confirmDelete} disabled={isDeleting}>
                   {isDeleting && <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
                   Delete
                 </button>
@@ -718,9 +836,7 @@ export default function ClientsPage() {
           <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 pointer-events-none">
             <div className="card max-w-lg w-full p-6 pointer-events-auto" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-base text-gray-900">
-                  Edit Client Details
-                </h3>
+                <h3 className="font-bold text-base text-gray-900">Edit Client Details</h3>
                 <button onClick={() => setEditingClientId(null)} className="text-gray-400 hover:text-gray-600">
                   <X className="h-4 w-4" />
                 </button>
@@ -728,13 +844,12 @@ export default function ClientsPage() {
               <p className="text-sm text-gray-500 mb-4">
                 {clients.find(c => c.id === editingClientId)?.first_name} {clients.find(c => c.id === editingClientId)?.last_name}
               </p>
-
               <div className="mb-3">
                 <label className="text-sm font-medium text-gray-700 mb-1.5 block">Goal</label>
                 <select
                   className="input-field text-sm"
                   value={editingGoal || ''}
-                  onChange={(e) => setEditingGoal(e.target.value as Client['goal'])}
+                  onChange={(e) => setEditingGoal((e.target.value || null) as GoalType)}
                 >
                   <option value="">Not Set</option>
                   <option value="fat_loss">Fat Loss</option>
@@ -742,7 +857,6 @@ export default function ClientsPage() {
                   <option value="muscle_gain">Muscle Gain</option>
                 </select>
               </div>
-
               <div className="mb-4">
                 <label className="text-sm font-medium text-gray-700 mb-1.5 block">Notes</label>
                 <textarea
@@ -752,19 +866,9 @@ export default function ClientsPage() {
                   onChange={(e) => setEditingNotes(e.target.value)}
                 />
               </div>
-
               <div className="flex justify-end gap-2">
-                <button
-                  className="btn-secondary text-sm"
-                  onClick={() => setEditingClientId(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="btn-primary text-sm flex items-center gap-2"
-                  onClick={saveClientDetails}
-                  disabled={isSavingNotes}
-                >
+                <button className="btn-secondary text-sm" onClick={() => setEditingClientId(null)}>Cancel</button>
+                <button className="btn-primary text-sm flex items-center gap-2" onClick={saveClientDetails} disabled={isSavingNotes}>
                   {isSavingNotes && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                   Save
                 </button>
@@ -795,7 +899,6 @@ export default function ClientsPage() {
                   onChange={(e) => setImportSearchQuery(e.target.value)}
                 />
               </div>
-
               <div className="overflow-y-auto flex-1">
                 <table className="w-full">
                   <thead>
@@ -844,16 +947,10 @@ export default function ClientsPage() {
                   </tbody>
                 </table>
               </div>
-
               <div className="flex items-center justify-between p-6 border-t border-gray-200">
-                <p className="text-sm text-gray-500">
-                  {selectedImportIds.length} selected
-                </p>
+                <p className="text-sm text-gray-500">{selectedImportIds.length} selected</p>
                 <div className="flex gap-2">
-                  <button
-                    className="btn-secondary text-sm"
-                    onClick={() => { setIsModalOpen(false); setSelectedImportIds([]); setImportSearchQuery(''); }}
-                  >
+                  <button className="btn-secondary text-sm" onClick={() => { setIsModalOpen(false); setSelectedImportIds([]); setImportSearchQuery(''); }}>
                     Cancel
                   </button>
                   <button

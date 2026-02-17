@@ -4,7 +4,7 @@ import { ReactNode, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
-import Link from "next/link";
+import Logo from "@/components/Logo";
 
 export default function DashboardShell({
   children,
@@ -46,9 +46,7 @@ export default function DashboardShell({
         >
           <Menu className="w-5 h-5 text-gray-700" />
         </button>
-        <Link href="/dashboard" className="font-display font-bold text-gray-900">
-          FitReport
-        </Link>
+        <Logo variant="full" size="sm" theme="light" href="/dashboard" />
       </div>
 
       {/* Mobile sidebar backdrop */}

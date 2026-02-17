@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { ReactNode } from "react";
-import { Users, FileText, Settings, Link2, X, ChevronLeft } from "lucide-react";
+import { Users, FileText, Settings, Link2, X, ChevronLeft, Sparkles } from "lucide-react";
+import { LogoIcon } from "@/components/Logo";
 import ButtonAccount from "./ButtonAccount";
 
 interface SidebarItemProps {
@@ -79,12 +80,13 @@ export default function Sidebar({
       {/* Header */}
       <div className="h-[60px] border-b border-gray-800 flex items-center px-5 overflow-hidden">
         <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
+          <LogoIcon size={24} />
           <span
             className={`font-display font-bold text-white whitespace-nowrap transition-all duration-300 ${
-              collapsed ? "text-lg text-center w-full" : "text-xl"
+              collapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
             }`}
           >
-            {collapsed ? "F" : "FitReport"}
+            FitReport
           </span>
         </Link>
 
@@ -110,6 +112,16 @@ export default function Sidebar({
           title="Clients"
         >
           Clients
+        </SidebarItem>
+
+        <SidebarItem
+          href="/dashboard/coaching-profile"
+          icon={<Sparkles className="w-4 h-4" />}
+          isActive={currentPath.startsWith("/dashboard/coaching-profile")}
+          collapsed={collapsed}
+          title="Coaching AI"
+        >
+          Coaching AI
         </SidebarItem>
 
         <SidebarItem

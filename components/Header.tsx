@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import ButtonSignin from "./ButtonSignin";
+import Logo from "@/components/Logo";
 import config from "@/config";
 
 // TODO: Replace with your actual Calendly link
@@ -61,15 +62,7 @@ const Header = () => {
       >
         {/* Logo */}
         <div className="flex lg:flex-1">
-          <Link
-            className="flex items-center shrink-0 group"
-            href="/"
-            title={`${config.appName} homepage`}
-          >
-            <span className="font-display font-extrabold text-lg text-gray-900">
-              {config.appName}
-            </span>
-          </Link>
+          <Logo variant="full" size="md" theme="light" href="/" />
         </div>
 
         {/* Burger button on mobile */}
@@ -136,16 +129,9 @@ const Header = () => {
           >
             <div className="bg-white h-full px-6 py-6 overflow-y-auto border-l border-gray-200 shadow-xl">
               <div className="flex items-center justify-between mb-8">
-                <Link
-                  className="flex items-center shrink-0"
-                  title={`${config.appName} homepage`}
-                  href="/"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <span className="font-display font-extrabold text-lg text-gray-900">
-                    {config.appName}
-                  </span>
-                </Link>
+                <span onClick={() => setIsOpen(false)}>
+                  <Logo variant="full" size="md" theme="light" href="/" />
+                </span>
                 <button
                   type="button"
                   className="-m-2.5 rounded-md p-2.5 text-gray-500 hover:text-gray-900 transition-colors"

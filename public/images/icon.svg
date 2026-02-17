@@ -1,25 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="32" height="32" rx="8" fill="#7E3AF2"/>
-  
-  <!-- Fitness graph line (trending up) -->
-  <path d="M6 22 L12 16 L18 20 L26 10" 
-        stroke="white" 
-        stroke-width="3" 
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        fill="none"/>
-  
-  <!-- Dot indicators -->
-  <circle cx="12" cy="16" r="2" fill="white"/>
-  <circle cx="18" cy="20" r="2" fill="white"/>
-  <circle cx="26" cy="10" r="2" fill="white"/>
-  
-  <!-- Dumbbell icon integrated with the graph -->
-  <g transform="translate(6,22) scale(0.6)">
-    <circle cx="4" cy="4" r="3" fill="white"/>
-    <circle cx="16" cy="4" r="3" fill="white"/>
-    <rect x="4" y="3" width="12" height="2" fill="white"/>
-  </g>
-</svg> 
+  <rect width="32" height="32" rx="8" fill="#2563EB"/>
+  <rect x="7" y="8" width="18" height="3" rx="1.5" fill="white"/>
+  <rect x="7" y="15" width="13" height="3" rx="1.5" fill="white"/>
+  <rect x="7" y="22" width="8" height="3" rx="1.5" fill="white"/>
+</svg>

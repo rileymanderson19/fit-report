@@ -13,6 +13,7 @@ export interface ClientMetrics {
   avgDailySteps: number | null;
   avgSleep: number | null;
   totalWorkouts: number;
+  scheduledWorkouts: number;
   workoutDays: number;
 }
 
@@ -36,6 +37,7 @@ function extractMetrics(reportData: any): ClientMetrics {
     avgDailySteps: null,
     avgSleep: null,
     totalWorkouts: 0,
+    scheduledWorkouts: 0,
     workoutDays: 0,
   };
 
@@ -85,13 +87,27 @@ function extractMetrics(reportData: any): ClientMetrics {
     }
   }
 
-  // Workouts
-  const workoutCalendar = reportData?.workoutData?.workoutCalendar;
-  if (Array.isArray(workoutCalendar)) {
-    const tracked = workoutCalendar.filter((w: any) => w.status === 'tracked');
-    metrics.totalWorkouts = tracked.length;
-    const uniqueDays = new Set(tracked.map((w: any) => new Date(w.date).toISOString().split('T')[0]));
+  // Workouts — count only training sessions (those with exercises), not cardio/tracking activities
+  const workouts = reportData?.workoutData?.workouts;
+  if (Array.isArray(workouts)) {
+    const trainingSessions = workouts.filter((w: any) =>
+      Array.isArray(w.exercises) && w.exercises.length > 0
+    );
+    metrics.totalWorkouts = trainingSessions.length;
+    const uniqueDays = new Set(trainingSessions.map((w: any) => new Date(w.date).toISOString().split('T')[0]));
     metrics.workoutDays = uniqueDays.size;
+
+    // Count scheduled training sessions by matching titles of real training workouts
+    const workoutCalendar = reportData?.workoutData?.workoutCalendar;
+    if (Array.isArray(workoutCalendar)) {
+      const trainingTitles = new Set(trainingSessions.map((w: any) => (w.title || '').toLowerCase()));
+      const scheduledTraining = workoutCalendar.filter((w: any) =>
+        trainingTitles.has((w.title || '').toLowerCase())
+      );
+      metrics.scheduledWorkouts = scheduledTraining.length;
+    } else {
+      metrics.scheduledWorkouts = metrics.totalWorkouts;
+    }
   }
 
   return metrics;
@@ -111,7 +127,7 @@ export function computeClientStatus(
       metrics: {
         latestWeight: null, weightChange: null, avgCalories: null,
         avgProtein: null, avgDailySteps: null, avgSleep: null,
-        totalWorkouts: 0, workoutDays: 0,
+        totalWorkouts: 0, scheduledWorkouts: 0, workoutDays: 0,
       },
       lastReportDate: null,
       reportDateRange: null,
@@ -160,13 +176,20 @@ export function computeClientStatus(
     }
   }
 
-  // Workout check
-  if (metrics.totalWorkouts >= 3) {
+  // Workout check (completed/scheduled)
+  if (metrics.scheduledWorkouts > 0) {
+    const completion = metrics.totalWorkouts / metrics.scheduledWorkouts;
+    if (completion >= 0.8) {
+      wins.push(`${metrics.totalWorkouts}/${metrics.scheduledWorkouts} workouts`);
+    } else if (metrics.totalWorkouts === 0) {
+      concerns.push(`0/${metrics.scheduledWorkouts} workouts completed`);
+    } else {
+      concerns.push(`${metrics.totalWorkouts}/${metrics.scheduledWorkouts} workouts`);
+    }
+  } else if (metrics.totalWorkouts > 0) {
     wins.push(`${metrics.totalWorkouts} workouts`);
-  } else if (metrics.totalWorkouts === 0) {
-    concerns.push('No workouts logged');
   } else {
-    concerns.push(`Only ${metrics.totalWorkouts} workout${metrics.totalWorkouts === 1 ? '' : 's'}`);
+    concerns.push('No workouts logged');
   }
 
   // Protein check (general threshold)
