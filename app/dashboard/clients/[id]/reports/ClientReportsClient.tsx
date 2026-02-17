@@ -9,7 +9,7 @@ import ClientSearchBar from '@/components/ClientSearchBar';
 import { ShareProgressModal, ShareWeeklyHighlightsCard, ShareWeightProgressChart } from '@/components/shareable';
 import { useReportAnalytics, DailyData, WeeklyAverage } from '@/hooks/useReportAnalytics';
 import { toast } from 'sonner';
-import { RefreshCw, Share2, ChevronLeft, ChevronRight, Copy, Check, Camera, X, AlertTriangle, XCircle, Sparkles, ChevronDown, Lightbulb, ArrowRight } from 'lucide-react';
+import { RefreshCw, Share2, ChevronLeft, ChevronRight, Copy, Check, Camera, X, AlertTriangle, XCircle, ChevronDown, Lightbulb, ArrowRight } from 'lucide-react';
 
 
 interface Report {
@@ -133,6 +133,9 @@ export default function ClientReportsClient({
   const [selectedPoseComparison, setSelectedPoseComparison] = useState<PoseComparison | null>(null);
   const [isSettingBaseline, setIsSettingBaseline] = useState(false);
   const [isSyncingAllPhotos, setIsSyncingAllPhotos] = useState(false);
+
+  // Report config collapse state
+  const [isConfigExpanded, setIsConfigExpanded] = useState(true);
 
   // AI Coaching Notes state
   const [coachingNotes, setCoachingNotes] = useState<{
@@ -983,50 +986,62 @@ export default function ClientReportsClient({
       {/* Report Content */}
       <div className="space-y-6">
           {/* Report Configuration */}
-          <div className="card p-6">
-            {/* Date Range */}
-            <div className="mb-6">
-              <DateRangePicker
-                from={startDate || undefined}
-                to={endDate || undefined}
-                onSelect={(range) => {
-                  setStartDate(range.from || null);
-                  setEndDate(range.to || null);
-                }}
-                showPresets={true}
-              />
+          <div className="card overflow-hidden">
+            <div
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => setIsConfigExpanded(!isConfigExpanded)}
+            >
+              <h3 className="font-semibold text-gray-900 text-sm">Report Settings</h3>
+              <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isConfigExpanded ? 'rotate-180' : ''}`} />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <button
-                className="btn-primary px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 hover:-translate-y-0.5 hover:shadow-md transition-all"
-                onClick={generateLiveReport}
-                disabled={isGeneratingLive || !startDate || !endDate}
-              >
-                {isGeneratingLive ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-5 h-5" />
-                    <span>Generate Report</span>
-                  </>
-                )}
-              </button>
+            {isConfigExpanded && (
+              <div className="border-t border-gray-100 p-6 pt-4">
+                {/* Date Range */}
+                <div className="mb-6">
+                  <DateRangePicker
+                    from={startDate || undefined}
+                    to={endDate || undefined}
+                    onSelect={(range) => {
+                      setStartDate(range.from || null);
+                      setEndDate(range.to || null);
+                    }}
+                    showPresets={true}
+                  />
+                </div>
 
-              {liveReportData && (
-                <button
-                  className="btn-secondary px-8 py-3 rounded-lg font-medium flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-md transition-all border-green-300 text-green-700 hover:bg-green-50"
-                  onClick={() => setIsShareModalOpen(true)}
-                >
-                  <Share2 className="w-5 h-5" />
-                  <span>Share Progress</span>
-                </button>
-              )}
-            </div>
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    className="btn-primary px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 flex-1 hover:-translate-y-0.5 hover:shadow-md transition-all"
+                    onClick={generateLiveReport}
+                    disabled={isGeneratingLive || !startDate || !endDate}
+                  >
+                    {isGeneratingLive ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-5 h-5" />
+                        <span>Generate Report</span>
+                      </>
+                    )}
+                  </button>
+
+                  {liveReportData && (
+                    <button
+                      className="btn-secondary px-8 py-3 rounded-lg font-medium flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-md transition-all border-green-300 text-green-700 hover:bg-green-50"
+                      onClick={() => setIsShareModalOpen(true)}
+                    >
+                      <Share2 className="w-5 h-5" />
+                      <span>Share Progress</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Client Navigation */}
@@ -1076,10 +1091,7 @@ export default function ClientReportsClient({
                 onClick={() => coachingNotes && setIsNotesExpanded(!isNotesExpanded)}
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-purple-50">
-                    <Sparkles className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">AI Coaching Notes</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Coaching Notes</h3>
                   {coachingNotes && (
                     <span className="text-[11px] text-gray-400">
                       {new Date(coachingNotes.generatedAt).toLocaleDateString()}
@@ -1092,10 +1104,8 @@ export default function ClientReportsClient({
                     disabled={isGeneratingNotes}
                     className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all bg-purple-50 text-purple-700 hover:bg-purple-100 disabled:opacity-50 flex items-center gap-1.5"
                   >
-                    {isGeneratingNotes ? (
+                    {isGeneratingNotes && (
                       <div className="w-3 h-3 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Sparkles className="h-3 w-3" />
                     )}
                     {coachingNotes ? 'Regenerate' : 'Generate'}
                   </button>
@@ -1150,7 +1160,7 @@ export default function ClientReportsClient({
 
               {!coachingNotes && !isGeneratingNotes && (
                 <div className="border-t border-gray-100 p-4 text-center">
-                  <p className="text-xs text-gray-400">Click Generate to get AI-powered coaching insights for this client</p>
+                  <p className="text-xs text-gray-400">Click Generate to get coaching insights for this client</p>
                 </div>
               )}
 
