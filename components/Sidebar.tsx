@@ -82,11 +82,12 @@ export default function Sidebar({
         <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
           <LogoIcon size={24} />
           <span
-            className={`font-display font-bold text-white whitespace-nowrap transition-all duration-300 ${
+            className={`font-display font-bold whitespace-nowrap transition-all duration-300 ${
               collapsed ? "w-0 opacity-0 overflow-hidden" : "w-auto opacity-100"
             }`}
           >
-            FitReport
+            <span className="text-blue-400">Fit</span>
+            <span className="text-white">Report</span>
           </span>
         </Link>
 

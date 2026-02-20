@@ -48,8 +48,9 @@ export default function Logo({
     <span className={`flex items-center ${config.gap} ${className}`}>
       <LogoIcon size={config.icon} />
       {variant === "full" && (
-        <span className={`font-display ${config.textClass} ${textColor} whitespace-nowrap`}>
-          FitReport
+        <span className={`font-display ${config.textClass} whitespace-nowrap`}>
+          <span className="text-blue-600">Fit</span>
+          <span className={textColor}>Report</span>
         </span>
       )}
     </span>

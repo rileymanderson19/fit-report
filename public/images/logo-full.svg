@@ -1,0 +1,12 @@
+<svg width="200" height="40" viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon Mark -->
+  <rect width="36" height="36" x="2" y="2" rx="8" fill="#2563EB"/>
+  <rect x="9" y="9" width="20" height="3.5" rx="1.75" fill="white"/>
+  <rect x="9" y="17" width="15" height="3.5" rx="1.75" fill="white"/>
+  <rect x="9" y="25" width="10" height="3.5" rx="1.75" fill="white"/>
+
+  <!-- Wordmark -->
+  <text x="48" y="28" font-family="'Space Grotesk', 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="700" fill="#111827" letter-spacing="-0.5">
+    <tspan fill="#2563EB">Fit</tspan><tspan fill="#111827">Report</tspan>
+  </text>
+</svg>
