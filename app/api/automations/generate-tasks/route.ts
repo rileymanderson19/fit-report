@@ -207,12 +207,14 @@ Based on this information, generate 3-5 actionable tasks for this client. Focus 
       { role: 'user', content: userPrompt }
     ];
 
-    const aiResponse = await sendOpenAi(messages, client.trainerize_id || 0, 2000, 0.7);
-
-    if (!aiResponse) {
+    let aiResponse: string;
+    try {
+      aiResponse = await sendOpenAi(messages, client.trainerize_id || 0, 2000, 0.7);
+    } catch (aiError: any) {
+      console.error('AI generation failed:', aiError.message);
       return NextResponse.json(
-        { error: 'Failed to generate tasks from AI' },
-        { status: 500 }
+        { error: aiError.message || 'Failed to generate tasks from AI' },
+        { status: 502 }
       );
     }
 

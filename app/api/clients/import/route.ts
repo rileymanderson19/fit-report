@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       trainerize_id: client.id,
       first_name: client.firstName,
       last_name: client.lastName,
-      email: client.email,
+      email: client.email || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       active: true

@@ -8,7 +8,7 @@ export type Database = {
           trainerize_id: number
           first_name: string
           last_name: string
-          email: string
+          email: string | null
           created_at: string
           updated_at: string
           active: boolean
@@ -20,7 +20,7 @@ export type Database = {
           trainerize_id: number
           first_name: string
           last_name: string
-          email: string
+          email?: string | null
           created_at?: string
           updated_at?: string
           active?: boolean
@@ -32,7 +32,7 @@ export type Database = {
           trainerize_id?: number
           first_name?: string
           last_name?: string
-          email?: string
+          email?: string | null
           created_at?: string
           updated_at?: string
           active?: boolean

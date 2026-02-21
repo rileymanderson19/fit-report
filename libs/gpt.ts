@@ -16,6 +16,12 @@ export const sendOpenAi = async (
     ? process.env.OPENROUTER_API_KEY
     : process.env.OPENAI_API_KEY;
 
+  if (!apiKey) {
+    throw new Error(
+      `Missing API key: ${useOpenRouter ? 'OPENROUTER_API_KEY' : 'OPENAI_API_KEY'} is not set`
+    );
+  }
+
   console.log(`Ask GPT >>> (via ${useOpenRouter ? 'OpenRouter' : 'OpenAI'})`);
   messages.map((m) =>
     console.log(' - ' + m.role.toUpperCase() + ': ' + m.content)
@@ -57,8 +63,13 @@ export const sendOpenAi = async (
     console.log('\n');
 
     return answer;
-  } catch (e) {
-    console.error('GPT Error: ' + e?.response?.status, e?.response?.data);
-    return null;
+  } catch (e: any) {
+    const status = e?.response?.status;
+    const data = e?.response?.data;
+    console.error('GPT Error: ' + status, data);
+
+    const detail =
+      data?.error?.message || data?.error || e?.message || 'Unknown AI error';
+    throw new Error(`AI request failed (${status || 'network error'}): ${detail}`);
   }
 };

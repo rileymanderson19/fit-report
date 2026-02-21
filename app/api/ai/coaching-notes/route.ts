@@ -205,12 +205,14 @@ Generate coaching notes for this client.`;
       { role: "user", content: userPrompt },
     ];
 
-    const aiResponse = await sendOpenAi(messages, 0, 1000, 0.7);
-
-    if (!aiResponse) {
+    let aiResponse: string;
+    try {
+      aiResponse = await sendOpenAi(messages, 0, 1000, 0.7);
+    } catch (aiError: any) {
+      console.error("AI generation failed:", aiError.message);
       return NextResponse.json(
-        { error: "Failed to generate coaching notes" },
-        { status: 500 }
+        { error: aiError.message || "Failed to generate coaching notes" },
+        { status: 502 }
       );
     }
 
@@ -232,10 +234,10 @@ Generate coaching notes for this client.`;
       ...parsed,
       generatedAt: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in /api/ai/coaching-notes:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error.message || "Internal server error" },
       { status: 500 }
     );
   }

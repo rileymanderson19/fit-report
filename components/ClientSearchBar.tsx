@@ -9,7 +9,7 @@ interface Client {
   id: string;
   first_name: string;
   last_name: string;
-  email: string;
+  email: string | null;
   active: boolean;
 }
 
@@ -86,7 +86,7 @@ export default function ClientSearchBar({
       if (currentClientId && client.id === currentClientId) return false;
 
       const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
-      const email = client.email.toLowerCase();
+      const email = (client.email || '').toLowerCase();
 
       return searchTerms.every(term =>
         fullName.includes(term) ||
@@ -265,7 +265,7 @@ export default function ClientSearchBar({
                       <div className={`text-sm ${
                         index === selectedIndex ? 'text-gray-600' : 'text-gray-500'
                       }`}>
-                        {client.email}
+                        {client.email || ''}
                       </div>
                     </div>
                     <div className={`text-xs ${

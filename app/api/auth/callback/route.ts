@@ -71,8 +71,8 @@ export async function GET(req: NextRequest) {
           .eq("status", "accepted")
           .single();
 
-        if (invite) {
-          // User came from invite - update profile and redirect to onboarding
+        if (invite && existingProfile?.onboarding_status !== "completed") {
+          // User came from invite and hasn't completed onboarding yet
           await adminClient
             .from("profiles")
             .update({

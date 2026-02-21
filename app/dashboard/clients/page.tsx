@@ -18,7 +18,7 @@ interface DashboardClient {
   id: string;
   first_name: string;
   last_name: string;
-  email: string;
+  email: string | null;
   goal: 'fat_loss' | 'maintenance' | 'muscle_gain' | null;
   notes: string | null;
   created_at: string;
@@ -30,7 +30,7 @@ interface TrainerizeClient {
   id: string;
   first_name: string;
   last_name: string;
-  email: string;
+  email: string | null;
 }
 
 type StatusFilter = 'all' | ManualStatus | 'no_data';
@@ -282,7 +282,7 @@ export default function ClientsPage() {
     .filter(client => {
       const matchesSearch = searchQuery === '' ||
         `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        client.email.toLowerCase().includes(searchQuery.toLowerCase());
+        (client.email || '').toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'all' ||
         (statusFilter === 'no_data' ? client.computed.status === 'no_data' : client.manual_status === statusFilter);
       const matchesGoal = goalFilter === 'all' ||
@@ -372,7 +372,7 @@ export default function ClientsPage() {
           trainer_id: user.id,
           first_name: client.first_name,
           last_name: client.last_name,
-          email: client.email,
+          email: client.email || null,
           trainerize_id: parseInt(client.id),
           active: true,
           status: 'new',
@@ -443,7 +443,7 @@ export default function ClientsPage() {
 
   const filteredTrainerizeClients = trainerizeClients.filter(c =>
     `${c.first_name} ${c.last_name}`.toLowerCase().includes(importSearchQuery.toLowerCase()) ||
-    c.email.toLowerCase().includes(importSearchQuery.toLowerCase())
+    (c.email || '').toLowerCase().includes(importSearchQuery.toLowerCase())
   );
 
   if (isLoading) {
@@ -630,7 +630,7 @@ export default function ClientsPage() {
                               {summary}
                             </p>
                           ) : (
-                            <p className="text-xs text-gray-300 truncate">{client.email}</p>
+                            <p className="text-xs text-gray-300 truncate">{client.email || ''}</p>
                           )}
                         </div>
                       </div>
@@ -938,7 +938,7 @@ export default function ClientsPage() {
                           />
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">{client.first_name} {client.last_name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-500">{client.email}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">{client.email || '—'}</td>
                       </tr>
                     ))}
                     {filteredTrainerizeClients.length === 0 && (

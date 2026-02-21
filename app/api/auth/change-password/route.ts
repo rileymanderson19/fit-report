@@ -26,32 +26,20 @@ export async function GET() {
   }
 
   const supabaseAdmin = createAdminClient();
-  const { data: adminUser, error: adminError } =
-    await supabaseAdmin.auth.admin.getUserById(user.id);
 
-  if (adminError || !adminUser?.user) {
+  // Check the password_set column in the profiles table
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("password_set")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) {
+    console.error("Error fetching profile for password check:", profileError);
     return NextResponse.json({ hasPassword: false });
   }
 
-  // Check if user has a password by looking at identities
-  // Users created via admin without a password will have an email identity
-  // but their encrypted_password in the DB will be empty.
-  // The admin API doesn't expose this directly, but we can check
-  // if the user has ever signed in with a password by checking
-  // the identity's last_sign_in_at or using a workaround.
-  // Safest approach: try to verify with an empty password — if it fails
-  // with "Invalid login credentials", they have a password set.
-  const { error: signInError } =
-    await supabaseAdmin.auth.signInWithPassword({
-      email: user.email!,
-      password: "",
-    });
-
-  // If empty password works, they don't have a password.
-  // If it fails with "Invalid login credentials", they have one.
-  const hasPassword = signInError?.message === "Invalid login credentials";
-
-  return NextResponse.json({ hasPassword });
+  return NextResponse.json({ hasPassword: profile?.password_set ?? false });
 }
 
 /**
@@ -115,6 +103,16 @@ export async function POST(request: NextRequest) {
       { error: updateError.message || "Failed to update password" },
       { status: 500 }
     );
+  }
+
+  // Mark password as set in the profile
+  const { error: profileUpdateError } = await supabaseAdmin
+    .from("profiles")
+    .update({ password_set: true })
+    .eq("id", user.id);
+
+  if (profileUpdateError) {
+    console.error("Error updating password_set flag:", profileUpdateError);
   }
 
   return NextResponse.json({ success: true });
