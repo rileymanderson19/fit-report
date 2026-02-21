@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ReactNode } from "react";
-import { Users, FileText, Settings, Link2, X, ChevronLeft, Sparkles } from "lucide-react";
+import { Users, Settings, Link2, X, ChevronLeft, Sparkles } from "lucide-react";
 import { LogoIcon } from "@/components/Logo";
 import ButtonAccount from "./ButtonAccount";
 
@@ -123,16 +123,6 @@ export default function Sidebar({
           title="Coaching AI"
         >
           Coaching AI
-        </SidebarItem>
-
-        <SidebarItem
-          href="/dashboard/text-reports"
-          icon={<FileText className="w-4 h-4" />}
-          isActive={currentPath.startsWith("/dashboard/text-reports")}
-          collapsed={collapsed}
-          title="Text Reports"
-        >
-          Text Reports
         </SidebarItem>
 
         <SidebarItem

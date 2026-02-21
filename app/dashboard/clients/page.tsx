@@ -593,8 +593,8 @@ export default function ClientsPage() {
       </div>
 
       {/* Client table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="card">
+        <div className="overflow-x-visible">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
@@ -820,7 +820,7 @@ export default function ClientsPage() {
                   Cancel
                 </button>
                 <button className="btn-danger text-sm flex items-center gap-2" onClick={confirmDelete} disabled={isDeleting}>
-                  {isDeleting && <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
+                  {isDeleting && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                   Delete
                 </button>
               </div>
