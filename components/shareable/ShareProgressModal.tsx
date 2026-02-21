@@ -262,6 +262,14 @@ export default function ShareProgressModal({
   }, [consistencyAnalysis, processedData.dailyData]);
 
   const weeklyData = React.useMemo(() => {
+    const weeklyAvgs = processedData.weeklyAverages;
+    const avgCarbs = weeklyAvgs.length > 0
+      ? weeklyAvgs.reduce((sum, w) => sum + w.avgCarbs, 0) / weeklyAvgs.length
+      : 0;
+    const avgFats = weeklyAvgs.length > 0
+      ? weeklyAvgs.reduce((sum, w) => sum + w.avgFats, 0) / weeklyAvgs.length
+      : 0;
+
     if (!consistencyAnalysis) {
       return {
         workoutsCompleted: 0,
@@ -269,7 +277,9 @@ export default function ShareProgressModal({
         avgDailySteps: 0,
         stepsGoal: 10000,
         avgCalories: 0,
-        avgProtein: 0
+        avgProtein: 0,
+        avgCarbs,
+        avgFats
       };
     }
 
@@ -279,9 +289,11 @@ export default function ShareProgressModal({
       avgDailySteps: Math.round(consistencyAnalysis.steps.avg),
       stepsGoal: 10000,
       avgCalories: consistencyAnalysis.calories.avg,
-      avgProtein: consistencyAnalysis.protein.avg
+      avgProtein: consistencyAnalysis.protein.avg,
+      avgCarbs,
+      avgFats
     };
-  }, [consistencyAnalysis]);
+  }, [consistencyAnalysis, processedData.weeklyAverages]);
 
   // Download function
   const handleDownload = useCallback(async () => {

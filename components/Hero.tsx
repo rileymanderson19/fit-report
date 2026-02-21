@@ -45,12 +45,12 @@ const Hero = () => {
           >
             <div className="card overflow-hidden rounded-xl shadow-lg">
               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                {/* TODO: Replace with your actual Loom or YouTube video URL */}
                 <iframe
-                  src="https://www.youtube.com/embed/PLACEHOLDER"
+                  src="https://www.youtube.com/embed/CGNIn7suVgc?si=W7mP24F9ZPgpsvbk"
                   title="FitReport Demo"
                   className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   allowFullScreen
                 />
               </div>
