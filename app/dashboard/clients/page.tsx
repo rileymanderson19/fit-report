@@ -7,8 +7,7 @@ import Link from 'next/link';
 import {
   Upload, Edit2, Search, Users, CheckCircle2, AlertTriangle,
   AlertCircle, Star, Trash2, X, Eye, ChevronLeft, ChevronRight, ChevronDown,
-  Flame, Scale, TrendingUp, Database,
-  Trophy, Clock, Activity
+  Flame, Scale, TrendingUp, Database
 } from 'lucide-react';
 import type { ClientStatusResult } from '@/lib/client-status';
 
@@ -79,96 +78,6 @@ const getAvatarColor = (name: string) => {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 };
 
-// --- Alert system ---
-interface DashboardAlert {
-  id: string;
-  type: 'weight' | 'inactivity' | 'win' | 'overdue';
-  severity: 'success' | 'warning' | 'danger';
-  clientId: string;
-  clientName: string;
-  message: string;
-}
-
-function generateAlerts(clients: DashboardClient[]): DashboardAlert[] {
-  const alerts: DashboardAlert[] = [];
-
-  for (const client of clients) {
-    const name = `${client.first_name} ${client.last_name}`;
-    const { metrics, status, lastReportDate } = client.computed;
-
-    if (status === 'no_data') continue;
-
-    // Weight spike/drop (> 3 lbs)
-    if (metrics.weightChange !== null && Math.abs(metrics.weightChange) > 3) {
-      const dir = metrics.weightChange > 0 ? 'up' : 'down';
-      const abs = Math.abs(metrics.weightChange).toFixed(1);
-      const isGood = (client.goal === 'fat_loss' && dir === 'down') ||
-                     (client.goal === 'muscle_gain' && dir === 'up');
-      alerts.push({
-        id: `weight-${client.id}`,
-        type: 'weight',
-        severity: isGood ? 'success' : 'danger',
-        clientId: client.id,
-        clientName: name,
-        message: isGood
-          ? `${client.first_name} is ${dir} ${abs} lbs — great progress!`
-          : `${client.first_name}'s weight ${dir === 'up' ? 'jumped' : 'dropped'} ${abs} lbs this period`,
-      });
-    }
-
-    // Inactivity (has data but 0 workouts)
-    if (metrics.totalWorkouts === 0) {
-      alerts.push({
-        id: `inactive-${client.id}`,
-        type: 'inactivity',
-        severity: 'warning',
-        clientId: client.id,
-        clientName: name,
-        message: `${client.first_name} hasn't logged any workouts`,
-      });
-    }
-
-    // Wins (5+ workouts or high protein)
-    if (metrics.totalWorkouts >= 5) {
-      alerts.push({
-        id: `win-workouts-${client.id}`,
-        type: 'win',
-        severity: 'success',
-        clientId: client.id,
-        clientName: name,
-        message: `${client.first_name} crushed ${metrics.totalWorkouts} workouts this period`,
-      });
-    }
-
-    // Overdue check-in (> 14 days since last report)
-    if (lastReportDate) {
-      const daysSince = Math.floor((Date.now() - new Date(lastReportDate).getTime()) / (1000 * 60 * 60 * 24));
-      if (daysSince > 14) {
-        alerts.push({
-          id: `overdue-${client.id}`,
-          type: 'overdue',
-          severity: 'warning',
-          clientId: client.id,
-          clientName: name,
-          message: `${client.first_name} hasn't been reviewed in ${daysSince} days`,
-        });
-      }
-    }
-  }
-
-  // Sort: danger first, then warning, then success
-  const severityOrder: Record<string, number> = { danger: 0, warning: 1, success: 2 };
-  alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-
-  return alerts;
-}
-
-const ALERT_STYLES: Record<string, { bg: string; border: string; text: string; icon: typeof AlertCircle }> = {
-  danger: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: AlertCircle },
-  warning: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', icon: Clock },
-  success: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', icon: Trophy },
-};
-
 export default function ClientsPage() {
   const supabase = createClient();
 
@@ -180,9 +89,6 @@ export default function ClientsPage() {
   const [sortOption, setSortOption] = useState<SortOption>('attention');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
-  const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
-  const [isAlertsExpanded, setIsAlertsExpanded] = useState(true);
-
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
   const [goalDropdownId, setGoalDropdownId] = useState<string | null>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
@@ -272,11 +178,6 @@ export default function ClientsPage() {
     new: clients.filter(c => c.manual_status === 'new').length,
     noData: clients.filter(c => c.computed.status === 'no_data').length,
   };
-
-  const alerts = React.useMemo(() =>
-    generateAlerts(clients).filter(a => !dismissedAlertIds.has(a.id)),
-    [clients, dismissedAlertIds]
-  );
 
   const filteredClients = clients
     .filter(client => {
@@ -507,53 +408,6 @@ export default function ClientsPage() {
               </button>
             );
           })}
-        </div>
-      )}
-
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <div className="mb-4">
-          <button
-            onClick={() => setIsAlertsExpanded(!isAlertsExpanded)}
-            className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <Activity className="h-4 w-4" />
-            <span>{alerts.length} alert{alerts.length !== 1 ? 's' : ''}</span>
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isAlertsExpanded ? 'rotate-180' : ''}`} />
-          </button>
-          {isAlertsExpanded && (
-            <div className="space-y-2">
-              {alerts.slice(0, 8).map(alert => {
-                const style = ALERT_STYLES[alert.severity];
-                const AlertIcon = style.icon;
-                return (
-                  <div
-                    key={alert.id}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg border ${style.bg} ${style.border}`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <AlertIcon className={`h-3.5 w-3.5 shrink-0 ${style.text}`} />
-                      <Link
-                        href={`/dashboard/clients/${alert.clientId}/reports`}
-                        className={`text-sm ${style.text} hover:underline truncate`}
-                      >
-                        {alert.message}
-                      </Link>
-                    </div>
-                    <button
-                      onClick={() => setDismissedAlertIds(prev => new Set([...prev, alert.id]))}
-                      className="p-0.5 text-gray-400 hover:text-gray-600 shrink-0 ml-2"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                );
-              })}
-              {alerts.length > 8 && (
-                <p className="text-xs text-gray-400 pl-1">+{alerts.length - 8} more alerts</p>
-              )}
-            </div>
-          )}
         </div>
       )}
 
