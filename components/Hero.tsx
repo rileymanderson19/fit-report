@@ -34,7 +34,7 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-base sm:text-lg text-gray-500 leading-relaxed max-w-2xl text-center mb-8 md:mb-10"
           >
-            FitReport auto-generates client reports from your Trainerize data so you don't waste time with data collection.
+            FitReport auto-generates client reports from your Trainerize data so you don&apos;t waste time with data collection.
           </motion.p>
 
           {/* CTA Buttons */}
