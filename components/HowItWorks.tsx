@@ -48,9 +48,6 @@ const steps = [
   },
 ];
 
-// TODO: Replace with your actual Calendly link
-const CALENDLY_URL = "https://calendly.com/fitreport/demo";
-
 const HowItWorks = () => {
 
   return (
@@ -119,6 +116,7 @@ const HowItWorks = () => {
                         </p>
                       </div>
                     </div>
+
                   </div>
                 </motion.div>
               );
@@ -126,24 +124,6 @@ const HowItWorks = () => {
           </div>
         </div>
 
-        {/* CTA Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex justify-center mt-14"
-        >
-          <a
-            href={CALENDLY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary px-10 py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center gap-2"
-          >
-            Schedule a Call
-            <span>→</span>
-          </a>
-        </motion.div>
       </div>
     </section>
   );

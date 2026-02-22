@@ -14,7 +14,7 @@ const CTA = () => {
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        className="flex flex-col items-center max-w-4xl mx-auto text-center bg-gray-50 border border-gray-200 p-10 lg:p-16 rounded-2xl"
+        className="flex flex-col items-center max-w-4xl mx-auto text-center bg-white border border-gray-200 p-10 lg:p-16 rounded-2xl shadow-sm"
       >
         <motion.h2
           initial={{ opacity: 0, y: 20 }}

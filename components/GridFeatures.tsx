@@ -3,15 +3,17 @@
 import { motion, useInView } from "framer-motion";
 import { BarChart3, LineChart, Zap } from "lucide-react";
 import { useRef, type ReactNode } from "react";
+import { ClientDashboardMini, WeightChartMini, WeeklyReportMini } from "@/components/landing/FeatureVisuals";
 
 interface FeatureCardProps {
   icon: ReactNode;
   title: string;
   description: string;
+  visual: ReactNode;
   delay: number;
 }
 
-const FeatureCard = ({ icon, title, description, delay }: FeatureCardProps) => {
+const FeatureCard = ({ icon, title, description, visual, delay }: FeatureCardProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -28,6 +30,7 @@ const FeatureCard = ({ icon, title, description, delay }: FeatureCardProps) => {
       </div>
       <h3 className="mb-3 text-xl font-display font-bold text-gray-900">{title}</h3>
       <p className="text-base text-gray-500 leading-relaxed">{description}</p>
+      {visual}
     </motion.div>
   );
 };
@@ -40,8 +43,9 @@ export default function GridFeatures() {
           <BarChart3 className="h-7 w-7 text-blue-600" />
         </div>
       ),
-      title: "See Every Client's Progress at a Glance",
+      title: "Know Exactly Who Needs Your Attention",
       description: "No more clicking through individual Trainerize profiles. One dashboard shows who's on track, who's plateauing, and who needs attention.",
+      visual: <ClientDashboardMini />,
     },
     {
       icon: (
@@ -49,8 +53,9 @@ export default function GridFeatures() {
           <LineChart className="h-7 w-7 text-teal-600" />
         </div>
       ),
-      title: "Charts Your Clients Actually Understand",
-      description: "Clean, visual progress reports with body composition, strength gains, and consistency trends \u2014 designed for clients, not data analysts.",
+      title: "Reports That Make You Look Like a Pro",
+      description: "Clean, visual progress reports with body composition, strength gains, and consistency trends \u2014 ready to send the moment you generate them.",
+      visual: <WeightChartMini />,
     },
     {
       icon: (
@@ -60,6 +65,7 @@ export default function GridFeatures() {
       ),
       title: "Weekly Reports, Zero Manual Work",
       description: "Hit generate and get a polished, branded report for every client. What used to take your Sunday afternoon now takes 30 seconds.",
+      visual: <WeeklyReportMini />,
     },
   ];
 

@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { JSX } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import ButtonSignin from "./ButtonSignin";
 import Logo from "@/components/Logo";
-import config from "@/config";
 
 // TODO: Replace with your actual Calendly link
 const CALENDLY_URL = "https://calendly.com/fitreport/demo";
@@ -20,13 +19,7 @@ const links: {
     href: "/#how-it-works",
     label: "How It Works",
   },
-  {
-    href: CALENDLY_URL,
-    label: "Schedule a Call",
-  },
 ];
-
-const cta: JSX.Element = <ButtonSignin extraStyle="btn-primary px-5 py-2.5 rounded-lg" />;
 
 const Header = () => {
   const searchParams = useSearchParams();
@@ -105,8 +98,19 @@ const Header = () => {
           ))}
         </div>
 
-        {/* CTA on large screens */}
-        <div className="hidden lg:flex lg:justify-end lg:flex-1">{cta}</div>
+        {/* CTAs on large screens */}
+        <div className="hidden lg:flex lg:justify-end lg:flex-1 lg:items-center lg:gap-3">
+          <ButtonSignin extraStyle="text-gray-600 font-medium hover:text-gray-900 px-4 py-2.5 transition-colors" />
+          <a
+            href={CALENDLY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-1.5 transition-all hover:-translate-y-0.5"
+          >
+            Schedule a Call
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
       </nav>
 
       {/* Mobile menu */}
@@ -179,9 +183,18 @@ const Header = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="pt-6 border-t border-gray-200"
+                className="pt-6 border-t border-gray-200 flex flex-col gap-3"
               >
-                {cta}
+                <ButtonSignin extraStyle="btn-secondary px-5 py-2.5 rounded-lg w-full text-center" />
+                <a
+                  href={CALENDLY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary px-5 py-2.5 rounded-lg font-semibold inline-flex items-center justify-center gap-1.5 w-full"
+                >
+                  Schedule a Call
+                  <ArrowRight className="w-4 h-4" />
+                </a>
               </motion.div>
             </div>
           </motion.div>

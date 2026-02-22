@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
+import HeroProductPreview from "@/components/landing/HeroProductPreview";
 
 // TODO: Replace with your actual Calendly link
 const CALENDLY_URL = "https://calendly.com/fitreport/demo";
@@ -22,8 +23,8 @@ const Hero = () => {
             transition={{ duration: 0.8 }}
             className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-center mb-3 md:mb-4 leading-[1.1]"
           >
-            <span className="text-gray-900">Client Reports That Used to Take Hours, </span>
-            <span className="gradient-text">Done in Seconds</span>
+            <span className="text-gray-900">Client Fulfillment That Used to Take Hours, </span>
+            <span className="gradient-text">Done in Minutes</span>
           </motion.h1>
 
           {/* Description */}
@@ -31,54 +32,44 @@ const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-base sm:text-lg text-gray-500 leading-relaxed max-w-2xl text-center mb-6 md:mb-8"
+            className="text-base sm:text-lg text-gray-500 leading-relaxed max-w-2xl text-center mb-8 md:mb-10"
           >
-            FitReport pulls your Trainerize data and turns it into detailed reports (all on one screen)..
+            FitReport auto-generates client reports from your Trainerize data so you don't waste time with data collection.
           </motion.p>
 
-          {/* Demo Video */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="relative w-full max-w-4xl mb-8 md:mb-10"
-          >
-            <div className="card overflow-hidden rounded-xl shadow-lg">
-              <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                <iframe
-                  src="https://www.youtube.com/embed/CGNIn7suVgc?si=W7mP24F9ZPgpsvbk"
-                  title="FitReport Demo"
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* CTA Buttons — below video */}
+          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex flex-col sm:flex-row gap-4 w-full max-w-lg justify-center"
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="mb-10 md:mb-12 flex flex-col sm:flex-row items-center gap-3 sm:gap-4"
           >
             <a
               href={CALENDLY_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary w-full sm:w-auto px-8 py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center justify-center gap-2"
+              className="btn-primary px-8 py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center justify-center gap-2"
             >
               Schedule a Call
               <ArrowRight className="w-5 h-5" />
             </a>
             <a
-              href="/#how-it-works"
-              className="w-full sm:w-auto px-8 py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 inline-flex items-center justify-center gap-2 bg-white text-gray-900 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm"
+              href="#demo-video"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-lg font-semibold text-gray-700 hover:text-gray-900 transition-colors rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50"
             >
-              How It Works
+              <Play className="w-5 h-5" />
+              Watch Demo
             </a>
+          </motion.div>
+
+          {/* Product Preview */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="w-full"
+          >
+            <HeroProductPreview />
           </motion.div>
 
         </div>
