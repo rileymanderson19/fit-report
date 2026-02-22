@@ -231,22 +231,12 @@ export default function ShareProgressModal({
       };
     }
 
-    // Calculate weekly change from actual first/last weight measurements
-    // This avoids issues where weeklyAverages may have entries with avgWeight = 0
-    // (weeks that have nutrition/steps data but no weight measurements)
     let weeklyChange = 0;
-    const weightsWithData = processedData.dailyData.filter(d => d.weight > 0);
-    if (weightsWithData.length >= 2) {
-      const firstWeight = weightsWithData[0].weight;
-      const lastWeight = weightsWithData[weightsWithData.length - 1].weight;
-      const firstDate = new Date(weightsWithData[0].date);
-      const lastDate = new Date(weightsWithData[weightsWithData.length - 1].date);
-      const daysBetween = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
-      const weeksBetween = daysBetween / 7;
-
-      if (weeksBetween > 0) {
-        weeklyChange = (lastWeight - firstWeight) / weeksBetween;
-      }
+    const weeksWithWeight = processedData.weeklyAverages.filter(w => w.avgWeight > 0);
+    if (weeksWithWeight.length >= 2) {
+      const firstWeekAvg = weeksWithWeight[0].avgWeight;
+      const lastWeekAvg = weeksWithWeight[weeksWithWeight.length - 1].avgWeight;
+      weeklyChange = (lastWeekAvg - firstWeekAvg) / (weeksWithWeight.length - 1);
     }
 
     const trend: 'up' | 'down' | 'stable' = weeklyChange < -0.1 ? 'down' :
@@ -259,7 +249,7 @@ export default function ShareProgressModal({
       trend,
       weeklyChange
     };
-  }, [consistencyAnalysis, processedData.dailyData]);
+  }, [consistencyAnalysis, processedData.weeklyAverages]);
 
   const weeklyData = React.useMemo(() => {
     const weeklyAvgs = processedData.weeklyAverages;

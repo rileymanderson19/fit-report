@@ -33,7 +33,7 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-base sm:text-lg text-gray-500 leading-relaxed max-w-2xl text-center mb-6 md:mb-8"
           >
-            FitReport pulls your Trainerize data and turns it into professional progress reports your clients will actually read.
+            FitReport pulls your Trainerize data and turns it into detailed reports (all on one screen)..
           </motion.p>
 
           {/* Demo Video */}

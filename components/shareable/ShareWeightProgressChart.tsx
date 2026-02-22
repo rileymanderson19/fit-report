@@ -41,7 +41,7 @@ interface ShareWeightProgressChartProps {
 
 export default function ShareWeightProgressChart({
   dailyData,
-  weeklyAverages: _weeklyAverages,
+  weeklyAverages,
   goalWeight,
   clientName: _clientName,
   dateRangeStart,
@@ -88,23 +88,13 @@ export default function ShareWeightProgressChart({
   const endWeight = chartData.length > 0 ? chartData[chartData.length - 1].weight : 0;
   const totalChange = endWeight - startWeight;
 
-  // Calculate average change per week using actual first/last weight measurements
-  // This avoids issues where weeklyAverages may have entries with avgWeight = 0
-  // (weeks that have nutrition/steps data but no weight measurements)
+  // Calculate average change per week using weekly average weights
   let avgChangePerWeek = 0;
-  if (chartData.length >= 2) {
-    // chartData already filters for weight > 0 and has converted weights
-    const firstWeight = chartData[0].weight;
-    const lastWeight = chartData[chartData.length - 1].weight;
-    const firstDate = new Date(chartData[0].date);
-    const lastDate = new Date(chartData[chartData.length - 1].date);
-    const daysBetween = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24);
-    const weeksBetween = daysBetween / 7;
-
-    if (weeksBetween > 0) {
-      // chartData weights are already in display units (converted)
-      avgChangePerWeek = (lastWeight - firstWeight) / weeksBetween;
-    }
+  const weeksWithWeight = weeklyAverages.filter(w => w.avgWeight > 0);
+  if (weeksWithWeight.length >= 2) {
+    const firstWeekAvg = convertWeight(weeksWithWeight[0].avgWeight);
+    const lastWeekAvg = convertWeight(weeksWithWeight[weeksWithWeight.length - 1].avgWeight);
+    avgChangePerWeek = (lastWeekAvg - firstWeekAvg) / (weeksWithWeight.length - 1);
   }
 
   // Custom tooltip
