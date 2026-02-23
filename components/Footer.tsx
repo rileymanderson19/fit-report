@@ -39,7 +39,7 @@ const Footer = () => {
                   </a>
                 )}
                 <a
-                  href="https://calendly.com/fitreport/demo"
+                  href="https://calendly.com/riley-fitreport/intro"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-gray-500 hover:text-blue-600 transition-colors"

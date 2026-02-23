@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import HeroProductPreview from "@/components/landing/HeroProductPreview";
 
-// TODO: Replace with your actual Calendly link
-const CALENDLY_URL = "https://calendly.com/fitreport/demo";
+const CALENDLY_URL = "https://calendly.com/riley-fitreport/intro";
 
 const Hero = () => {
   return (
@@ -24,7 +23,7 @@ const Hero = () => {
             className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-center mb-3 md:mb-4 leading-[1.1]"
           >
             <span className="text-gray-900">Client Fulfillment That Used to Take Hours, </span>
-            <span className="gradient-text">Done in Minutes</span>
+            <span className="gradient-text"> Done in Minutes</span>
           </motion.h1>
 
           {/* Description */}

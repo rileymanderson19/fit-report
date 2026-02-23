@@ -8,8 +8,7 @@ import { ArrowRight } from "lucide-react";
 import ButtonSignin from "./ButtonSignin";
 import Logo from "@/components/Logo";
 
-// TODO: Replace with your actual Calendly link
-const CALENDLY_URL = "https://calendly.com/fitreport/demo";
+const CALENDLY_URL = "https://calendly.com/riley-fitreport/intro";
 
 const links: {
   href: string;

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Check, Clock, DollarSign, Users, Sparkles } from "lucide-react";
 
-const CALENDLY_URL = "https://calendly.com/fitreport/demo";
+const CALENDLY_URL = "https://calendly.com/riley-fitreport/intro";
 
 const features = [
   "Unlimited client reports",
