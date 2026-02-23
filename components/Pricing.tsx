@@ -125,21 +125,21 @@ const Pricing = () => {
               <Clock className="w-6 h-6 text-blue-600" />
             </div>
             <p className="text-2xl font-display font-bold text-gray-900">5+ hrs/week</p>
-            <p className="text-sm text-gray-500">Saved on client fulfillment</p>
+            <p className="text-sm text-gray-500">Of admin work eliminated</p>
           </div>
           <div className="flex flex-col items-center gap-2">
             <div className="p-3 bg-blue-50 rounded-xl">
               <DollarSign className="w-6 h-6 text-blue-600" />
             </div>
             <p className="text-2xl font-display font-bold text-gray-900">$1,000+/mo</p>
-            <p className="text-sm text-gray-500">In time value recovered</p>
+            <p className="text-sm text-gray-500">In time saved monthly</p>
           </div>
           <div className="flex flex-col items-center gap-2">
             <div className="p-3 bg-blue-50 rounded-xl">
               <Users className="w-6 h-6 text-blue-600" />
             </div>
-            <p className="text-2xl font-display font-bold text-gray-900">Scale faster</p>
-            <p className="text-sm text-gray-500">More clients, no extra admin</p>
+            <p className="text-2xl font-display font-bold text-gray-900">2x capacity</p>
+            <p className="text-sm text-gray-500">Scale your roster without scaling your admin</p>
           </div>
         </div>
       </motion.div>

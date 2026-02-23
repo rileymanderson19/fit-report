@@ -27,21 +27,21 @@ const colorMap = {
 const steps = [
   {
     title: "Get Your API Key",
-    description: "Send a quick request to Trainerize support \u2014 we\u2019ll give you the exact email template. Most coaches get access within a few days.",
+    description: "We give you the exact email template to send Trainerize. Copy, paste, send. Most coaches get their key within 48 hours.",
     number: "01",
     icon: Key,
     color: "blue" as const,
   },
   {
     title: "Connect Your Account",
-    description: "Paste your API key into FitReport and your full client roster syncs automatically. No manual entry, no CSV uploads.",
+    description: "Paste your API key, and every client in your Trainerize account appears instantly. Workout history, nutrition, body metrics \u2014 all synced.",
     number: "02",
     icon: Link2,
     color: "teal" as const,
   },
   {
-    title: "Generate Your First Report",
-    description: "Pick a client, choose a date range, and get a branded progress report in seconds. Share it via link or download as PDF.",
+    title: "Generate Reports in Seconds",
+    description: "Pick a client, hit generate, and get a professional branded report with charts, AI notes, and progress photos. Share via link or PDF.",
     number: "03",
     icon: FileText,
     color: "indigo" as const,
@@ -62,10 +62,10 @@ const HowItWorks = () => {
           className="flex flex-col text-center mb-14"
         >
           <h2 className="text-4xl lg:text-5xl font-display font-bold tracking-tight mb-5 text-gray-900">
-            Up and Running in <span className="gradient-text">3 Steps</span>
+            Live in Under <span className="gradient-text">5 Minutes</span>
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
-            We handle the technical setup. You just tell us about your clients.
+            No integrations to build, no data to enter. Three steps and you&apos;re generating reports.
           </p>
         </motion.div>
 

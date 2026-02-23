@@ -58,6 +58,22 @@ const faqList: FAQItemProps[] = [
       </p>
     ),
   },
+  {
+    question: "I have 30+ clients. Can I generate reports for all of them quickly?",
+    answer: (
+      <p>
+        Yes. Each report takes about 30 seconds to generate. Even with 30 clients, you&apos;re done in under 20 minutes — compared to the 5+ hours it would take manually. We&apos;re also working on batch generation.
+      </p>
+    ),
+  },
+  {
+    question: "Will my clients think I made these reports myself?",
+    answer: (
+      <p>
+        That&apos;s the point. Your logo, your colors, your brand throughout. FitReport stays completely invisible to your clients. As far as they know, you spent an hour putting together a beautiful report just for them.
+      </p>
+    ),
+  },
 ];
 
 const FaqItem = ({ item }: { item: FAQItemProps }) => {

@@ -21,7 +21,7 @@ const CTA = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="font-display font-bold text-4xl lg:text-5xl tracking-tight mb-5 text-gray-900"
         >
-          Let&apos;s Get You <span className="gradient-text">Set Up</span>
+          Reclaim Your Admin Hours <span className="gradient-text">This Week</span>
         </motion.h2>
 
         <motion.p
@@ -31,7 +31,7 @@ const CTA = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-lg text-gray-500 mb-10 max-w-2xl leading-relaxed"
         >
-          Book a 15-minute call. We&apos;ll walk you through the product, help you get API access, and have you generating reports the same week.
+          Book a 15-minute setup call. We&apos;ll handle the Trainerize API access, walk you through everything, and have you generating branded reports before your next Sunday rolls around.
         </motion.p>
 
         <motion.div
@@ -54,7 +54,7 @@ const CTA = () => {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="mt-10 flex flex-wrap justify-center gap-6 text-sm text-gray-400"
         >
-          {["15-minute setup call", "We handle Trainerize API access", "Generating reports within a week"].map((text) => (
+          {["15-minute call, no sales pitch", "We handle Trainerize API setup", "Reports within the week, guaranteed"].map((text) => (
             <div key={text} className="flex items-center gap-2">
               <Check className="w-4 h-4 text-blue-600" />
               <span>{text}</span>

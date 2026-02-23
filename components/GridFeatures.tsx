@@ -43,8 +43,8 @@ export default function GridFeatures() {
           <BarChart3 className="h-7 w-7 text-blue-600" />
         </div>
       ),
-      title: "Know Exactly Who Needs Your Attention",
-      description: "No more clicking through individual Trainerize profiles. One dashboard shows who's on track, who's plateauing, and who needs attention.",
+      title: "Spot At-Risk Clients in Seconds",
+      description: "Stop clicking through 30 Trainerize profiles every Monday. One dashboard flags who\u2019s slipping, who\u2019s crushing it, and who hasn\u2019t logged in a week.",
       visual: <ClientDashboardMini />,
     },
     {
@@ -53,8 +53,8 @@ export default function GridFeatures() {
           <LineChart className="h-7 w-7 text-teal-600" />
         </div>
       ),
-      title: "Reports That Make You Look Like a Pro",
-      description: "Clean, visual progress reports with body composition, strength gains, and consistency trends \u2014 ready to send the moment you generate them.",
+      title: "Premium Reports Without the Design Degree",
+      description: "Branded progress reports with charts, photos, and AI coaching notes. Your clients think you spent an hour on it. You spent 30 seconds.",
       visual: <WeightChartMini />,
     },
     {
@@ -63,8 +63,8 @@ export default function GridFeatures() {
           <Zap className="h-7 w-7 text-indigo-600" />
         </div>
       ),
-      title: "Weekly Reports, Zero Manual Work",
-      description: "Hit generate and get a polished, branded report for every client. What used to take your Sunday afternoon now takes 30 seconds.",
+      title: "Get Your Sundays Back",
+      description: "One click pulls workout data, nutrition logs, weight trends, and progress photos from Trainerize. No copying, no spreadsheets, no 4-hour admin sessions.",
       visual: <WeeklyReportMini />,
     },
   ];
@@ -79,10 +79,10 @@ export default function GridFeatures() {
         className="text-center mb-14"
       >
         <h2 className="text-4xl lg:text-5xl font-display font-bold mb-5 tracking-tight text-gray-900">
-          Stop Digging Through <span className="gradient-text">Trainerize Data</span>
+          Everything Trainerize <span className="gradient-text">Doesn&apos;t Give You</span>
         </h2>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
-          FitReport does the heavy lifting so you can focus on what you do best &mdash; coaching.
+          Trainerize stores your clients&apos; data. FitReport makes it useful &mdash; so you coach more and admin less.
         </p>
       </motion.div>
 

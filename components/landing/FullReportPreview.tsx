@@ -22,7 +22,7 @@ interface FullReportPreviewProps {
 }
 
 export default function FullReportPreview({ compact = false }: FullReportPreviewProps) {
-  const maxHeight = compact ? 'max-h-[500px]' : 'max-h-[400px]';
+  const maxHeight = compact ? 'max-h-[500px]' : 'max-h-[500px]';
 
   return (
     <div className={`bg-white overflow-hidden ${compact ? 'rounded-2xl shadow-lg p-4' : 'p-6 md:p-8'}`}>

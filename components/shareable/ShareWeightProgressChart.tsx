@@ -37,6 +37,7 @@ interface ShareWeightProgressChartProps {
   hideWeightChange?: boolean;
   unitPreference?: 'lbs' | 'kg';
   brand?: BrandConfig | null;
+  chartHeight?: number;
 }
 
 export default function ShareWeightProgressChart({
@@ -51,7 +52,8 @@ export default function ShareWeightProgressChart({
   hideHeader = false,
   hideWeightChange = false,
   unitPreference = 'lbs',
-  brand
+  brand,
+  chartHeight = 280
 }: ShareWeightProgressChartProps) {
   const primaryColor = brand?.primary_color || '#2563EB';
   // Unit conversion helpers
@@ -165,7 +167,7 @@ export default function ShareWeightProgressChart({
       </div>
 
       {/* Chart */}
-      <div style={{ width: '100%', height: 280 }}>
+      <div style={{ width: '100%', height: chartHeight }}>
         <ResponsiveContainer>
           <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <defs>
