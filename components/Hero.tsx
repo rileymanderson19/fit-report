@@ -35,8 +35,8 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="font-display font-extrabold text-4xl sm:text-5xl lg:text-[3.5rem] tracking-tight mb-5 leading-[1.1] max-w-3xl"
           >
-            <span className="text-gray-900">Your Sunday Admin Grind, </span>
-            <span className="gradient-text">Replaced in 30 Seconds</span>
+            <span className="text-gray-900">Give Every Client </span>
+            <span className="gradient-text">the Attention They&rsquo;re Paying For</span>
           </motion.h1>
 
           {/* Description */}
@@ -46,7 +46,7 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-base sm:text-lg text-gray-500 leading-relaxed max-w-2xl mb-8"
           >
-            FitReport pulls your Trainerize data and turns it into branded progress reports &mdash; so you stop spending hours on admin that should take seconds.
+            FitReport pulls your Trainerize data and builds detailed progress reports &mdash; weight trends, nutrition, workouts, AI coaching notes &mdash; so you can spend less time on admin and more time making adjustments that matter.
           </motion.p>
 
           {/* CTA Buttons */}
