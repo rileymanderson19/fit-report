@@ -22,10 +22,10 @@ interface FullReportPreviewProps {
 }
 
 export default function FullReportPreview({ compact = false }: FullReportPreviewProps) {
-  const maxHeight = compact ? 'max-h-[500px]' : 'max-h-[700px]';
+  const maxHeight = compact ? 'max-h-[500px]' : 'max-h-[400px]';
 
   return (
-    <div className={`bg-white rounded-2xl shadow-lg overflow-hidden ${compact ? 'p-4' : 'p-6 md:p-8'}`}>
+    <div className={`bg-white overflow-hidden ${compact ? 'rounded-2xl shadow-lg p-4' : 'p-6 md:p-8'}`}>
       {/* Report Header */}
       <div className={compact ? 'mb-4' : 'mb-6'}>
         <div className="h-1 w-16 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 mb-3" />

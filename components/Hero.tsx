@@ -2,67 +2,68 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
-import HeroProductPreview from "@/components/landing/HeroProductPreview";
 import CalendlyButton from "@/components/CalendlyButton";
 
 const Hero = () => {
   return (
     <section className="relative w-full overflow-hidden bg-white">
-      {/* Subtle background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-white" />
+      {/* Background gradient — subtle, professional */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-blue-50/30 to-white" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-20 pb-10 md:pb-14">
-        <div className="flex flex-col items-center max-w-5xl mx-auto">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 lg:pt-36 pb-24 sm:pb-32 lg:pb-40">
+        <div className="flex flex-col items-center max-w-4xl mx-auto">
+
+          {/* Qualifier Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              For Trainerize Coaches
+            </span>
+          </motion.div>
 
           {/* Heading */}
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-center mb-3 md:mb-4 leading-[1.1]"
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight text-center mb-5 leading-[1.1]"
           >
             <span className="text-gray-900">Client Fulfillment That Used to Take Hours, </span>
-            <span className="gradient-text"> Done in Minutes</span>
+            <span className="gradient-text">Done in Minutes</span>
           </motion.h1>
 
           {/* Description */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-base sm:text-lg text-gray-500 leading-relaxed max-w-2xl text-center mb-8 md:mb-10"
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-base sm:text-lg text-gray-500 leading-relaxed max-w-xl text-center mb-8"
           >
             FitReport auto-generates client reports from your Trainerize data so you don&apos;t waste time with data collection.
           </motion.p>
 
           {/* CTA Buttons */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="mb-10 md:mb-12 flex flex-col sm:flex-row items-center gap-3 sm:gap-4"
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4"
           >
-            <CalendlyButton className="btn-primary px-8 py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center justify-center gap-2">
+            <CalendlyButton className="btn-primary px-7 py-3 text-base font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center justify-center gap-2">
               Schedule a Call
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-4 h-4" />
             </CalendlyButton>
             <a
               href="#demo-video"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-lg font-semibold text-gray-700 hover:text-gray-900 transition-colors rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 text-base font-medium text-gray-500 hover:text-gray-900 transition-colors"
             >
-              <Play className="w-5 h-5" />
+              <Play className="w-4 h-4" />
               Watch Demo
             </a>
-          </motion.div>
-
-          {/* Product Preview */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="w-full"
-          >
-            <HeroProductPreview />
           </motion.div>
 
         </div>

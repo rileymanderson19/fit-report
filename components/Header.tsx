@@ -42,13 +42,15 @@ const Header = () => {
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-100'
-          : 'bg-transparent'
+        scrolled ? 'px-4 sm:px-6 pt-4' : ''
       }`}
     >
       <nav
-        className="container flex items-center justify-between px-4 sm:px-8 py-4 mx-auto"
+        className={`flex items-center justify-between px-4 sm:px-6 py-3 transition-all duration-300 ${
+          scrolled
+            ? 'max-w-5xl mx-auto rounded-2xl bg-white/90 backdrop-blur-md shadow-lg ring-1 ring-black/5'
+            : 'max-w-7xl mx-auto'
+        }`}
         aria-label="Global"
       >
         {/* Logo */}
