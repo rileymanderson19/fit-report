@@ -2,8 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, Check } from "lucide-react";
-
-const CALENDLY_URL = "https://calendly.com/riley-fitreport/intro";
+import CalendlyButton from "@/components/CalendlyButton";
 
 const CTA = () => {
   return (
@@ -41,16 +40,11 @@ const CTA = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <a
-            href={CALENDLY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group btn-primary px-8 py-3.5 text-lg font-semibold rounded-lg inline-flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg"
-          >
+          <CalendlyButton className="group btn-primary px-8 py-3.5 text-lg font-semibold rounded-lg inline-flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg">
             <Calendar className="w-5 h-5" />
             Book a Call
             <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-          </a>
+          </CalendlyButton>
         </motion.div>
 
         <motion.div

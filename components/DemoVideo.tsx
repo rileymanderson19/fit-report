@@ -2,8 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Calendar, ArrowRight } from "lucide-react";
-
-const CALENDLY_URL = "https://calendly.com/riley-fitreport/intro";
+import CalendlyButton from "@/components/CalendlyButton";
 
 const DemoVideo = () => {
   return (
@@ -21,16 +20,11 @@ const DemoVideo = () => {
         <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed mb-8">
           Book a quick call and we&apos;ll walk you through setup, including getting your Trainerize API access.
         </p>
-        <a
-          href={CALENDLY_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group btn-primary px-8 py-3.5 text-lg font-semibold rounded-lg inline-flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg"
-        >
+        <CalendlyButton className="group btn-primary px-8 py-3.5 text-lg font-semibold rounded-lg inline-flex items-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-lg">
           <Calendar className="w-5 h-5" />
           Book a Call
           <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-        </a>
+        </CalendlyButton>
       </motion.div>
     </section>
   );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import config from "@/config";
+import CalendlyButton from "@/components/CalendlyButton";
 
 const Footer = () => {
   return (
@@ -38,14 +39,9 @@ const Footer = () => {
                     Support
                   </a>
                 )}
-                <a
-                  href="https://calendly.com/riley-fitreport/intro"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
-                >
+                <CalendlyButton className="text-sm text-gray-500 hover:text-blue-600 transition-colors text-left">
                   Schedule a Call
-                </a>
+                </CalendlyButton>
               </div>
             </div>
 

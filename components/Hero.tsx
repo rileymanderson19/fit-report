@@ -3,8 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import HeroProductPreview from "@/components/landing/HeroProductPreview";
-
-const CALENDLY_URL = "https://calendly.com/riley-fitreport/intro";
+import CalendlyButton from "@/components/CalendlyButton";
 
 const Hero = () => {
   return (
@@ -43,15 +42,10 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="mb-10 md:mb-12 flex flex-col sm:flex-row items-center gap-3 sm:gap-4"
           >
-            <a
-              href={CALENDLY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary px-8 py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center justify-center gap-2"
-            >
+            <CalendlyButton className="btn-primary px-8 py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center justify-center gap-2">
               Schedule a Call
               <ArrowRight className="w-5 h-5" />
-            </a>
+            </CalendlyButton>
             <a
               href="#demo-video"
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-lg font-semibold text-gray-700 hover:text-gray-900 transition-colors rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50"

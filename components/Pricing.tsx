@@ -2,8 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Check, Clock, DollarSign, Users, Sparkles } from "lucide-react";
-
-const CALENDLY_URL = "https://calendly.com/riley-fitreport/intro";
+import CalendlyButton from "@/components/CalendlyButton";
 
 const features = [
   "Unlimited client reports",
@@ -99,17 +98,14 @@ const Pricing = () => {
               </ul>
 
               {/* CTA */}
-              <a
-                href={CALENDLY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <CalendlyButton
                 className={`w-full py-3.5 text-lg font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:shadow-lg inline-flex items-center justify-center gap-2 ${
                   plan.featured ? 'btn-primary' : 'btn-secondary'
                 }`}
               >
                 Get Started
                 <ArrowRight className="w-5 h-5" />
-              </a>
+              </CalendlyButton>
             </div>
           </motion.div>
         ))}

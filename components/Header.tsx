@@ -7,8 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import ButtonSignin from "./ButtonSignin";
 import Logo from "@/components/Logo";
-
-const CALENDLY_URL = "https://calendly.com/riley-fitreport/intro";
+import CalendlyButton from "@/components/CalendlyButton";
 
 const links: {
   href: string;
@@ -100,15 +99,10 @@ const Header = () => {
         {/* CTAs on large screens */}
         <div className="hidden lg:flex lg:justify-end lg:flex-1 lg:items-center lg:gap-3">
           <ButtonSignin extraStyle="text-gray-600 font-medium hover:text-gray-900 px-4 py-2.5 transition-colors" />
-          <a
-            href={CALENDLY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-1.5 transition-all hover:-translate-y-0.5"
-          >
+          <CalendlyButton className="btn-primary px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-1.5 transition-all hover:-translate-y-0.5">
             Schedule a Call
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </CalendlyButton>
         </div>
       </nav>
 
@@ -185,15 +179,10 @@ const Header = () => {
                 className="pt-6 border-t border-gray-200 flex flex-col gap-3"
               >
                 <ButtonSignin extraStyle="btn-secondary px-5 py-2.5 rounded-lg w-full text-center" />
-                <a
-                  href={CALENDLY_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary px-5 py-2.5 rounded-lg font-semibold inline-flex items-center justify-center gap-1.5 w-full"
-                >
+                <CalendlyButton className="btn-primary px-5 py-2.5 rounded-lg font-semibold inline-flex items-center justify-center gap-1.5 w-full">
                   Schedule a Call
                   <ArrowRight className="w-4 h-4" />
-                </a>
+                </CalendlyButton>
               </motion.div>
             </div>
           </motion.div>
