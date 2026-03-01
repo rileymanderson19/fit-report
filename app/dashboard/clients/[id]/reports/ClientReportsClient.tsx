@@ -9,7 +9,7 @@ import ClientSearchBar from '@/components/ClientSearchBar';
 import { ShareProgressModal, ShareWeeklyHighlightsCard, ShareWeightProgressChart } from '@/components/shareable';
 import { useReportAnalytics, DailyData, WeeklyAverage } from '@/hooks/useReportAnalytics';
 import { toast } from 'sonner';
-import { RefreshCw, Share2, ChevronLeft, ChevronRight, Copy, Check, Camera, X, AlertTriangle, XCircle, ChevronDown, Lightbulb, ArrowRight } from 'lucide-react';
+import { RefreshCw, Share2, ChevronLeft, ChevronRight, Copy, Check, Camera, X, AlertTriangle, XCircle, ChevronDown, Lightbulb, ArrowRight, MessageSquare } from 'lucide-react';
 
 
 interface Report {
@@ -142,10 +142,12 @@ export default function ClientReportsClient({
     summary: string;
     keyInsights: string[];
     actionItems: string[];
+    checkInMessage?: string;
     generatedAt: string;
   } | null>(null);
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const [isNotesExpanded, setIsNotesExpanded] = useState(true);
+  const [isCheckInCopied, setIsCheckInCopied] = useState(false);
 
   // Full Report copy state
   const [isFullReportCopied, setIsFullReportCopied] = useState(false);
@@ -783,8 +785,14 @@ export default function ClientReportsClient({
       const sorted = bodyStats.filter((s: any) => s.weight > 0).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
       if (sorted.length > 0) {
         latestWeight = sorted[sorted.length - 1].weight;
-        if (sorted.length >= 2) weightChange = sorted[sorted.length - 1].weight - sorted[0].weight;
       }
+    }
+    // Use weekly averages for weight change to match the Full Report card
+    const weeksWithWeight = processedData.weeklyAverages.filter(w => w.avgWeight > 0);
+    if (weeksWithWeight.length >= 2) {
+      const firstWeekAvg = weeksWithWeight[0].avgWeight;
+      const lastWeekAvg = weeksWithWeight[weeksWithWeight.length - 1].avgWeight;
+      weightChange = lastWeekAvg - firstWeekAvg;
     }
     const nutrition = liveReportData?.nutritionData?.nutrition;
     let avgCalories: number | null = null;
@@ -827,7 +835,7 @@ export default function ClientReportsClient({
       }
     }
     return { latestWeight, weightChange, avgCalories, avgProtein, avgDailySteps, avgSleep, totalWorkouts, scheduledWorkouts, workoutDays };
-  }, [liveReportData]);
+  }, [liveReportData, processedData.weeklyAverages]);
 
   // Load cached coaching notes
   React.useEffect(() => {
@@ -869,6 +877,18 @@ export default function ClientReportsClient({
       toast.error(error instanceof Error ? error.message : 'Failed to generate coaching notes');
     } finally {
       setIsGeneratingNotes(false);
+    }
+  };
+
+  const handleCopyCheckIn = async () => {
+    if (!coachingNotes?.checkInMessage) return;
+    try {
+      await navigator.clipboard.writeText(coachingNotes.checkInMessage);
+      setIsCheckInCopied(true);
+      toast.success('Check-in message copied!');
+      setTimeout(() => setIsCheckInCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy to clipboard');
     }
   };
 
@@ -1146,6 +1166,39 @@ export default function ClientReportsClient({
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+
+                  {/* Client Check-in Message */}
+                  {coachingNotes.checkInMessage && (
+                    <div className="border-t border-gray-100 pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <MessageSquare className="h-3.5 w-3.5 text-green-500" />
+                          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Client Check-in Message</span>
+                        </div>
+                        <button
+                          onClick={handleCopyCheckIn}
+                          className="text-xs px-2.5 py-1 rounded-md font-medium transition-all bg-green-50 text-green-700 hover:bg-green-100 flex items-center gap-1.5"
+                        >
+                          {isCheckInCopied ? (
+                            <>
+                              <Check className="w-3 h-3" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              Copy Message
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className="bg-green-50/50 border border-green-100 rounded-lg p-3">
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                          {coachingNotes.checkInMessage}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>

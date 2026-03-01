@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     // Prepare the clients data for insertion
     const clientsToInsert = clients.map(client => ({
       trainer_id: user.id,
-      trainerize_id: client.id,
+      trainerize_id: Number(client.id),
       first_name: client.firstName,
       last_name: client.lastName,
       email: client.email || null,

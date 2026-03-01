@@ -12,6 +12,7 @@ const CoachingNotesSchema = z.object({
   summary: z.string(),
   keyInsights: z.array(z.string()),
   actionItems: z.array(z.string()),
+  checkInMessage: z.string(),
 });
 
 interface MetricsInput {
@@ -186,7 +187,8 @@ Respond with valid JSON:
 {
   "summary": "2-3 sentence coaching overview of where this client stands",
   "keyInsights": ["3-5 specific observations from the data"],
-  "actionItems": ["1-3 concrete next steps for the coach to take with this client"]
+  "actionItems": ["1-3 concrete next steps for the coach to take with this client"],
+  "checkInMessage": "A friendly check-in message addressed directly to the client (using 'you') that: (1) acknowledges their progress with specific numbers from the data, (2) highlights 1-2 things they're doing well, (3) suggests 1-2 adjustments if the data warrants it, and (4) ends with encouragement. Keep it 3-5 short paragraphs. Write in the coaching tone and voice described above. Do NOT include a subject line or greeting like 'Hey [name]'. Do NOT include a signature — just the body of the message."
 }
 
 Be specific, reference actual numbers from the data. Keep it concise and actionable. Do not use generic advice.`;
@@ -207,7 +209,7 @@ Generate coaching notes for this client.`;
 
     let aiResponse: string;
     try {
-      aiResponse = await sendOpenAi(messages, 0, 1000, 0.7);
+      aiResponse = await sendOpenAi(messages, 0, 1500, 0.7);
     } catch (aiError: any) {
       console.error("AI generation failed:", aiError.message);
       return NextResponse.json(

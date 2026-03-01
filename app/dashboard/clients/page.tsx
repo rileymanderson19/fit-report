@@ -269,7 +269,7 @@ export default function ClientsPage() {
       if (selected.length === 0) throw new Error('No clients selected');
 
       for (const client of selected) {
-        const { error } = await supabase.from('clients').insert({
+        const { error } = await supabase.from('clients').upsert({
           trainer_id: user.id,
           first_name: client.first_name,
           last_name: client.last_name,
@@ -277,8 +277,10 @@ export default function ClientsPage() {
           trainerize_id: parseInt(client.id),
           active: true,
           status: 'new',
-          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'trainer_id,trainerize_id',
+          ignoreDuplicates: false
         });
         if (error) throw new Error(`Failed to import ${client.first_name} ${client.last_name}: ${error.message}`);
       }
