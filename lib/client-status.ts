@@ -28,7 +28,7 @@ export interface ClientStatusResult {
 /**
  * Extract key metrics from raw report_data JSONB.
  */
-function extractMetrics(reportData: any): ClientMetrics {
+export function extractMetrics(reportData: any): ClientMetrics {
   const metrics: ClientMetrics = {
     latestWeight: null,
     weightChange: null,

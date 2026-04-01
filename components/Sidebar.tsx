@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ReactNode } from "react";
-import { Users, Settings, Link2, X, ChevronLeft, Sparkles } from "lucide-react";
+import { Users, Settings, Link2, X, ChevronLeft, Sparkles, MessageSquare } from "lucide-react";
 import { LogoIcon } from "@/components/Logo";
 import ButtonAccount from "./ButtonAccount";
 
@@ -123,6 +123,16 @@ export default function Sidebar({
           title="Coaching AI"
         >
           Coaching AI
+        </SidebarItem>
+
+        <SidebarItem
+          href="/dashboard/batch-checkins"
+          icon={<MessageSquare className="w-4 h-4" />}
+          isActive={currentPath.startsWith("/dashboard/batch-checkins")}
+          collapsed={collapsed}
+          title="Check-ins"
+        >
+          Check-ins
         </SidebarItem>
 
         <SidebarItem
