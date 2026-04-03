@@ -150,6 +150,16 @@ async function fetchTrainerizeDirect(
     // First pass: collect workout IDs from calendar
     const workoutIds: { id: number; date: string; title: string }[] = [];
 
+    // Debug: log all calendar items to see types and statuses
+    const allItems: string[] = [];
+    for (const day of calendarData.calendar) {
+      if (!day.items) continue;
+      for (const item of day.items) {
+        allItems.push(`${day.date}: type=${item.type} status=${item.status} title="${item.title}" workoutID=${item.detail?.workoutID}`);
+      }
+    }
+    console.log(`[TRAINERIZE-DIRECT] All calendar items (${allItems.length}):\n${allItems.join("\n")}`);
+
     for (const day of calendarData.calendar) {
       if (!day.items) continue;
       for (const item of day.items) {
