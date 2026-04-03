@@ -129,6 +129,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 1: Query report_cache (primary source — daily cron + on-demand generation)
+    // No expiration filter — stale data is better than no data for check-in messages
     const validClientIds = validClients.map((c) => c.id);
     const reportDataByClient = new Map<string, any>();
 
@@ -138,7 +139,6 @@ export async function POST(req: NextRequest) {
       .eq("trainer_id", user.id)
       .eq("status", "ready")
       .in("client_id", validClientIds)
-      .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false });
 
     for (const entry of cacheEntries || []) {
@@ -179,6 +179,17 @@ export async function POST(req: NextRequest) {
             reportDataByClient.set(report.client_id, report.report_data);
           }
         }
+      }
+    }
+
+    console.log(`[BATCH-CHECKINS] Data sources: ${reportDataByClient.size}/${validClientIds.length} clients have report data`);
+    for (const clientId of validClientIds) {
+      const data = reportDataByClient.get(clientId);
+      if (data) {
+        const workouts = data?.workoutData?.workouts;
+        console.log(`[BATCH-CHECKINS] Client ${clientId}: workoutData exists=${!!data?.workoutData}, workouts count=${Array.isArray(workouts) ? workouts.length : 'N/A'}`);
+      } else {
+        console.log(`[BATCH-CHECKINS] Client ${clientId}: NO DATA in either report_cache or reports`);
       }
     }
 
