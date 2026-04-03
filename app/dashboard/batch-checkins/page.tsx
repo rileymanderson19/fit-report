@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Star,
+  Search,
 } from "lucide-react";
 import { CHECKIN_TEMPLATES } from "@/lib/checkin-templates";
 
@@ -57,6 +58,7 @@ export default function BatchCheckinsPage() {
 
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [templateId, setTemplateId] = useState(CHECKIN_TEMPLATES[0].id);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -101,11 +103,17 @@ export default function BatchCheckinsPage() {
     });
   };
 
+  const filteredClients = clients.filter((c) => {
+    if (!searchQuery) return true;
+    const name = `${c.first_name} ${c.last_name}`.toLowerCase();
+    return name.includes(searchQuery.toLowerCase());
+  });
+
   const toggleAll = () => {
-    if (selectedIds.size === clients.length) {
+    if (selectedIds.size === filteredClients.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(clients.map((c) => c.id)));
+      setSelectedIds(new Set(filteredClients.map((c) => c.id)));
     }
   };
 
@@ -254,20 +262,33 @@ export default function BatchCheckinsPage() {
             className="text-sm text-blue-600 hover:text-blue-800"
             disabled={isGenerating}
           >
-            {selectedIds.size === clients.length
+            {selectedIds.size === filteredClients.length
               ? "Deselect All"
-              : `Select All (${clients.length})`}
+              : `Select All (${filteredClients.length})`}
           </button>
         </div>
 
-        {clients.length === 0 ? (
+        {/* Search bar */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search clients..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            disabled={isGenerating}
+          />
+        </div>
+
+        {filteredClients.length === 0 ? (
           <div className="text-center py-8 text-gray-500 border border-gray-200 rounded-lg">
             <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-            <p>No clients found. Import clients from Trainerize first.</p>
+            <p>{searchQuery ? "No clients match your search." : "No clients found. Import clients from Trainerize first."}</p>
           </div>
         ) : (
           <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
-            {clients.map((client) => {
+            {filteredClients.map((client) => {
               const isSelected = selectedIds.has(client.id);
               const statusKey = client.status || "new";
               const StatusIcon = STATUS_ICONS[statusKey] || Star;

@@ -128,33 +128,57 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 1: Get latest report ID per client (lightweight query, no report_data)
+    // Step 1: Query report_cache (primary source — daily cron + on-demand generation)
     const validClientIds = validClients.map((c) => c.id);
-    const { data: reportHeaders } = await supabase
-      .from("reports")
-      .select("id, client_id")
+    const reportDataByClient = new Map<string, any>();
+
+    const { data: cacheEntries } = await supabase
+      .from("report_cache")
+      .select("client_id, report_data")
       .eq("trainer_id", user.id)
+      .eq("status", "ready")
       .in("client_id", validClientIds)
+      .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false });
 
-    const latestReportIdByClient = new Map<string, string>();
-    for (const rh of reportHeaders || []) {
-      if (!latestReportIdByClient.has(rh.client_id)) {
-        latestReportIdByClient.set(rh.client_id, rh.id);
+    for (const entry of cacheEntries || []) {
+      if (!reportDataByClient.has(entry.client_id)) {
+        reportDataByClient.set(entry.client_id, entry.report_data);
       }
     }
 
-    // Step 2: Fetch full report_data for latest reports only
-    const reportDataByClient = new Map<string, any>();
-    const latestIds = Array.from(latestReportIdByClient.values());
-    if (latestIds.length > 0) {
-      const { data: reports } = await supabase
-        .from("reports")
-        .select("client_id, report_data")
-        .in("id", latestIds);
+    // Step 2: Fallback to reports table for clients not found in cache
+    const missingClientIds = validClientIds.filter(
+      (id) => !reportDataByClient.has(id)
+    );
 
-      for (const report of reports || []) {
-        reportDataByClient.set(report.client_id, report.report_data);
+    if (missingClientIds.length > 0) {
+      const { data: reportHeaders } = await supabase
+        .from("reports")
+        .select("id, client_id")
+        .eq("trainer_id", user.id)
+        .in("client_id", missingClientIds)
+        .order("created_at", { ascending: false });
+
+      const latestReportIdByClient = new Map<string, string>();
+      for (const rh of reportHeaders || []) {
+        if (!latestReportIdByClient.has(rh.client_id)) {
+          latestReportIdByClient.set(rh.client_id, rh.id);
+        }
+      }
+
+      const latestIds = Array.from(latestReportIdByClient.values());
+      if (latestIds.length > 0) {
+        const { data: reports } = await supabase
+          .from("reports")
+          .select("client_id, report_data")
+          .in("id", latestIds);
+
+        for (const report of reports || []) {
+          if (!reportDataByClient.has(report.client_id)) {
+            reportDataByClient.set(report.client_id, report.report_data);
+          }
+        }
       }
     }
 
