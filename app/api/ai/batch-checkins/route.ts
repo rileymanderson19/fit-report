@@ -1,5 +1,6 @@
 import { createClient } from "@/libs/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 import {
   rateLimitMiddleware,
   getClientIdentifier,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/generate-coaching-message";
 import { getTemplateById } from "@/lib/checkin-templates";
 import { extractMetrics } from "@/lib/client-status";
+import { generateReportData } from "@/lib/report-generator";
 
 const MAX_CLIENTS = 30;
 const CONCURRENCY_LIMIT = 5;
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
     // Verify all clients belong to this trainer
     const { data: clients, error: clientsError } = await supabase
       .from("clients")
-      .select("id, first_name, last_name, goal, notes")
+      .select("id, first_name, last_name, goal, notes, trainerize_id")
       .eq("trainer_id", user.id)
       .eq("active", true)
       .in("id", clientIds);
@@ -197,11 +199,48 @@ export async function POST(req: NextRequest) {
     const { profile: coachProfile, exists: profileExists } =
       await fetchCoachProfile(supabase, user.id);
 
+    // Get auth headers for Trainerize API calls (needed for clients with no cached data)
+    const headersList = headers();
+    const cookie = headersList.get("cookie") || "";
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const authHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      cookie,
+    };
+
+    // Date range for fresh Trainerize pulls: last 7 days
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 7);
+    const startDateStr = startDate.toISOString().split("T")[0];
+    const endDateStr = endDate.toISOString().split("T")[0];
+
     // Generate messages concurrently
     const tasks = validClients.map((client) => async (): Promise<BatchResult> => {
-      const reportData = reportDataByClient.get(client.id);
-      let metrics: MetricsInput;
+      let reportData = reportDataByClient.get(client.id);
 
+      // If no cached data exists, fetch fresh from Trainerize
+      if (!reportData && client.trainerize_id) {
+        try {
+          console.log(`[BATCH-CHECKINS] Client ${client.id}: fetching fresh Trainerize data`);
+          reportData = await generateReportData(
+            {
+              trainerizeUserId: client.trainerize_id,
+              startDate: startDateStr,
+              endDate: endDateStr,
+              trainerId: user.id,
+              clientId: client.id,
+              enableTrainerizeCache: true,
+            },
+            origin,
+            authHeaders
+          );
+        } catch (err: any) {
+          console.error(`[BATCH-CHECKINS] Client ${client.id}: Trainerize fetch failed:`, err.message);
+        }
+      }
+
+      let metrics: MetricsInput;
       if (reportData) {
         metrics = extractMetrics(reportData);
       } else {
