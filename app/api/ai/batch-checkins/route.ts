@@ -126,11 +126,21 @@ async function fetchTrainerizeDirect(
     ]);
 
   // Parse responses (best-effort, partial data is fine)
+  console.log(`[TRAINERIZE-DIRECT] API responses: calendar=${calendarRes.status}, nutrition=${nutritionRes.status}, bodyStats=${bodyStatsRes.status}, health=${healthRes.status}, sleep=${sleepRes.status}`);
+
   const calendarData = calendarRes.ok ? await calendarRes.json() : null;
   const nutritionData = nutritionRes.ok ? await nutritionRes.json() : null;
   const bodyStatsData = bodyStatsRes.ok ? await bodyStatsRes.json() : null;
   const healthData = healthRes.ok ? await healthRes.json() : null;
   const sleepData = sleepRes.ok ? await sleepRes.json() : null;
+
+  if (!calendarRes.ok) {
+    const errText = await calendarRes.text().catch(() => "unknown");
+    console.error(`[TRAINERIZE-DIRECT] Calendar error: ${errText}`);
+  }
+
+  const calendarDays = calendarData?.calendar?.length || 0;
+  console.log(`[TRAINERIZE-DIRECT] Calendar days: ${calendarDays}, userID: ${trainerizeUserId}`);
 
   // Extract workouts from calendar (same logic as /api/trainerize/workouts)
   const workouts: any[] = [];
@@ -194,6 +204,8 @@ async function fetchTrainerizeDirect(
       if (d) workouts.push(d);
     }
   }
+
+  console.log(`[TRAINERIZE-DIRECT] Result: ${workouts.length} workouts, ${workoutCalendar.length} calendar items`);
 
   // Return in the same shape as generateReportData (what extractMetrics expects)
   return {
