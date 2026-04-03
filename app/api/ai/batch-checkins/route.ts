@@ -12,7 +12,10 @@ import {
 } from "@/lib/generate-coaching-message";
 import { getTemplateById } from "@/lib/checkin-templates";
 import { extractMetrics } from "@/lib/client-status";
-import { generateReportData } from "@/lib/report-generator";
+import {
+  getTrainerizeCredentials,
+  createBasicAuthHeader,
+} from "@/libs/trainerize/credentials";
 
 const MAX_CLIENTS = 30;
 const CONCURRENCY_LIMIT = 5;
@@ -49,6 +52,157 @@ async function withConcurrency<T>(
   );
   await Promise.all(workers);
   return results;
+}
+
+/**
+ * Fetch Trainerize data directly using the trainer's credentials.
+ * Bypasses internal API routes (which require browser auth) by calling the
+ * Trainerize API directly with Basic Auth.
+ */
+async function fetchTrainerizeDirect(
+  trainerizeUserId: number,
+  startDate: string,
+  endDate: string,
+  authHeader: string
+): Promise<any> {
+  const apiBase = "https://api.trainerize.com";
+  const headers = {
+    Authorization: authHeader,
+    "Content-Type": "application/json",
+  };
+
+  // Fetch calendar, nutrition, body stats, health data in parallel
+  const [calendarRes, nutritionRes, bodyStatsRes, healthRes, sleepRes] =
+    await Promise.all([
+      fetch(`${apiBase}/v03/calendar/getList`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          userID: trainerizeUserId,
+          startDate,
+          endDate,
+          unitDistance: "miles",
+          unitWeight: "lbs",
+        }),
+      }),
+      fetch(`${apiBase}/v03/nutrition/getList`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          userID: trainerizeUserId,
+          startDate,
+          endDate,
+        }),
+      }),
+      fetch(`${apiBase}/v03/bodyStat/getList`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          userID: trainerizeUserId,
+          startDate,
+          endDate,
+          unitBodystats: "inches",
+          unitWeight: "lbs",
+        }),
+      }),
+      fetch(`${apiBase}/v03/healthData/getList`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          userID: trainerizeUserId,
+          startDate,
+          endDate,
+        }),
+      }),
+      fetch(`${apiBase}/v03/sleep/getList`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          userID: trainerizeUserId,
+          startDate,
+          endDate,
+        }),
+      }),
+    ]);
+
+  // Parse responses (best-effort, partial data is fine)
+  const calendarData = calendarRes.ok ? await calendarRes.json() : null;
+  const nutritionData = nutritionRes.ok ? await nutritionRes.json() : null;
+  const bodyStatsData = bodyStatsRes.ok ? await bodyStatsRes.json() : null;
+  const healthData = healthRes.ok ? await healthRes.json() : null;
+  const sleepData = sleepRes.ok ? await sleepRes.json() : null;
+
+  // Extract workouts from calendar (same logic as /api/trainerize/workouts)
+  const workouts: any[] = [];
+  const workoutCalendar: any[] = [];
+
+  if (calendarData?.calendar) {
+    // First pass: collect workout IDs from calendar
+    const workoutIds: { id: number; date: string; title: string }[] = [];
+
+    for (const day of calendarData.calendar) {
+      if (!day.items) continue;
+      for (const item of day.items) {
+        if (item.type === "workoutRegular") {
+          workoutCalendar.push({
+            date: day.date,
+            title: item.title,
+            status: item.status,
+            id: item.id,
+            workoutID: item.detail?.workoutID,
+          });
+
+          if (item.status === "tracked" && item.detail?.workoutID) {
+            workoutIds.push({
+              id: item.detail.workoutID,
+              date: day.date,
+              title: item.title,
+            });
+          }
+        }
+      }
+    }
+
+    // Second pass: fetch workout details for tracked workouts
+    const detailPromises = workoutIds.map(async (w) => {
+      try {
+        const res = await fetch(`${apiBase}/v03/workout/getWorkout`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ workoutID: w.id }),
+        });
+        if (!res.ok) return null;
+        const detail = await res.json();
+        return {
+          id: w.id,
+          title: w.title,
+          date: w.date,
+          exercises: detail.dailyWorkouts?.[0]?.exercises?.map((e: any) => ({
+            def: { name: e.def?.name, sets: e.def?.sets },
+            stats: e.stats,
+            notes: e.notes,
+          })) || [],
+          duration: detail.dailyWorkouts?.[0]?.duration,
+        };
+      } catch {
+        return null;
+      }
+    });
+
+    const details = await Promise.all(detailPromises);
+    for (const d of details) {
+      if (d) workouts.push(d);
+    }
+  }
+
+  // Return in the same shape as generateReportData (what extractMetrics expects)
+  return {
+    workoutData: { workouts, workoutCalendar },
+    nutritionData: nutritionData || { data: [] },
+    bodyStats: bodyStatsData || { stats: [] },
+    healthData: healthData || { data: [] },
+    sleepData: sleepData || { data: [] },
+  };
 }
 
 /**
@@ -198,23 +352,11 @@ export async function POST(req: NextRequest) {
     const { profile: coachProfile, exists: profileExists } =
       await fetchCoachProfile(supabase, user.id);
 
-    // Get auth headers for Trainerize API calls (needed for clients with no cached data)
-    const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const authHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (session?.access_token) {
-      authHeaders["authorization"] = `Bearer ${session.access_token}`;
-    } else {
-      // Fallback: forward the original request cookie
-      const cookie = req.headers.get("cookie");
-      if (cookie) {
-        authHeaders["cookie"] = cookie;
-      }
-    }
+    // Get Trainerize credentials for direct API calls (needed for clients with no cached data)
+    const trainerizeCreds = await getTrainerizeCredentials(user.id);
+    const trainerizeAuth = trainerizeCreds
+      ? `Basic ${createBasicAuthHeader(trainerizeCreds)}`
+      : null;
 
     // Date range for fresh Trainerize pulls: last 7 days
     const endDate = new Date();
@@ -227,21 +369,15 @@ export async function POST(req: NextRequest) {
     const tasks = validClients.map((client) => async (): Promise<BatchResult> => {
       let reportData = reportDataByClient.get(client.id);
 
-      // If no cached data exists, fetch fresh from Trainerize
-      if (!reportData && client.trainerize_id) {
+      // If no cached data exists, fetch fresh from Trainerize API directly
+      if (!reportData && client.trainerize_id && trainerizeAuth) {
         try {
-          console.log(`[BATCH-CHECKINS] Client ${client.id}: fetching fresh Trainerize data`);
-          reportData = await generateReportData(
-            {
-              trainerizeUserId: client.trainerize_id,
-              startDate: startDateStr,
-              endDate: endDateStr,
-              trainerId: user.id,
-              clientId: client.id,
-              enableTrainerizeCache: true,
-            },
-            origin,
-            authHeaders
+          console.log(`[BATCH-CHECKINS] Client ${client.id}: fetching fresh Trainerize data directly`);
+          reportData = await fetchTrainerizeDirect(
+            client.trainerize_id,
+            startDateStr,
+            endDateStr,
+            trainerizeAuth
           );
         } catch (err: any) {
           console.error(`[BATCH-CHECKINS] Client ${client.id}: Trainerize fetch failed:`, err.message);
