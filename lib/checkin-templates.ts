@@ -5,7 +5,7 @@ export interface CheckinTemplate {
   promptModifier: string;
 }
 
-const DETAIL_INSTRUCTIONS = `Be specific and data-driven. Reference actual numbers from the data: name specific exercises and weights, cite exact workout completion counts, mention specific calorie/protein averages, and reference step counts. Never say "your workouts" generically when you can say "your Upper 1 and Running sessions." Never say "your nutrition" when you can say "averaging 1,669 calories." The more specific you are, the more the client feels seen.`;
+const DETAIL_INSTRUCTIONS = `Reference actual numbers from the data naturally, like you're reading their training log out loud. "Upper 1 and Running done this week, squat went up 5lbs" not "your workouts have been going well." "Averaging 1,669 cals" not "your nutrition." Specific beats generic every time.`;
 
 export const CHECKIN_TEMPLATES: CheckinTemplate[] = [
   {
@@ -13,28 +13,28 @@ export const CHECKIN_TEMPLATES: CheckinTemplate[] = [
     name: "Friday Weekly Review",
     description: "Summarize the week + ask about weekend plans",
     promptModifier:
-      `Write a Friday check-in message. Summarize their training week with specific detail: name the workouts they completed, reference specific exercises and any weight increases, cite their nutrition averages, and mention step counts. Acknowledge what went well with specifics. Ask how their weekend is looking and if they have any active plans. Keep it 3-4 short paragraphs. ${DETAIL_INSTRUCTIONS} Write in the coaching tone and voice described above. Do NOT include a subject line or greeting. Do NOT include a signature.`,
+      `Write a Friday end-of-week message like a real coach texting their client. Mention specific workouts they did by name, any weight PRs or rep improvements, their calorie/protein averages if available, and step counts. If something was off this week, say it plainly. Ask one casual question about their weekend. Keep it 2-3 short paragraphs max. Write like you're texting, not writing an essay. Short sentences. Fragments ok. No motivational speeches. ${DETAIL_INSTRUCTIONS} Write in the coaching tone and voice described above. Do NOT include a subject line or greeting. Do NOT include a signature.`,
   },
   {
     id: "midweek-pulse",
     name: "Mid-week Check-in",
     description: "Review last couple days + general encouragement",
     promptModifier:
-      `Write a mid-week check-in message. Reference their last couple days of activity with specifics: name the workouts they did, mention any standout exercises or PRs, cite nutrition numbers. Ask how their week is going. Keep it conversational, 2-3 short paragraphs. ${DETAIL_INSTRUCTIONS} Write in the coaching tone and voice described above. Do NOT include a subject line or greeting. Do NOT include a signature.`,
+      `Write a quick mid-week text like a coach checking in. Mention what they've done so far this week (name the workouts). If anything looks off, flag it. Ask how the rest of their week is looking. Keep it short, 1-2 paragraphs. Casual tone, like a text message. ${DETAIL_INSTRUCTIONS} Write in the coaching tone and voice described above. Do NOT include a subject line or greeting. Do NOT include a signature.`,
   },
   {
     id: "monday-kickoff",
     name: "Monday Kickoff",
     description: "Brief last-week review + set tone for new week",
     promptModifier:
-      `Write a Monday kickoff message. Mention last week's highlights with specific numbers (workouts completed, key lifts, nutrition consistency). Set an encouraging tone for the new week. Mention 1-2 specific things to focus on based on their data (e.g., "let's get that protein closer to 150g" or "aim for 4 training sessions this week"). Keep it 2-3 short paragraphs. ${DETAIL_INSTRUCTIONS} Write in the coaching tone and voice described above. Do NOT include a subject line or greeting. Do NOT include a signature.`,
+      `Write a Monday message like a coach setting up the week. One line about how last week went (with numbers). Then 1-2 things to focus on this week based on their data. Keep it tight, 2 short paragraphs. No pep talks, just what to do. ${DETAIL_INSTRUCTIONS} Write in the coaching tone and voice described above. Do NOT include a subject line or greeting. Do NOT include a signature.`,
   },
   {
     id: "quick-encouragement",
     name: "Quick Encouragement",
     description: "Positive reinforcement based on recent activity",
     promptModifier:
-      `Write a brief encouragement message. Highlight something specific they did well recently: a workout PR with the actual weight, consistent nutrition with the actual numbers, a good step count streak. Be precise, not generic. Keep it 1-2 short paragraphs. Warm and genuine. ${DETAIL_INSTRUCTIONS} Write in the coaching tone and voice described above. Do NOT include a subject line or greeting. Do NOT include a signature.`,
+      `Write a quick encouragement text. Pick ONE specific thing they did well (a PR, hitting their protein, consistent steps) and call it out with the actual number. Keep it to 2-3 sentences. Don't pile on praise. Just acknowledge the one thing and move on. ${DETAIL_INSTRUCTIONS} Write in the coaching tone and voice described above. Do NOT include a subject line or greeting. Do NOT include a signature.`,
   },
 ];
 

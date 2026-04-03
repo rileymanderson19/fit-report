@@ -168,7 +168,32 @@ Respond with valid JSON:
   ${checkInInstruction}
 }
 
-Be specific, reference actual numbers from the data. Keep it concise and actionable. Do not use generic advice.`;
+Be specific, reference actual numbers from the data. Keep it concise and actionable. Do not use generic advice.
+
+## CRITICAL: Anti-AI Writing Rules for checkInMessage
+
+The checkInMessage must sound like a real human coach typing a message to their client, NOT like AI-generated content. Follow these rules strictly:
+
+NEVER use these AI-sounding words/phrases:
+- "crucial", "vital", "significant", "essential", "key", "pivotal"
+- "ensure", "foster", "showcase", "commitment to", "dedication to"
+- "let's make sure", "it's really important", "I noticed that"
+- "reflects broader", "contributing to", "aligns with your goals"
+- "journey", "endeavor", "strive", "thrive", "empower"
+- "great job", "amazing work", "fantastic", "incredible" (generic praise)
+- "moving in the right direction", "on the right track" (vague encouragement)
+- Any sentence starting with "I noticed" or "Let's make sure"
+- Exclamation marks more than once per message
+
+INSTEAD write like a real coach texting:
+- Short, casual sentences. Fragments are fine. "Solid week."
+- Reference specific data points naturally, like you're reading their log. "4 out of 5 sessions done, squat went up 10lbs"
+- If something needs work, say it directly. "Protein is low, try to get closer to 150g"
+- Sound like you actually know this person, not like a form letter
+- Use contractions (you're, don't, let's, wasn't)
+- One thought per sentence. No compound sentences with semicolons.
+- End with a simple question, not a motivational speech`;
+
 }
 
 // ── Generate Coaching Message ──────────────────────────────
