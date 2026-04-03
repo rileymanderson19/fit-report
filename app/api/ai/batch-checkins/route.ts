@@ -1,6 +1,5 @@
 import { createClient } from "@/libs/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import {
   rateLimitMiddleware,
   getClientIdentifier,
@@ -200,13 +199,22 @@ export async function POST(req: NextRequest) {
       await fetchCoachProfile(supabase, user.id);
 
     // Get auth headers for Trainerize API calls (needed for clients with no cached data)
-    const headersList = headers();
-    const cookie = headersList.get("cookie") || "";
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const origin = req.nextUrl.origin || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const authHeaders: Record<string, string> = {
       "Content-Type": "application/json",
-      cookie,
     };
+    if (session?.access_token) {
+      authHeaders["authorization"] = `Bearer ${session.access_token}`;
+    } else {
+      // Fallback: forward the original request cookie
+      const cookie = req.headers.get("cookie");
+      if (cookie) {
+        authHeaders["cookie"] = cookie;
+      }
+    }
 
     // Date range for fresh Trainerize pulls: last 7 days
     const endDate = new Date();
