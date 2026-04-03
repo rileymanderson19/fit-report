@@ -172,9 +172,9 @@ async function fetchTrainerizeDirect(
             workoutID: item.detail?.workoutID,
           });
 
-          if (item.status === "tracked" && item.detail?.workoutID) {
+          if (item.status === "tracked") {
             workoutIds.push({
-              id: item.detail.workoutID,
+              id: item.id,  // calendar item ID, not workoutID
               date: day.date,
               title: item.title,
             });
@@ -183,35 +183,46 @@ async function fetchTrainerizeDirect(
       }
     }
 
-    // Second pass: fetch workout details for tracked workouts
-    const detailPromises = workoutIds.map(async (w) => {
+    // Second pass: fetch workout details in one batch call (same as /api/trainerize/workouts)
+    if (workoutIds.length > 0) {
       try {
-        const res = await fetch(`${apiBase}/v03/workout/getWorkout`, {
+        const res = await fetch(`${apiBase}/v03/dailyWorkout/get`, {
           method: "POST",
           headers,
-          body: JSON.stringify({ workoutID: w.id }),
+          body: JSON.stringify({ ids: workoutIds.map((w) => w.id) }),
         });
-        if (!res.ok) return null;
-        const detail = await res.json();
-        return {
-          id: w.id,
-          title: w.title,
-          date: w.date,
-          exercises: detail.dailyWorkouts?.[0]?.exercises?.map((e: any) => ({
-            def: { name: e.def?.name, sets: e.def?.sets },
-            stats: e.stats,
-            notes: e.notes,
-          })) || [],
-          duration: detail.dailyWorkouts?.[0]?.duration,
-        };
-      } catch {
-        return null;
-      }
-    });
 
-    const details = await Promise.all(detailPromises);
-    for (const d of details) {
-      if (d) workouts.push(d);
+        if (res.ok) {
+          const workoutData = await res.json();
+          for (const w of workoutIds) {
+            const details = workoutData.dailyWorkouts?.find(
+              (dw: any) => dw.id === w.id
+            );
+            workouts.push({
+              id: w.id,
+              title: w.title,
+              date: w.date,
+              duration: details?.duration,
+              exercises: details?.exercises?.map((e: any) => ({
+                name: e.def?.name,
+                sets: e.def?.sets,
+                def: { name: e.def?.name, sets: e.def?.sets },
+                stats: e.stats?.map((s: any) => ({
+                  reps: s.reps,
+                  weight: s.weight,
+                  time: s.time,
+                  distance: s.distance,
+                })),
+                notes: e.notes || "",
+              })) || [],
+            });
+          }
+        } else {
+          console.error(`[TRAINERIZE-DIRECT] dailyWorkout/get failed: ${res.status}`);
+        }
+      } catch (err: any) {
+        console.error(`[TRAINERIZE-DIRECT] dailyWorkout/get error: ${err.message}`);
+      }
     }
   }
 
